@@ -6,15 +6,25 @@
 
 ### 油猴脚本安装
 
-[![安装到 Tampermonkey](https://img.shields.io/badge/Install%20to-Tampermonkey-blue?style=for-the-badge&logo=tampermonkey)](tampermonkey://install?url=https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js)
+**方法一：一键安装（推荐）**
+1. 复制这个链接：`https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js`
+2. 在浏览器地址栏粘贴并访问
+3. Tampermonkey 会自动弹出安装界面
+4. 点击 **安装** 完成
 
-**一键安装：**
-1. 点击上方蓝色按钮
-2. Tampermonkey 会自动打开并显示安装界面
-3. 点击 **安装** 按钮完成
+**方法二：手动安装**
+1. 点击这里下载脚本：[`userscript.js`](userscript.js)
+2. 打开 Tampermonkey 管理面板
+3. 点击 **添加新脚本**
+4. 将下载的脚本内容粘贴进去
+5. 保存并刷新游戏页面
 
-**备用安装方法：**
-- 如果链接无法打开，请手动复制 [`userscript.js`](userscript.js) 内容到 Tampermonkey
+### 安装验证
+
+安装完成后：
+- 刷新游戏页面
+- 打开浏览器控制台
+- 如果看到 `[ShuangDialog Loader] ShuangDialog Loader 启动` 说明安装成功
 
 ## 项目架构
 
