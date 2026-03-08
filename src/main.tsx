@@ -9,7 +9,7 @@ import './ui/style.css';
 // 油猴脚本入口函数
 function main() {
   // 初始化核心层
-  const core = initCore();
+  initCore();
   
   // 创建React根节点
   const container = document.createElement('div');

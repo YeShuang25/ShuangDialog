@@ -62,7 +62,7 @@ export class ChatParser {
     return mentions;
   }
 
-  private static extractEmotes(message: string): Array<{
+  private static extractEmotes(_message: string): Array<{
     id: string;
     name: string;
     positions: Array<{ start: number; end: number }>;
