@@ -1,123 +1,98 @@
-// Socket Hook 逻辑 - 核心数据监听中枢
 import { GamePacket, SocketHook } from './types';
 
-export class GameSocketCore {
-  private hooks: SocketHook[] = [];
-  private isConnected = false;
-
-  constructor() {
-    this.initSocketConnection();
-  }
-
-  private initSocketConnection() {
-    // 这里实现与游戏socket的连接逻辑
-    // 具体实现取决于游戏的API
-    this.connectToGameSocket();
-  }
-
-  private connectToGameSocket() {
-    // 模拟socket连接
-    // 实际实现需要根据游戏的socket API来调整
-    try {
-      // 假设游戏提供了全局的socket对象
-      if (typeof window !== 'undefined' && (window as any).gameSocket) {
-        const gameSocket = (window as any).gameSocket;
-        
-        gameSocket.on('connect', () => {
-          this.isConnected = true;
-          this.hooks.forEach(hook => hook.onConnect());
-        });
-
-        gameSocket.on('disconnect', () => {
-          this.isConnected = false;
-          this.hooks.forEach(hook => hook.onDisconnect());
-        });
-
-        gameSocket.on('data', (rawData: unknown) => {
-          const packet = this.parseGameData(rawData);
-          if (packet) {
-            this.hooks.forEach(hook => hook.onData(packet));
-          }
-        });
-
-        gameSocket.on('error', (error: Error) => {
-          this.hooks.forEach(hook => hook.onError(error));
-        });
-      } else {
-        console.warn('[ShuangDialog] 游戏socket对象未找到，使用模拟模式');
-        this.startSimulationMode();
-      }
-    } catch (error) {
-      console.error('[ShuangDialog] Socket连接失败:', error);
-      this.hooks.forEach(hook => hook.onError(error as Error));
-    }
-  }
-
-  private startSimulationMode() {
-    // 模拟模式，用于开发和测试
-    console.log('[ShuangDialog] 启动模拟模式');
-    setInterval(() => {
-      if (this.isConnected && this.hooks.length > 0) {
-        const mockPacket: GamePacket = {
-          type: 'chat',
-          timestamp: Date.now(),
-          data: {
-            channel: 'world',
-            sender: '测试用户',
-            message: '这是一条测试消息',
-            timestamp: Date.now()
-          }
-        };
-        this.hooks.forEach(hook => hook.onData(mockPacket));
-      }
-    }, 5000);
-  }
-
-  private parseGameData(rawData: unknown): GamePacket | null {
-    try {
-      // 这里实现数据包解析逻辑
-      // 根据实际的游戏数据格式来调整
-      if (typeof rawData === 'object' && rawData !== null) {
-        const data = rawData as any;
-        return {
-          type: data.type || 'system',
-          timestamp: data.timestamp || Date.now(),
-          data: data.data || data
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error('[ShuangDialog] 数据解析失败:', error);
-      return null;
-    }
-  }
-
-  public addHook(hook: SocketHook): void {
-    this.hooks.push(hook);
-  }
-
-  public removeHook(hook: SocketHook): void {
-    const index = this.hooks.indexOf(hook);
-    if (index > -1) {
-      this.hooks.splice(index, 1);
-    }
-  }
-
-  public getConnectionStatus(): boolean {
-    return this.isConnected;
-  }
+// 核心模块 - Socket 连接管理
+interface SocketCore {
+  addHook(hook: SocketHook): void;
+  emit(eventName: string, data: unknown): void;
+  hooks: SocketHook[];
 }
 
-// 全局核心实例
-let coreInstance: GameSocketCore | null = null;
+// 全局单例
+let coreInstance: SocketCore | null = null;
 
-export function initCore(): GameSocketCore {
-  if (!coreInstance) {
-    coreInstance = new GameSocketCore();
+/**
+ * 创建核心 Socket 管理模块
+ */
+function createCore(): SocketCore {
+  const hooks: SocketHook[] = [];
+
+  return {
+    hooks,
+    addHook(hook: SocketHook) {
+      hooks.push(hook);
+    },
+    emit(eventName: string, data: unknown) {
+      // 分发数据给所有已注册的 hook
+      const packet: GamePacket = {
+        type: 'system', // 默认类型
+        timestamp: Date.now(),
+        data: { eventName, payload: data }
+      };
+      
+      hooks.forEach(hook => {
+        try {
+          hook.onData(packet);
+        } catch (error) {
+          hook.onError(error as Error);
+        }
+      });
+    }
+  };
+}
+
+/**
+ * 初始化核心模块并挂载 Socket Hook
+ */
+export function initCore(): SocketCore {
+  if (coreInstance) {
+    return coreInstance;
   }
+
+  coreInstance = createCore();
+  
+  // 检查 Socket 是否存在
+  if (typeof (window as any).ServerSocket !== 'undefined' && (window as any).ServerSocket !== null) {
+    
+    console.log('[ShuangDialog] 正在挂载全局消息监听器 (核心劫持模式)...');
+
+    const ServerSocket = (window as any).ServerSocket;
+    
+    // 1. 保存原本的处理函数
+    const originalOnevent = ServerSocket.onevent;
+
+    // 2. 重写 onevent 函数
+    ServerSocket.onevent = function (packet: any) {
+      // packet.data 是一个数组，格式为: ["事件名称", 数据对象1, 数据对象2...]
+      const eventName = packet.data ? packet.data[0] : '未知事件';
+      const eventData = packet.data ? packet.data[1] : null;
+
+      console.log(
+        `%c[全局劫持] 事件: ${eventName}`,
+        'color: red; font-weight: bold;',
+        eventData || packet.data
+      );
+
+      // 分发事件给注册的 hooks
+      if (coreInstance) {
+        coreInstance.emit(eventName, eventData);
+      }
+
+      // 3. 调用原本的函数，确保游戏正常运行
+      // 这一步非常关键，相当于把消息继续往下传
+      originalOnevent.call(this, packet);
+    };
+
+    console.log('[ShuangDialog] 全局监听器挂载成功！现在将捕获所有事件。');
+  } else {
+    console.error('[ShuangDialog] ServerSocket 未初始化。');
+  }
+
   return coreInstance;
 }
 
-export function getCore(): GameSocketCore | null {
+/**
+ * 获取核心模块实例
+ */
+export function getCore(): SocketCore | null {
   return coreInstance;
 }
