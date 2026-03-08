@@ -6,21 +6,15 @@
 
 ### 油猴脚本安装
 
-[![安装到 Tampermonkey](https://img.shields.io/badge/Install%20to-Tampermonkey-blue?style=for-the-badge&logo=tampermonkey)](https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js)
+[![安装到 Tampermonkey](https://img.shields.io/badge/Install%20to-Tampermonkey-blue?style=for-the-badge&logo=tampermonkey)](tampermonkey://install?url=https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js)
 
-**安装步骤：**
-1. 点击上方按钮或 [直接下载脚本](https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js)
-2. 浏览器会自动跳转到 Tampermonkey
-3. 点击 **安装** 按钮
-4. 刷新游戏页面即可使用
+**一键安装：**
+1. 点击上方蓝色按钮
+2. Tampermonkey 会自动打开并显示安装界面
+3. 点击 **安装** 按钮完成
 
-### 手动安装
-
-如果自动安装不工作：
-1. 复制 [`userscript.js`](userscript.js) 的全部内容
-2. 打开 Tampermonkey 管理面板
-3. 点击 **添加新脚本**
-4. 粘贴代码并保存
+**备用安装方法：**
+- 如果链接无法打开，请手动复制 [`userscript.js`](userscript.js) 内容到 Tampermonkey
 
 ## 项目架构
 
