@@ -4,7 +4,12 @@
 // @version      1.0.0
 // @description  游戏聊天增强插件
 // @author       YourName
-// @match        https://your-game-domain.com/*
+// @match https://bondageprojects.elementfx.com/*
+// @match https://www.bondageprojects.elementfx.com/*
+// @match https://bondage-europe.com/*
+// @match https://www.bondage-europe.com/*
+// @match https://bondageprojects.com/*
+// @match https://www.bondageprojects.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
