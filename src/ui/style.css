@@ -1,0 +1,147 @@
+/* 全局样式重置 */
+#shuang-dialog-root * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 滚动条样式 */
+#shuang-dialog-root ::-webkit-scrollbar {
+  width: 6px;
+}
+
+#shuang-dialog-root ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+#shuang-dialog-root ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+#shuang-dialog-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* 暗色主题滚动条 */
+#shuang-dialog-root .dark-theme ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#shuang-dialog-root .dark-theme ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#shuang-dialog-root .dark-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 消息动画 */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-enter {
+  animation: messageSlideIn 0.2s ease-out;
+}
+
+/* 高亮消息动画 */
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(255, 255, 0, 0.3);
+  }
+  50% {
+    background-color: rgba(255, 255, 0, 0.1);
+  }
+  100% {
+    background-color: rgba(255, 255, 0, 0.3);
+  }
+}
+
+.message-highlight {
+  animation: highlightPulse 2s ease-in-out;
+}
+
+/* 按钮样式 */
+.chat-button {
+  border: 1px solid #ccc;
+  background-color: transparent;
+  color: #666;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-button:hover {
+  background-color: #f0f0f0;
+  border-color: #007acc;
+  color: #007acc;
+}
+
+.chat-button.active {
+  background-color: #007acc;
+  border-color: #007acc;
+  color: #ffffff;
+}
+
+/* 暗色主题按钮 */
+.dark-theme .chat-button {
+  border-color: #555;
+  color: #ccc;
+}
+
+.dark-theme .chat-button:hover {
+  background-color: #333;
+  border-color: #007acc;
+  color: #007acc;
+}
+
+.dark-theme .chat-button.active {
+  background-color: #007acc;
+  border-color: #007acc;
+  color: #ffffff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  #shuang-dialog-root .chat-panel {
+    width: 100vw !important;
+    height: 50vh !important;
+    left: 0 !important;
+    top: auto !important;
+    bottom: 0;
+  }
+}
+
+/* 拖拽时的样式 */
+.dragging {
+  cursor: move !important;
+  user-select: none;
+}
+
+/* 消息内容样式 */
+.message-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.mention {
+  color: #007acc;
+  font-weight: bold;
+}
+
+.emote {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 2px;
+}
