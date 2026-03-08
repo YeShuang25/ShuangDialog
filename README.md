@@ -83,9 +83,76 @@ npm run build
 
 ### 部署到 GitHub Pages
 
-1. 构建项目：`npm run build`
-2. 将 `dist` 目录内容推送到 `gh-pages` 分支
-3. 更新 `userscript.js` 中的 `BUNDLE_URL` 配置
+#### 1. 推送代码到 GitHub
+
+```bash
+# 确保代码已推送到 main 分支
+git push origin main
+```
+
+#### 2. 配置 GitHub Pages
+
+1. **打开 GitHub 仓库**：访问 `https://github.com/YeShuang25/ShuangDialog`
+
+2. **进入 Settings**：点击仓库右上角的 **Settings** 标签
+
+3. **找到 Pages 设置**：
+   - 在左侧菜单中找到 **Pages**
+   - 在 **Source** 部分选择：
+     - **Branch**: `gh-pages`
+     - **Folder**: `/(root)` （选择根目录）
+   - 点击 **Save** 保存
+
+4. **等待部署完成**：
+   - GitHub 会显示 "Your site is publishing..."
+   - 等待 1-5 分钟，页面会显示：
+     ```
+     Your site is live at https://yeshuang25.github.io/ShuangDialog/
+     ```
+
+#### GitHub Pages 配置界面说明
+
+```
+GitHub仓库页面
+├── 右上角: Settings (齿轮图标)
+├── 左侧菜单: Pages
+├── Source 部分:
+│   ├── Branch 下拉菜单: 选择 "gh-pages"
+│   ├── Folder 下拉菜单: 选择 "/(root)"
+│   └── Save 按钮: 点击保存
+└── 部署状态: "Your site is live at https://用户名.github.io/仓库名/"
+```
+
+**注意事项：**
+- 仓库必须是 **公开的**（Public），私有仓库无法使用免费的 GitHub Pages
+- `gh-pages` 分支必须存在且包含网站文件
+- 首次配置可能需要 5-10 分钟生效
+- 如果修改了分支或文件夹，需要重新保存才会触发重新部署
+
+#### 3. 验证部署
+
+打开浏览器访问：`https://yeshuang25.github.io/ShuangDialog/dist/main.js`
+
+如果能看到 JavaScript 代码，说明部署成功。
+
+#### 4. 更新油猴脚本 URL
+
+在 `userscript.js` 中确认 URL 正确：
+
+```javascript
+const CONFIG = {
+    BUNDLE_URL: 'https://yeshuang25.github.io/ShuangDialog/dist/main.js',
+    // ...
+};
+```
+
+### 自动部署（推荐）
+
+安装 `gh-pages` 后，可以使用一键部署：
+
+```bash
+npm run deploy  # 自动构建并推送到 gh-pages 分支
+```
 
 ### 安装油猴脚本
 

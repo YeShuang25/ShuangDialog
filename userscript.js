@@ -18,7 +18,7 @@
     // 配置信息
     const CONFIG = {
         // GitHub Pages 部署的编译后的文件URL
-        BUNDLE_URL: 'https://yourusername.github.io/ShuangDialog/dist/main.js',
+        BUNDLE_URL: 'https://yeshuang25.github.io/ShuangDialog/main.js',
         // 版本号，用于缓存控制
         VERSION: '1.0.0',
         // 重试次数
