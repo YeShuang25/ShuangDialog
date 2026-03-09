@@ -71,7 +71,7 @@ export const ChatPanel: React.FC = () => {
         title="霜语"
         defaultPosition={{ x: 100, y: 100 }}
         defaultSize={{ width: 400, height: 500 }}
-        onClose={toggleSettings}
+        onSettings={toggleSettings}
         style={{
           backgroundColor: theme.background,
           color: theme.text,
@@ -83,30 +83,6 @@ export const ChatPanel: React.FC = () => {
         }}
       >
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          {/* 设置按钮 - 放在标题栏右侧 */}
-          <div style={{ 
-            position: 'absolute', 
-            top: '8px', 
-            right: '40px', 
-            zIndex: 10 
-          }}>
-            <Button 
-              onClick={toggleSettings} 
-              variant="secondary" 
-              size="small"
-              style={{ 
-                padding: '4px 8px', 
-                fontSize: '12px',
-                backgroundColor: 'rgba(0,0,0,0.1)',
-                color: '#333',
-                border: '1px solid rgba(0,0,0,0.2)',
-                borderRadius: '4px'
-              }}
-            >
-              设置
-            </Button>
-          </div>
-
           {/* 消息显示区域 */}
           <div style={{ flex: 1, padding: '12px', overflow: 'hidden' }}>
             <MessageList messages={messages} />
@@ -124,7 +100,7 @@ export const ChatPanel: React.FC = () => {
         <FloatingWindow
           title="设置"
           defaultPosition={{ x: 520, y: 100 }}
-          defaultSize={{ width: 320, height: 280 }}
+          defaultSize={{ width: 280, height: 180 }}
           onClose={toggleSettings}
           style={{
             backgroundColor: theme.background,
@@ -133,57 +109,40 @@ export const ChatPanel: React.FC = () => {
             fontSize: '14px',
             boxShadow: theme.shadow,
             border: 'none',
-            borderRadius: '12px'
+            borderRadius: '8px'
           }}
         >
-          <div style={{ 
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
-          }}>
-            {/* 设置标题 */}
-            <div style={{
-              padding: '16px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              borderBottom: `1px solid ${theme.border}`,
-              borderRadius: '12px 12px 0 0'
-            }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>设置选项</h3>
-            </div>
-
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* 设置内容 */}
             <div style={{ 
               flex: 1, 
-              padding: '20px',
+              padding: '16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px'
+              gap: '12px'
             }}>
               {/* 调试模式开关 */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '12px',
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                borderRadius: '8px',
-                border: `1px solid ${theme.border}`
+                padding: '8px',
+                border: `1px solid ${theme.border}`,
+                borderRadius: '4px'
               }}>
                 <div>
-                  <div style={{ fontWeight: '600', color: theme.text, marginBottom: '4px' }}>
+                  <div style={{ fontWeight: '600', color: theme.text, fontSize: '13px' }}>
                     调试模式
                   </div>
-                  <div style={{ fontSize: '12px', color: theme.textLight }}>
-                    启用详细的调试信息输出
+                  <div style={{ fontSize: '11px', color: theme.textLight }}>
+                    启用调试信息输出
                   </div>
                 </div>
                 <label style={{
                   position: 'relative',
                   display: 'inline-block',
-                  width: '44px',
-                  height: '24px'
+                  width: '36px',
+                  height: '20px'
                 }}>
                   <input
                     type="checkbox"
@@ -199,20 +158,19 @@ export const ChatPanel: React.FC = () => {
                     right: 0,
                     bottom: 0,
                     backgroundColor: debugMode ? theme.primary : '#ccc',
-                    transition: '0.4s',
-                    borderRadius: '24px'
+                    transition: '0.3s',
+                    borderRadius: '20px'
                   }}>
                     <span style={{
                       position: 'absolute',
                       content: '""',
-                      height: '18px',
-                      width: '18px',
-                      left: debugMode ? '20px' : '3px',
+                      height: '14px',
+                      width: '14px',
+                      left: debugMode ? '16px' : '2px',
                       bottom: '3px',
                       backgroundColor: 'white',
-                      transition: '0.4s',
-                      borderRadius: '50%',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      transition: '0.3s',
+                      borderRadius: '50%'
                     }} />
                   </span>
                 </label>
@@ -220,13 +178,12 @@ export const ChatPanel: React.FC = () => {
 
               {/* 其他设置项占位 */}
               <div style={{
-                padding: '12px',
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                borderRadius: '8px',
+                padding: '8px',
                 border: `1px solid ${theme.border}`,
+                borderRadius: '4px',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '12px', color: theme.textLight }}>
+                <div style={{ fontSize: '11px', color: theme.textLight }}>
                   更多设置选项将在后续版本中添加
                 </div>
               </div>
@@ -234,17 +191,16 @@ export const ChatPanel: React.FC = () => {
 
             {/* 底部操作按钮 */}
             <div style={{
-              padding: '16px',
+              padding: '12px',
               borderTop: `1px solid ${theme.border}`,
-              background: 'rgba(255,255,255,0.8)',
               display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '8px'
+              justifyContent: 'flex-end'
             }}>
               <Button 
                 onClick={toggleSettings} 
                 variant="secondary" 
                 size="small"
+                style={{ fontSize: '12px', padding: '4px 8px' }}
               >
                 关闭
               </Button>

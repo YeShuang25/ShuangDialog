@@ -7,6 +7,7 @@ export interface FloatingWindowProps {
   defaultSize?: { width: number; height: number };
   minSize?: { width: number; height: number };
   onClose?: () => void;
+  onSettings?: () => void;
   className?: string;
   style?: React.CSSProperties;
   showHeader?: boolean;
@@ -19,6 +20,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   defaultSize = { width: 400, height: 600 },
   minSize = { width: 200, height: 150 },
   onClose,
+  onSettings,
   className = '',
   style = {},
   showHeader = true
@@ -178,44 +180,91 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           }}
           onMouseDown={handleMouseDown}
         >
-          <div style={{ fontWeight: 'bold', color: '#333' }}>
-            {title}
-          </div>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
+          {/* 左侧：标题和最小化图标 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div 
               onClick={toggleMinimize}
               style={{
-                width: '20px',
-                height: '20px',
-                border: 'none',
-                backgroundColor: '#ffcc00',
-                borderRadius: '50%',
                 cursor: 'pointer',
+                width: '16px',
+                height: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '12px',
-                color: '#333'
+                color: '#666',
+                borderRadius: '2px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
               title="最小化"
             >
               −
-            </button>
+            </div>
+            <div style={{ fontWeight: 'bold', color: '#333', fontSize: '14px' }}>
+              {title}
+            </div>
+          </div>
+          
+          {/* 右侧：设置按钮和关闭按钮 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {onSettings && (
+              <button
+                onClick={onSettings}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  color: '#666',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                title="设置"
+              >
+                ⚙️
+              </button>
+            )}
             {onClose && (
               <button
                 onClick={onClose}
                 style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '16px',
+                  height: '16px',
                   border: 'none',
-                  backgroundColor: '#ff4444',
-                  borderRadius: '50%',
+                  backgroundColor: 'transparent',
+                  borderRadius: '2px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '12px',
-                  color: 'white'
+                  color: '#666',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,0,0,0.2)';
+                  e.currentTarget.style.color = '#ff4444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#666';
                 }}
                 title="关闭"
               >
