@@ -1,10 +1,12 @@
 // 聊天面板主组件
 import React, { useState } from 'react';
-import { FloatingWindow } from '../components/FloatingWindow';
+import { FloatingWindow, Button } from '../components';
+import { MessageList, Message, MessageInput } from '../features';
 
 export const ChatPanel: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const toggleSettings = () => {
     setShowSettings(!showSettings);
@@ -12,6 +14,16 @@ export const ChatPanel: React.FC = () => {
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  const handleSendMessage = (content: string) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, newMessage]);
   };
 
   return (
@@ -29,49 +41,14 @@ export const ChatPanel: React.FC = () => {
       >
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           {/* 消息显示区域 */}
-          <div style={{
-            flex: 1,
-            padding: '8px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            marginBottom: '8px',
-            backgroundColor: '#f9f9f9',
-            overflowY: 'auto',
-            minHeight: '200px'
-          }}>
-            {/* 这里是消息内容显示区域 */}
-            <div style={{ color: '#666', fontStyle: 'italic' }}>
-              消息内容将在这里显示...
-            </div>
-          </div>
+          <MessageList messages={messages} />
 
           {/* 输入框区域 */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="输入要说的话..."
-              style={{
-                flex: 1,
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            />
-            <button
-              onClick={toggleSettings}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#007acc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
+            <MessageInput onSendMessage={handleSendMessage} />
+            <Button onClick={toggleSettings} variant="secondary" size="small">
               设置
-            </button>
+            </Button>
           </div>
         </div>
       </FloatingWindow>
