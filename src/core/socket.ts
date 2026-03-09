@@ -1,5 +1,6 @@
 import { SocketHook } from './types';
 import { debug } from '../store/useDebugStore';
+import { useActivityStore } from '../store/useActivityStore';
 
 // 核心模块 - Socket 连接管理
 interface SocketCore {
@@ -37,6 +38,12 @@ function createCore(): SocketCore {
       // 只显示劫持到的原始事件，不显示分发事件
       if (shouldLog) {
         debug.log(`[全局劫持] 捕获事件: ${eventName}`, data, 'SocketHook');
+      }
+      
+      // 检测Type为'Activity'的事件并存储
+      if (data && typeof data === 'object' && 'Type' in data && data.Type === 'Activity') {
+        debug.log(`[Activity检测] 捕获Activity类型事件: ${eventName}`, data, 'SocketHook');
+        useActivityStore.getState().addActivityPacket(eventName, data);
       }
       
       hooks.forEach((hook, index) => {
@@ -84,7 +91,7 @@ export function initCore(): SocketCore {
 
       // 3. 调用原本的函数，确保游戏正常运行
       // 这一步非常关键，相当于把消息继续往下传
-      debug.log(`[全局劫持] 调用原始事件处理器`, null, 'SocketHook');
+      // debug.log(`[全局劫持] 调用原始事件处理器`, null, 'SocketHook');
       originalOnevent.call(this, packet);
     };
 

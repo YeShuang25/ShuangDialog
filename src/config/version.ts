@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.2';
+export const APP_VERSION = 'v1.3';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -17,6 +17,11 @@ export const VERSION_HISTORY = [
     version: 'v1.2',
     date: '2026-03-10',
     description: '添加BCEMsg内容过滤功能，减少日志噪音'
+  },
+  {
+    version: 'v1.3',
+    date: '2026-03-10',
+    description: '添加Activity类型事件数据包下载功能'
   }
 ];
 

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { FloatingWindow, Button } from '../components';
 import { MessageList, Message, MessageInput } from '../features';
 import { useDebugStore } from '../../store/useDebugStore';
+import { useActivityStore } from '../../store/useActivityStore';
 
 // 颜色主题
 const theme = {
@@ -100,7 +101,7 @@ export const ChatPanel: React.FC = () => {
         <FloatingWindow
           title="设置"
           defaultPosition={{ x: 520, y: 100 }}
-          defaultSize={{ width: 280, height: 180 }}
+          defaultSize={{ width: 300, height: 300 }}
           onClose={toggleSettings}
           showVersion={false}
           style={{
@@ -177,15 +178,56 @@ export const ChatPanel: React.FC = () => {
                 </label>
               </div>
 
-              {/* 其他设置项占位 */}
+              {/* Activity数据包下载功能 */}
               <div style={{
                 padding: '8px',
                 border: `1px solid ${theme.border}`,
-                borderRadius: '4px',
-                textAlign: 'center'
+                borderRadius: '4px'
               }}>
-                <div style={{ fontSize: '11px', color: theme.textLight }}>
-                  更多设置选项将在后续版本中添加
+                <div style={{ fontWeight: '600', color: theme.text, fontSize: '13px', marginBottom: '8px' }}>
+                  Activity数据包调试
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      const jsonData = useActivityStore.getState().getActivityPacketsAsJSON();
+                      const blob = new Blob([jsonData], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `activity_packets_${Date.now()}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      backgroundColor: theme.primary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    下载Activity数据包
+                  </Button>
+                  <Button
+                    onClick={() => useActivityStore.getState().clearActivityPackets()}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      backgroundColor: theme.accent,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    清空数据包
+                  </Button>
+                  <div style={{ fontSize: '10px', color: theme.textLight }}>
+                    已捕获: {useActivityStore.getState().activityPackets.length} 个数据包
+                  </div>
                 </div>
               </div>
             </div>
