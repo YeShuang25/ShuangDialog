@@ -70,8 +70,8 @@ export const ChatPanel: React.FC = () => {
       <FloatingWindow
         title="霜语"
         defaultPosition={{ x: 100, y: 100 }}
-        defaultSize={{ width: 420, height: 600 }}
-        showHeader={false}
+        defaultSize={{ width: 400, height: 500 }}
+        onClose={toggleSettings}
         style={{
           backgroundColor: theme.background,
           color: theme.text,
@@ -79,105 +79,41 @@ export const ChatPanel: React.FC = () => {
           fontSize: '14px',
           boxShadow: theme.shadow,
           border: 'none',
-          borderRadius: '12px'
+          borderRadius: '8px'
         }}
       >
-        <div style={{ 
-          height: '100%', 
-          display: 'flex', 
-          flexDirection: 'column',
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
-        }}>
-          {/* 标题栏 */}
-          <div style={{
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            borderBottom: `1px solid ${theme.border}`,
-            borderRadius: '12px 12px 0 0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-            position: 'relative'
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* 设置按钮 - 放在标题栏右侧 */}
+          <div style={{ 
+            position: 'absolute', 
+            top: '8px', 
+            right: '40px', 
+            zIndex: 10 
           }}>
-            <div style={{ 
-              fontWeight: '600', 
-              fontSize: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                background: 'linear-gradient(135deg, #4cd964 0%, #34e89e 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(76, 217, 100, 0.4)'
-              }}>
-                <span style={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  backgroundColor: 'white', 
-                  borderRadius: '50%',
-                  animation: 'pulse 2s infinite'
-                }} />
-              </div>
-              <div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>霜语助手</div>
-                <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>在线</div>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <Button 
-                onClick={toggleSettings} 
-                variant="secondary" 
-                size="small"
-                style={{ 
-                  padding: '8px 16px', 
-                  fontSize: '13px',
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  borderRadius: '20px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)';
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                ⚙️ 设置
-              </Button>
-            </div>
+            <Button 
+              onClick={toggleSettings} 
+              variant="secondary" 
+              size="small"
+              style={{ 
+                padding: '4px 8px', 
+                fontSize: '12px',
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                color: '#333',
+                border: '1px solid rgba(0,0,0,0.2)',
+                borderRadius: '4px'
+              }}
+            >
+              设置
+            </Button>
           </div>
 
           {/* 消息显示区域 */}
-          <div style={{ 
-            flex: 1, 
-            padding: '20px', 
-            overflow: 'hidden',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.8) 100%)'
-          }}>
+          <div style={{ flex: 1, padding: '12px', overflow: 'hidden' }}>
             <MessageList messages={messages} />
           </div>
 
           {/* 输入框区域 */}
-          <div style={{ 
-            padding: '20px', 
-            borderTop: `1px solid ${theme.border}`,
-            background: 'rgba(255,255,255,0.95)',
-            boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
-          }}>
+          <div style={{ padding: '12px', borderTop: `1px solid ${theme.border}` }}>
             <MessageInput onSendMessage={handleSendMessage} />
           </div>
         </div>
