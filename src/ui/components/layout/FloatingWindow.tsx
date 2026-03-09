@@ -31,6 +31,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragDistance, setDragDistance] = useState(0);
+  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
 
   const windowRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +44,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       x: e.clientX - position.x,
       y: e.clientY - position.y
     });
+    setMouseDownPos({ x: e.clientX, y: e.clientY });
+    setDragDistance(0);
 
     e.preventDefault();
   }, [position]);
@@ -55,12 +59,27 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       const newY = Math.max(0, Math.min(window.innerHeight - windowHeight, e.clientY - dragStart.y));
 
       setPosition({ x: newX, y: newY });
+      
+      // 计算拖拽距离
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - mouseDownPos.x, 2) + 
+        Math.pow(e.clientY - mouseDownPos.y, 2)
+      );
+      setDragDistance(distance);
     }
-  }, [isDragging, dragStart, size.width, isMinimized]);
+  }, [isDragging, dragStart, size.width, isMinimized, mouseDownPos]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
+
+  // 处理悬浮球点击（区分拖拽和点击）
+  const handleMinimizeClick = useCallback(() => {
+    // 如果拖拽距离小于5px，认为是点击，否则是拖拽
+    if (dragDistance < 5) {
+      toggleMinimize();
+    }
+  }, [dragDistance]);
 
   // 调整大小逻辑
   const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
@@ -149,7 +168,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       <div
         style={minimizedStyle}
         onMouseDown={handleMouseDown}
-        onClick={toggleMinimize}
+        onClick={handleMinimizeClick}
         className={className}
       >
         {title}
