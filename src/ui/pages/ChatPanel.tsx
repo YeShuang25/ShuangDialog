@@ -102,6 +102,7 @@ export const ChatPanel: React.FC = () => {
           defaultPosition={{ x: 520, y: 100 }}
           defaultSize={{ width: 280, height: 180 }}
           onClose={toggleSettings}
+          showVersion={false}
           style={{
             backgroundColor: theme.background,
             color: theme.text,

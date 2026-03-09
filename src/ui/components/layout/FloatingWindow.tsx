@@ -11,7 +11,10 @@ export interface FloatingWindowProps {
   className?: string;
   style?: React.CSSProperties;
   showHeader?: boolean;
+  showVersion?: boolean;
 }
+
+import { APP_VERSION } from '../../../config/version';
 
 export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   title,
@@ -23,7 +26,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   onSettings,
   className = '',
   style = {},
-  showHeader = true
+  showHeader = true,
+  showVersion = true
 }) => {
   // 从localStorage加载保存的位置，如果没有则使用默认位置
   const loadSavedPosition = () => {
@@ -360,9 +364,22 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
               fontWeight: '500', 
               color: '#495057', 
               fontSize: '12px',
-              lineHeight: '1'
+              lineHeight: '1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
             }}>
               {title}
+              {showVersion && (
+                <span style={{
+                  fontSize: '9px',
+                  color: '#6c757d',
+                  fontWeight: 'normal',
+                  opacity: 0.7
+                }}>
+                  {APP_VERSION}
+                </span>
+              )}
             </div>
           </div>
           
