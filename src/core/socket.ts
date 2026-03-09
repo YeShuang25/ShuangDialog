@@ -31,8 +31,13 @@ function createCore(): SocketCore {
         timestamp: Date.now()
       };
       
+      // 过滤BCEMsg内容，不输出日志
+      const shouldLog = !(data && typeof data === 'object' && 'Content' in data && data.Content === 'BCEMsg');
+      
       // 只显示劫持到的原始事件，不显示分发事件
-      debug.log(`[全局劫持] 捕获事件: ${eventName}`, data, 'SocketHook');
+      if (shouldLog) {
+        debug.log(`[全局劫持] 捕获事件: ${eventName}`, data, 'SocketHook');
+      }
       
       hooks.forEach((hook, index) => {
         try {
