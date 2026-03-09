@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.0';
+export const APP_VERSION = 'v1.1';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -7,6 +7,11 @@ export const VERSION_HISTORY = [
     version: 'v1.0',
     date: '2026-03-10',
     description: '初始版本 - 基础聊天窗口和悬浮球功能'
+  },
+  {
+    version: 'v1.1',
+    date: '2026-03-10',
+    description: '修复调试模式日志输出问题，优化日志系统'
   }
 ];
 

@@ -72,20 +72,21 @@ export class Logger {
 
   private outputToConsole(log: LogEntry): void {
     const timestamp = new Date(log.timestamp).toISOString();
-    const prefix = `[${timestamp}] [${log.source}] [${LogLevel[log.level]}]`;
+    const prefix = `[${timestamp}] [${LogLevel[log.level]}]`;
 
     switch (log.level) {
       case LogLevel.DEBUG:
-        console.debug(prefix, log.message, log.data || '');
+        // 使用 console.log 确保调试信息在浏览器中可见
+        console.log(`🔍 [ShuangDialog] ${prefix}`, log.message, log.data || '');
         break;
       case LogLevel.INFO:
-        console.info(prefix, log.message, log.data || '');
+        console.info(`ℹ️ [ShuangDialog] ${prefix}`, log.message, log.data || '');
         break;
       case LogLevel.WARN:
-        console.warn(prefix, log.message, log.data || '');
+        console.warn(`⚠️ [ShuangDialog] ${prefix}`, log.message, log.data || '');
         break;
       case LogLevel.ERROR:
-        console.error(prefix, log.message, log.data || '');
+        console.error(`❌ [ShuangDialog] ${prefix}`, log.message, log.data || '');
         break;
     }
   }
