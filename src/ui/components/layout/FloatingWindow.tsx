@@ -30,6 +30,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState('');
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragDistance, setDragDistance] = useState(0);
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
@@ -52,12 +53,25 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
+      let newX = e.clientX - dragStart.x;
+      let newY = e.clientY - dragStart.y;
+      
+      // 限制窗口不超出屏幕范围
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
       const windowWidth = isMinimized ? 120 : size.width;
       const windowHeight = isMinimized ? 40 : size.height;
+       
+      // 确保窗口不会超出左边界
+      newX = Math.max(0, newX);
+      // 确保窗口不会超出上边界
+      newY = Math.max(0, newY);
+      // 确保窗口不会超出右边界
+      newX = Math.min(screenWidth - windowWidth, newX);
+      // 确保窗口不会超出下边界
+      newY = Math.min(screenHeight - windowHeight, newY);
       
-      const newX = Math.max(0, Math.min(window.innerWidth - windowWidth, e.clientX - dragStart.x));
-      const newY = Math.max(0, Math.min(window.innerHeight - windowHeight, e.clientY - dragStart.y));
-
       setPosition({ x: newX, y: newY });
       
       // 计算拖拽距离
@@ -67,7 +81,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       );
       setDragDistance(distance);
     }
-  }, [isDragging, dragStart, size.width, isMinimized, mouseDownPos]);
+  }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -82,27 +96,102 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   }, [dragDistance]);
 
   // 调整大小逻辑
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
     if (isMinimized) return;
 
     setIsResizing(true);
+    setResizeDirection(direction);
     setDragStart({
-      x: e.clientX - size.width,
-      y: e.clientY - size.height
+      x: e.clientX,
+      y: e.clientY
     });
 
     e.preventDefault();
     e.stopPropagation();
-  }, [size, isMinimized]);
+  }, [isMinimized]);
 
   const handleResizeMouseMove = useCallback((e: MouseEvent) => {
-    if (isResizing) {
-      const newWidth = Math.max(minSize.width, e.clientX - dragStart.x);
-      const newHeight = Math.max(minSize.height, e.clientY - dragStart.y);
+    if (isResizing && resizeDirection) {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      
+      let newWidth = size.width;
+      let newHeight = size.height;
+      let newX = position.x;
+      let newY = position.y;
+
+      // 根据拖拽方向调整大小和位置
+      switch (resizeDirection) {
+        case 'n': // 上
+          newHeight = Math.max(minSize.height, size.height - deltaY);
+          newY = position.y + (size.height - newHeight);
+          break;
+        case 's': // 下
+          newHeight = Math.max(minSize.height, size.height + deltaY);
+          break;
+        case 'e': // 右
+          newWidth = Math.max(minSize.width, size.width + deltaX);
+          break;
+        case 'w': // 左
+          newWidth = Math.max(minSize.width, size.width - deltaX);
+          newX = position.x + (size.width - newWidth);
+          break;
+        case 'ne': // 右上
+          newWidth = Math.max(minSize.width, size.width + deltaX);
+          newHeight = Math.max(minSize.height, size.height - deltaY);
+          newY = position.y + (size.height - newHeight);
+          break;
+        case 'nw': // 左上
+          newWidth = Math.max(minSize.width, size.width - deltaX);
+          newHeight = Math.max(minSize.height, size.height - deltaY);
+          newX = position.x + (size.width - newWidth);
+          newY = position.y + (size.height - newHeight);
+          break;
+        case 'se': // 右下
+          newWidth = Math.max(minSize.width, size.width + deltaX);
+          newHeight = Math.max(minSize.height, size.height + deltaY);
+          break;
+        case 'sw': // 左下
+          newWidth = Math.max(minSize.width, size.width - deltaX);
+          newHeight = Math.max(minSize.height, size.height + deltaY);
+          newX = position.x + (size.width - newWidth);
+          break;
+      }
+
+      // 限制窗口不超出屏幕范围
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      // 确保窗口不会超出左边界
+      newX = Math.max(0, newX);
+      // 确保窗口不会超出上边界
+      newY = Math.max(0, newY);
+      // 确保窗口不会超出右边界
+      newX = Math.min(screenWidth - newWidth, newX);
+      // 确保窗口不会超出下边界
+      newY = Math.min(screenHeight - newHeight, newY);
+      
+      // 如果位置调整导致窗口超出边界，调整窗口大小
+      if (newX < 0) {
+        newWidth = Math.max(minSize.width, newWidth + newX);
+        newX = 0;
+      }
+      if (newY < 0) {
+        newHeight = Math.max(minSize.height, newHeight + newY);
+        newY = 0;
+      }
+      if (newX + newWidth > screenWidth) {
+        newWidth = Math.max(minSize.width, screenWidth - newX);
+      }
+      if (newY + newHeight > screenHeight) {
+        newHeight = Math.max(minSize.height, screenHeight - newY);
+      }
 
       setSize({ width: newWidth, height: newHeight });
+      setPosition({ x: newX, y: newY });
+      setDragStart({ x: e.clientX, y: e.clientY });
     }
-  }, [isResizing, dragStart, minSize]);
+  }, [isResizing, resizeDirection, dragStart, size, position, minSize]);
 
   const handleResizeMouseUp = useCallback(() => {
     setIsResizing(false);
@@ -308,18 +397,109 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         {children}
       </div>
 
-      {/* 调整大小手柄 */}
+      {/* 调整大小手柄 - 四周 */}
+      {/* 上 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          cursor: 'n-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'n')}
+      />
+      
+      {/* 下 */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          cursor: 's-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 's')}
+      />
+      
+      {/* 左 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: '4px',
+          cursor: 'w-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
+      />
+      
+      {/* 右 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '4px',
+          cursor: 'e-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
+      />
+      
+      {/* 左上 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '8px',
+          height: '8px',
+          cursor: 'nw-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
+      />
+      
+      {/* 右上 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '8px',
+          height: '8px',
+          cursor: 'ne-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
+      />
+      
+      {/* 左下 */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '8px',
+          height: '8px',
+          cursor: 'sw-resize'
+        }}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
+      />
+      
+      {/* 右下 */}
       <div
         style={{
           position: 'absolute',
           bottom: 0,
           right: 0,
-          width: '20px',
-          height: '20px',
-          cursor: 'nw-resize',
-          background: 'linear-gradient(-45deg, transparent 0%, transparent 40%, #ccc 40%, #ccc 60%, transparent 60%)'
+          width: '8px',
+          height: '8px',
+          cursor: 'se-resize'
         }}
-        onMouseDown={handleResizeMouseDown}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
       />
     </div>
   );
