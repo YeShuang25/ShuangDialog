@@ -1,4 +1,4 @@
-# ShuangDialog（霜语）
+# 霜语
 
 一个基于 React + TypeScript 的游戏聊天增强插件，专为油猴脚本设计。
 

@@ -33,8 +33,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   // 拖拽逻辑
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (isMinimized) return;
-
     setIsDragging(true);
     setDragStart({
       x: e.clientX - position.x,
@@ -42,16 +40,19 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     });
 
     e.preventDefault();
-  }, [position, isMinimized]);
+  }, [position]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
-      const newX = Math.max(0, Math.min(window.innerWidth - size.width, e.clientX - dragStart.x));
-      const newY = Math.max(0, Math.min(window.innerHeight - 40, e.clientY - dragStart.y));
+      const windowWidth = isMinimized ? 120 : size.width;
+      const windowHeight = isMinimized ? 40 : size.height;
+      
+      const newX = Math.max(0, Math.min(window.innerWidth - windowWidth, e.clientX - dragStart.x));
+      const newY = Math.max(0, Math.min(window.innerHeight - windowHeight, e.clientY - dragStart.y));
 
       setPosition({ x: newX, y: newY });
     }
-  }, [isDragging, dragStart, size.width]);
+  }, [isDragging, dragStart, size.width, isMinimized]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
