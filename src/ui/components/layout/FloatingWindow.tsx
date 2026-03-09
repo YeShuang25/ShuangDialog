@@ -168,36 +168,38 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         <div
           ref={headerRef}
           style={{
-            padding: '8px 12px',
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #ddd',
+            padding: '4px 8px',
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #e9ecef',
             borderRadius: '8px 8px 0 0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             cursor: 'move',
-            userSelect: 'none'
+            userSelect: 'none',
+            height: '24px',
+            minHeight: '24px'
           }}
           onMouseDown={handleMouseDown}
         >
           {/* 左侧：标题和最小化图标 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div 
               onClick={toggleMinimize}
               style={{
                 cursor: 'pointer',
-                width: '16px',
-                height: '16px',
+                width: '12px',
+                height: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '12px',
-                color: '#666',
-                borderRadius: '2px',
+                fontSize: '10px',
+                color: '#6c757d',
+                borderRadius: '1px',
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -206,32 +208,38 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
             >
               −
             </div>
-            <div style={{ fontWeight: 'bold', color: '#333', fontSize: '14px' }}>
+            <div style={{ 
+              fontWeight: '500', 
+              color: '#495057', 
+              fontSize: '12px',
+              lineHeight: '1'
+            }}>
               {title}
             </div>
           </div>
           
           {/* 右侧：设置按钮和关闭按钮 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {onSettings && (
               <button
                 onClick={onSettings}
                 style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '12px',
+                  height: '12px',
                   border: 'none',
                   backgroundColor: 'transparent',
-                  borderRadius: '2px',
+                  borderRadius: '1px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '10px',
-                  color: '#666',
-                  transition: 'background-color 0.2s'
+                  fontSize: '8px',
+                  color: '#6c757d',
+                  transition: 'background-color 0.2s',
+                  lineHeight: '1'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -245,26 +253,27 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
               <button
                 onClick={onClose}
                 style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '12px',
+                  height: '12px',
                   border: 'none',
                   backgroundColor: 'transparent',
-                  borderRadius: '2px',
+                  borderRadius: '1px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '12px',
-                  color: '#666',
-                  transition: 'background-color 0.2s'
+                  fontSize: '10px',
+                  color: '#6c757d',
+                  transition: 'background-color 0.2s',
+                  lineHeight: '1'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,0,0,0.2)';
-                  e.currentTarget.style.color = '#ff4444';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,0,0,0.1)';
+                  e.currentTarget.style.color = '#dc3545';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#666';
+                  e.currentTarget.style.color = '#6c757d';
                 }}
                 title="关闭"
               >
