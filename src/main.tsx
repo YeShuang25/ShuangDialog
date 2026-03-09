@@ -5,6 +5,7 @@ import { initCore } from './core/socket';
 import { createRoot } from 'react-dom/client';
 import { ChatPanel } from './ui/pages/ChatPanel';
 import './ui/style.css';
+import { debug } from './store/useDebugStore';
 
 // 油猴脚本入口函数
 function main() {
@@ -19,7 +20,7 @@ function main() {
   const root = createRoot(container);
   root.render(<ChatPanel />);
   
-  console.log('[ShuangDialog] 插件已启动');
+  debug.log('[ShuangDialog] 插件已启动');
 }
 
 // 确保DOM加载完成后启动

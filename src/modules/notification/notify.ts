@@ -1,5 +1,6 @@
 // 通知模块
 import { NotificationPacket, GamePacket } from '../../core/types';
+import { debug } from '../../store/useDebugStore';
 
 export interface NotificationOptions {
   title: string;
@@ -25,7 +26,7 @@ export class NotificationManager {
       this.permission = await Notification.requestPermission();
       this.isEnabled = this.permission === 'granted';
     } else {
-      console.warn('[ShuangDialog] 浏览器不支持通知API');
+      debug.warn('[ShuangDialog] 浏览器不支持通知API');
     }
   }
 
@@ -80,12 +81,12 @@ export class NotificationManager {
       };
 
       notification.onshow = () => {
-        console.log('[ShuangDialog] 通知已显示:', options.title);
+        debug.log('[ShuangDialog] 通知已显示:', options.title);
       };
 
       notification.onerror = (error) => {
-        console.error('[ShuangDialog] 通知显示失败:', error);
-      };
+          debug.error('[ShuangDialog] 通知显示失败:', error);
+        };
 
       // 自动关闭低优先级通知
       if (!options.requireInteraction) {
@@ -94,8 +95,8 @@ export class NotificationManager {
         }, 5000);
       }
     } catch (error) {
-      console.error('[ShuangDialog] 创建通知失败:', error);
-    }
+        debug.error('[ShuangDialog] 创建通知失败:', error);
+      }
   }
 
   private getDefaultIcon(): string {

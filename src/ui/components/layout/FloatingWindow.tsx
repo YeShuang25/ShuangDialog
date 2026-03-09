@@ -9,6 +9,7 @@ export interface FloatingWindowProps {
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
+  showHeader?: boolean;
 }
 
 export const FloatingWindow: React.FC<FloatingWindowProps> = ({
@@ -19,7 +20,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   minSize = { width: 200, height: 150 },
   onClose,
   className = '',
-  style = {}
+  style = {},
+  showHeader = true
 }) => {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
@@ -160,67 +162,69 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       className={className}
     >
       {/* 标题栏 */}
-      <div
-        ref={headerRef}
-        style={{
-          padding: '8px 12px',
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #ddd',
-          borderRadius: '8px 8px 0 0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          cursor: 'move',
-          userSelect: 'none'
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        <div style={{ fontWeight: 'bold', color: '#333' }}>
-          {title}
-        </div>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button
-            onClick={toggleMinimize}
-            style={{
-              width: '20px',
-              height: '20px',
-              border: 'none',
-              backgroundColor: '#ffcc00',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#333'
-            }}
-            title="最小化"
-          >
-            −
-          </button>
-          {onClose && (
+      {showHeader && (
+        <div
+          ref={headerRef}
+          style={{
+            padding: '8px 12px',
+            backgroundColor: '#f5f5f5',
+            borderBottom: '1px solid #ddd',
+            borderRadius: '8px 8px 0 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'move',
+            userSelect: 'none'
+          }}
+          onMouseDown={handleMouseDown}
+        >
+          <div style={{ fontWeight: 'bold', color: '#333' }}>
+            {title}
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
             <button
-              onClick={onClose}
+              onClick={toggleMinimize}
               style={{
                 width: '20px',
                 height: '20px',
                 border: 'none',
-                backgroundColor: '#ff4444',
+                backgroundColor: '#ffcc00',
                 borderRadius: '50%',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '12px',
-                color: 'white'
+                color: '#333'
               }}
-              title="关闭"
+              title="最小化"
             >
-              ×
+              −
             </button>
-          )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  border: 'none',
+                  backgroundColor: '#ff4444',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  color: 'white'
+                }}
+                title="关闭"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 内容区域 */}
       <div style={{ flex: 1, overflow: 'hidden' }}>

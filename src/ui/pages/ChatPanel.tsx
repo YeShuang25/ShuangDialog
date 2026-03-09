@@ -71,6 +71,7 @@ export const ChatPanel: React.FC = () => {
         title="霜语"
         defaultPosition={{ x: 100, y: 100 }}
         defaultSize={{ width: 420, height: 600 }}
+        showHeader={false}
         style={{
           backgroundColor: theme.background,
           color: theme.text,
