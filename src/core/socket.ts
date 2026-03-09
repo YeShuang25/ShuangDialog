@@ -1,4 +1,5 @@
 import { GamePacket, SocketHook } from './types';
+import { debug } from '../store/useDebugStore';
 
 // 核心模块 - Socket 连接管理
 interface SocketCore {
@@ -20,6 +21,7 @@ function createCore(): SocketCore {
     hooks,
     addHook(hook: SocketHook) {
       hooks.push(hook);
+      debug.log(`添加新的Socket Hook，当前Hook数量: ${hooks.length}`, hook, 'SocketCore');
     },
     emit(eventName: string, data: unknown) {
       // 分发数据给所有已注册的 hook
@@ -29,10 +31,14 @@ function createCore(): SocketCore {
         data: { eventName, payload: data }
       };
       
-      hooks.forEach(hook => {
+      debug.log(`分发事件: ${eventName}`, data, 'SocketCore');
+      
+      hooks.forEach((hook, index) => {
         try {
+          debug.log(`调用Hook ${index} 处理事件: ${eventName}`, null, 'SocketCore');
           hook.onData(packet);
         } catch (error) {
+          debug.error(`Hook ${index} 处理事件 ${eventName} 时出错`, error, 'SocketCore');
           hook.onError(error as Error);
         }
       });
@@ -53,7 +59,7 @@ export function initCore(): SocketCore {
   // 检查 Socket 是否存在
   if (typeof (window as any).ServerSocket !== 'undefined' && (window as any).ServerSocket !== null) {
     
-    console.log('[ShuangDialog] 正在挂载全局消息监听器 (核心劫持模式)...');
+    debug.log('[ShuangDialog] 正在挂载全局消息监听器 (核心劫持模式)...', null, 'SocketCore');
 
     const ServerSocket = (window as any).ServerSocket;
     
@@ -66,11 +72,8 @@ export function initCore(): SocketCore {
       const eventName = packet.data ? packet.data[0] : '未知事件';
       const eventData = packet.data ? packet.data[1] : null;
 
-      console.log(
-        `%c[全局劫持] 事件: ${eventName}`,
-        'color: red; font-weight: bold;',
-        eventData || packet.data
-      );
+      // 调试信息输出
+      debug.log(`[全局劫持] 捕获事件: ${eventName}`, eventData || packet.data, 'SocketHook');
 
       // 分发事件给注册的 hooks
       if (coreInstance) {
@@ -79,12 +82,13 @@ export function initCore(): SocketCore {
 
       // 3. 调用原本的函数，确保游戏正常运行
       // 这一步非常关键，相当于把消息继续往下传
+      debug.log(`[全局劫持] 调用原始事件处理器`, null, 'SocketHook');
       originalOnevent.call(this, packet);
     };
 
-    console.log('[ShuangDialog] 全局监听器挂载成功！现在将捕获所有事件。');
+    debug.log('[ShuangDialog] 全局监听器挂载成功！现在将捕获所有事件。', null, 'SocketCore');
   } else {
-    console.error('[ShuangDialog] ServerSocket 未初始化。');
+    debug.error('[ShuangDialog] ServerSocket 未初始化。', null, 'SocketCore');
   }
 
   return coreInstance;

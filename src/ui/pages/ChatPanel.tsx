@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { FloatingWindow, Button } from '../components';
 import { MessageList, Message, MessageInput } from '../features';
+import { useDebugStore } from '../../store/useDebugStore';
 
 // 颜色主题
 const theme = {
@@ -34,15 +35,13 @@ const styles = `
 
 export const ChatPanel: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  
+  // 使用全局调试状态
+  const { debugMode, toggleDebugMode } = useDebugStore();
 
   const toggleSettings = () => {
     setShowSettings(!showSettings);
-  };
-
-  const toggleDebugMode = () => {
-    setDebugMode(!debugMode);
   };
 
   const handleSendMessage = (content: string) => {
