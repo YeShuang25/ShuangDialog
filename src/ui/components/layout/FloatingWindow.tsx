@@ -25,9 +25,33 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   style = {},
   showHeader = true
 }) => {
-  const [position, setPosition] = useState(defaultPosition);
+  // 从localStorage加载保存的位置，如果没有则使用默认位置
+  const loadSavedPosition = () => {
+    try {
+      const saved = localStorage.getItem(`floating-window-${title}-position`);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.warn('Failed to load saved position:', error);
+    }
+    return defaultPosition;
+  };
+
+  // 从localStorage加载保存的最小化状态
+  const loadSavedMinimized = () => {
+    try {
+      const saved = localStorage.getItem(`floating-window-${title}-minimized`);
+      return saved ? JSON.parse(saved) : true; // 默认最小化
+    } catch (error) {
+      console.warn('Failed to load saved minimized state:', error);
+      return true; // 默认最小化
+    }
+  };
+
+  const [position, setPosition] = useState(loadSavedPosition);
   const [size, setSize] = useState(defaultSize);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(loadSavedMinimized);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState('');
@@ -72,7 +96,15 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       // 确保窗口不会超出下边界
       newY = Math.min(screenHeight - windowHeight, newY);
       
-      setPosition({ x: newX, y: newY });
+      const newPosition = { x: newX, y: newY };
+      setPosition(newPosition);
+      
+      // 保存位置到localStorage
+      try {
+        localStorage.setItem(`floating-window-${title}-position`, JSON.stringify(newPosition));
+      } catch (error) {
+        console.warn('Failed to save position:', error);
+      }
       
       // 计算拖拽距离
       const distance = Math.sqrt(
@@ -81,7 +113,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       );
       setDragDistance(distance);
     }
-  }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized]);
+  }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized, title]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -212,7 +244,15 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   // 最小化按钮
   const toggleMinimize = () => {
-    setIsMinimized(!isMinimized);
+    const newMinimized = !isMinimized;
+    setIsMinimized(newMinimized);
+    
+    // 保存最小化状态到localStorage
+    try {
+      localStorage.setItem(`floating-window-${title}-minimized`, JSON.stringify(newMinimized));
+    } catch (error) {
+      console.warn('Failed to save minimized state:', error);
+    }
   };
 
   // 最小化状态的样式
