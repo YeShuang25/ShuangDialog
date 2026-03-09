@@ -3,6 +3,8 @@ import React from 'react';
 export interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseLeave?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
@@ -13,6 +15,8 @@ export interface ButtonProps {
 export const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
   variant = 'primary',
   size = 'medium',
   disabled = false,
@@ -69,6 +73,8 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       style={styles}
       onClick={disabled ? undefined : onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       disabled={disabled}
       className={className}
     >

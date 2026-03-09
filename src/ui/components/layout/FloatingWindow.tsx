@@ -145,7 +145,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       <div
         style={minimizedStyle}
         onMouseDown={handleMouseDown}
-        onDoubleClick={toggleMinimize}
+        onClick={toggleMinimize}
         className={className}
       >
         {title}

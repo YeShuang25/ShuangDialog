@@ -90,7 +90,7 @@ export const ChatPanel: React.FC = () => {
         }}>
           {/* 标题栏 */}
           <div style={{
-            padding: '12px 16px',
+            padding: '16px 20px',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
             borderBottom: `1px solid ${theme.border}`,
@@ -98,51 +98,85 @@ export const ChatPanel: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            position: 'relative'
           }}>
             <div style={{ 
               fontWeight: '600', 
-              fontSize: '16px',
+              fontSize: '18px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '12px'
             }}>
-              <span style={{ 
-                width: '8px', 
-                height: '8px', 
-                backgroundColor: '#4cd964', 
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: 'linear-gradient(135deg, #4cd964 0%, #34e89e 100%)',
                 borderRadius: '50%',
-                animation: 'pulse 2s infinite'
-              }} />
-              霜语助手
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(76, 217, 100, 0.4)'
+              }}>
+                <span style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  backgroundColor: 'white', 
+                  borderRadius: '50%',
+                  animation: 'pulse 2s infinite'
+                }} />
+              </div>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>霜语助手</div>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>在线</div>
+              </div>
             </div>
             
-            <Button 
-              onClick={toggleSettings} 
-              variant="secondary" 
-              size="small"
-              style={{ 
-                padding: '6px 12px', 
-                fontSize: '12px',
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.3)'
-              }}
-            >
-              ⚙️ 设置
-            </Button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <Button 
+                onClick={toggleSettings} 
+                variant="secondary" 
+                size="small"
+                style={{ 
+                  padding: '8px 16px', 
+                  fontSize: '13px',
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '20px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                ⚙️ 设置
+              </Button>
+            </div>
           </div>
 
           {/* 消息显示区域 */}
-          <div style={{ flex: 1, padding: '16px', overflow: 'hidden' }}>
+          <div style={{ 
+            flex: 1, 
+            padding: '20px', 
+            overflow: 'hidden',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.8) 100%)'
+          }}>
             <MessageList messages={messages} />
           </div>
 
           {/* 输入框区域 */}
           <div style={{ 
-            padding: '16px', 
+            padding: '20px', 
             borderTop: `1px solid ${theme.border}`,
-            background: 'rgba(255,255,255,0.8)'
+            background: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
           }}>
             <MessageInput onSendMessage={handleSendMessage} />
           </div>
