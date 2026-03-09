@@ -5,6 +5,7 @@ import { useSettingStore } from '../../store/useSettingStore';
 import { ChatParser } from '../../modules/chat/parser';
 import { ChatFilter } from '../../modules/chat/filter';
 import { getDispatcher } from '../../core/dispatcher';
+import { FloatingWindow } from '../components/FloatingWindow';
 
 export const ChatPanel: React.FC = () => {
   const messages = useChatStore((state) => state.messages);
@@ -45,36 +46,6 @@ export const ChatPanel: React.FC = () => {
 
   const filteredMessages = messages.filter(msg => msg.channel === activeChannel);
 
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed',
-    left: chatSettings.position.x,
-    top: chatSettings.position.y,
-    width: chatSettings.position.width,
-    height: chatSettings.position.height,
-    backgroundColor: chatSettings.theme === 'dark' ? '#1a1a1a' : '#ffffff',
-    color: chatSettings.theme === 'dark' ? '#ffffff' : '#000000',
-    border: `1px solid ${chatSettings.theme === 'dark' ? '#333' : '#ccc'}`,
-    borderRadius: '8px',
-    fontFamily: chatSettings.fontFamily,
-    fontSize: `${chatSettings.fontSize}px`,
-    opacity: chatSettings.opacity,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    zIndex: 10000,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-  };
-
-  const headerStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    backgroundColor: chatSettings.theme === 'dark' ? '#2a2a2a' : '#f5f5f5',
-    borderBottom: `1px solid ${chatSettings.theme === 'dark' ? '#333' : '#ddd'}`,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    cursor: 'move'
-  };
-
   const messagesStyle: React.CSSProperties = {
     flex: 1,
     overflowY: 'auto',
@@ -97,26 +68,34 @@ export const ChatPanel: React.FC = () => {
   });
 
   return (
-    <div style={panelStyle}>
-      <div style={headerStyle}>
-        <div>
-          <strong>霜语聊天</strong>
-          {chatSettings.showChannel && (
-            <span style={{ marginLeft: '8px', color: '#666' }}>
-              [{activeChannel}]
-            </span>
-          )}
-        </div>
-        <div>
+    <FloatingWindow
+      title="霜语聊天"
+      defaultPosition={chatSettings.position}
+      defaultSize={{ width: chatSettings.position.width, height: chatSettings.position.height }}
+      style={{
+        backgroundColor: chatSettings.theme === 'dark' ? '#1a1a1a' : '#ffffff',
+        color: chatSettings.theme === 'dark' ? '#ffffff' : '#000000',
+        fontFamily: chatSettings.fontFamily,
+        fontSize: `${chatSettings.fontSize}px`,
+        opacity: chatSettings.opacity
+      }}
+    >
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* 频道切换栏 */}
+        <div style={{
+          padding: '4px 8px',
+          borderBottom: `1px solid ${chatSettings.theme === 'dark' ? '#333' : '#ddd'}`,
+          display: 'flex',
+          gap: '4px'
+        }}>
           <button 
             onClick={() => setActiveChannel('world')}
             style={{ 
-              marginRight: '4px',
               padding: '2px 6px',
               fontSize: '12px',
               border: activeChannel === 'world' ? '1px solid #007acc' : '1px solid #ccc',
               backgroundColor: activeChannel === 'world' ? '#007acc' : 'transparent',
-              color: activeChannel === 'world' ? '#ffffff' : '#666',
+              color: activeChannel === 'world' ? '#ffffff' : (chatSettings.theme === 'dark' ? '#ccc' : '#666'),
               borderRadius: '3px',
               cursor: 'pointer'
             }}
@@ -130,46 +109,52 @@ export const ChatPanel: React.FC = () => {
               fontSize: '12px',
               border: activeChannel === 'guild' ? '1px solid #007acc' : '1px solid #ccc',
               backgroundColor: activeChannel === 'guild' ? '#007acc' : 'transparent',
-              color: activeChannel === 'guild' ? '#ffffff' : '#666',
+              color: activeChannel === 'guild' ? '#ffffff' : (chatSettings.theme === 'dark' ? '#ccc' : '#666'),
               borderRadius: '3px',
               cursor: 'pointer'
             }}
           >
             公会
           </button>
+          {chatSettings.showChannel && (
+            <span style={{ marginLeft: 'auto', color: '#666', fontSize: '12px', alignSelf: 'center' }}>
+              [{activeChannel}]
+            </span>
+          )}
+        </div>
+        
+        {/* 消息列表 */}
+        <div style={messagesStyle}>
+          {filteredMessages.map((message) => (
+            <div key={message.id} style={messageStyle(message)}>
+              {chatSettings.showTimestamp && (
+                <span style={{ color: '#666', marginRight: '8px' }}>
+                  [{new Date(message.timestamp).toLocaleTimeString()}]
+                </span>
+              )}
+              
+              {chatSettings.showChannel && message.channel !== 'world' && (
+                <span style={{ color: '#007acc', marginRight: '8px' }}>
+                  [{message.channel}]
+                </span>
+              )}
+              
+              <span style={{ 
+                color: message.isSystem ? '#999' : '#007acc',
+                fontWeight: message.isSystem ? 'normal' : 'bold',
+                marginRight: '8px'
+              }}>
+                {message.sender}:
+              </span>
+              
+              <span>
+                {message.filteredMessage || message.message}
+              </span>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
-      
-      <div style={messagesStyle}>
-        {filteredMessages.map((message) => (
-          <div key={message.id} style={messageStyle(message)}>
-            {chatSettings.showTimestamp && (
-              <span style={{ color: '#666', marginRight: '8px' }}>
-                [{new Date(message.timestamp).toLocaleTimeString()}]
-              </span>
-            )}
-            
-            {chatSettings.showChannel && message.channel !== 'world' && (
-              <span style={{ color: '#007acc', marginRight: '8px' }}>
-                [{message.channel}]
-              </span>
-            )}
-            
-            <span style={{ 
-              color: message.isSystem ? '#999' : '#007acc',
-              fontWeight: message.isSystem ? 'normal' : 'bold',
-              marginRight: '8px'
-            }}>
-              {message.sender}:
-            </span>
-            
-            <span>
-              {message.filteredMessage || message.message}
-            </span>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-    </div>
+    </FloatingWindow>
   );
 };
