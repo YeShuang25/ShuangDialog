@@ -12,41 +12,35 @@ export const useDebugStore = create<DebugState>((set) => ({
   setDebugMode: (enabled: boolean) => set({ debugMode: enabled })
 }));
 
+import { logger } from '../utils/logger';
+
 // 导出调试工具函数
 export const debug = {
   log: (message: string, data?: unknown, source?: string) => {
     const { debugMode } = useDebugStore.getState();
     if (debugMode) {
-      const timestamp = new Date().toISOString();
-      const sourceText = source ? `[${source}] ` : '';
-      console.log(`🔍 ${timestamp} ${sourceText}${message}`, data || '');
+      logger.debug(message, data, source);
     }
   },
   
   info: (message: string, data?: unknown, source?: string) => {
     const { debugMode } = useDebugStore.getState();
     if (debugMode) {
-      const timestamp = new Date().toISOString();
-      const sourceText = source ? `[${source}] ` : '';
-      console.info(`ℹ️ ${timestamp} ${sourceText}${message}`, data || '');
+      logger.info(message, data, source);
     }
   },
   
   warn: (message: string, data?: unknown, source?: string) => {
     const { debugMode } = useDebugStore.getState();
     if (debugMode) {
-      const timestamp = new Date().toISOString();
-      const sourceText = source ? `[${source}] ` : '';
-      console.warn(`⚠️ ${timestamp} ${sourceText}${message}`, data || '');
+      logger.warn(message, data, source);
     }
   },
   
   error: (message: string, data?: unknown, source?: string) => {
     const { debugMode } = useDebugStore.getState();
     if (debugMode) {
-      const timestamp = new Date().toISOString();
-      const sourceText = source ? `[${source}] ` : '';
-      console.error(`❌ ${timestamp} ${sourceText}${message}`, data || '');
+      logger.error(message, data, source);
     }
   }
 };

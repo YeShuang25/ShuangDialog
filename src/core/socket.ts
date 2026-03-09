@@ -72,9 +72,6 @@ export function initCore(): SocketCore {
       const eventName = packet.data ? packet.data[0] : '未知事件';
       const eventData = packet.data ? packet.data[1] : null;
 
-      // 调试信息输出
-      debug.log(`[全局劫持] 捕获事件: ${eventName}`, eventData || packet.data, 'SocketHook');
-
       // 分发事件给注册的 hooks
       if (coreInstance) {
         coreInstance.emit(eventName, eventData);
