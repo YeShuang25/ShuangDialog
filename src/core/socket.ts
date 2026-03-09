@@ -1,4 +1,4 @@
-import { GamePacket, SocketHook } from './types';
+import { SocketHook } from './types';
 import { debug } from '../store/useDebugStore';
 
 // 核心模块 - Socket 连接管理
@@ -24,18 +24,18 @@ function createCore(): SocketCore {
       debug.log(`添加新的Socket Hook，当前Hook数量: ${hooks.length}`, hook, 'SocketCore');
     },
     emit(eventName: string, data: unknown) {
-      // 分发数据给所有已注册的 hook
-      const packet: GamePacket = {
-        type: 'system', // 默认类型
-        timestamp: Date.now(),
-        data: { eventName, payload: data }
+      // 直接传递原始数据，不做任何处理
+      const packet = {
+        eventName,
+        data,
+        timestamp: Date.now()
       };
       
-      debug.log(`分发事件: ${eventName}`, data, 'SocketCore');
+      // 只显示劫持到的原始事件，不显示分发事件
+      debug.log(`[全局劫持] 捕获事件: ${eventName}`, data, 'SocketHook');
       
       hooks.forEach((hook, index) => {
         try {
-          debug.log(`调用Hook ${index} 处理事件: ${eventName}`, null, 'SocketCore');
           hook.onData(packet);
         } catch (error) {
           debug.error(`Hook ${index} 处理事件 ${eventName} 时出错`, error, 'SocketCore');

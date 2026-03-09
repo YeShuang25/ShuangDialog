@@ -36,6 +36,6 @@ export interface NotificationPacket extends GamePacket {
 export interface SocketHook {
   onConnect: () => void;
   onDisconnect: () => void;
-  onData: (packet: GamePacket) => void;
+  onData: (packet: any) => void;
   onError: (error: Error) => void;
 }
