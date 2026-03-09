@@ -7,13 +7,13 @@
 ### 油猴脚本安装
 
 **方法一：一键安装（推荐）**
-1. 复制这个链接：`https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/userscript.js`
+1. 复制这个链接：`https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/loader.user.js`
 2. 在浏览器地址栏粘贴并访问
 3. Tampermonkey 会自动弹出安装界面
 4. 点击 **安装** 完成
 
 **方法二：手动安装**
-1. 点击这里下载脚本：[`userscript.js`](userscript.js)
+1. 点击这里下载脚本：[`loader.user.js`](loader.user.js)
 2. 打开 Tampermonkey 管理面板
 3. 点击 **添加新脚本**
 4. 将下载的脚本内容粘贴进去
@@ -61,7 +61,7 @@ ShuangDialog/
 │       ├── logger.ts        # 日志工具 (调试用)
 │       └── helper.ts
 │
-├── userscript.js            # 油猴脚本 loader 文件
+├── loader.user.js            # 油猴脚本 loader 文件
 ├── vite.config.ts           # Vite 配置
 ├── package.json
 ├── tsconfig.json
@@ -161,7 +161,7 @@ GitHub仓库页面
 
 #### 4. 更新油猴脚本 URL
 
-在 `userscript.js` 中确认 URL 正确：
+在 `loader.user.js` 中确认 URL 正确：
 
 ```javascript
 const CONFIG = {
@@ -181,7 +181,7 @@ npm run deploy  # 自动构建并推送到 gh-pages 分支
 ### 安装油猴脚本
 
 1. 安装 Tampermonkey 扩展
-2. 将 `userscript.js` 内容复制到 Tampermonkey
+2. 将 `loader.user.js` 内容复制到 Tampermonkey
 3. 根据实际游戏域名修改 `@match` 配置
 4. 更新 GitHub Pages URL
 
@@ -233,7 +233,7 @@ npm run deploy
 
 #### 4. 更新版本号（可选）
 
-如果有重大更新，更新 `userscript.js` 中的版本号：
+如果有重大更新，更新 `loader.user.js` 中的版本号：
 
 ```javascript
 const CONFIG = {
