@@ -7,6 +7,7 @@ export interface ButtonProps {
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,7 +16,8 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'medium',
   disabled = false,
-  className = ''
+  className = '',
+  style = {}
 }) => {
   const baseStyles = {
     border: 'none',
@@ -59,7 +61,8 @@ export const Button: React.FC<ButtonProps> = ({
   const styles = {
     ...baseStyles,
     ...variantStyles[variant],
-    ...sizeStyles[size]
+    ...sizeStyles[size],
+    ...style
   };
 
   return (
