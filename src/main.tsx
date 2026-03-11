@@ -2,6 +2,7 @@
 // 负责初始化核心和挂载React应用
 
 import { initCore } from './core/socket';
+import { initChatMonitor } from './core/chatMonitor';
 import { createRoot } from 'react-dom/client';
 import { ChatPanel } from './ui/pages/ChatPanel';
 import './ui/style.css';
@@ -11,6 +12,9 @@ import { debug } from './store/useDebugStore';
 function main() {
   // 初始化核心层
   initCore();
+  
+  // 初始化聊天监控
+  initChatMonitor();
   
   // 创建React根节点
   const container = document.createElement('div');

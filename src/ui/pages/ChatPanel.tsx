@@ -4,6 +4,7 @@ import { FloatingWindow, Button } from '../components';
 import { MessageList, Message, MessageInput } from '../features';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useActivityStore } from '../../store/useActivityStore';
+import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 
 // 颜色主题
 const theme = {
@@ -40,6 +41,9 @@ export const ChatPanel: React.FC = () => {
   
   // 使用全局调试状态
   const { debugMode, toggleDebugMode } = useDebugStore();
+  
+  // 使用聊天监控状态
+  const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
 
   const toggleSettings = () => {
     setShowSettings(!showSettings);
@@ -169,6 +173,61 @@ export const ChatPanel: React.FC = () => {
                       height: '14px',
                       width: '14px',
                       left: debugMode ? '16px' : '2px',
+                      bottom: '3px',
+                      backgroundColor: 'white',
+                      transition: '0.3s',
+                      borderRadius: '50%'
+                    }} />
+                  </span>
+                </label>
+              </div>
+
+              {/* 聊天监控开关 */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px',
+                border: `1px solid ${theme.border}`,
+                borderRadius: '4px'
+              }}>
+                <div>
+                  <div style={{ fontWeight: '600', color: theme.text, fontSize: '13px' }}>
+                    聊天监控
+                  </div>
+                  <div style={{ fontSize: '11px', color: theme.textLight }}>
+                    监控对话框消息变化并输出日志
+                  </div>
+                </div>
+                <label style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  width: '36px',
+                  height: '20px'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={chatMonitorEnabled}
+                    onChange={toggleChatMonitor}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    cursor: 'pointer',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: chatMonitorEnabled ? theme.primary : '#ccc',
+                    transition: '0.3s',
+                    borderRadius: '20px'
+                  }}>
+                    <span style={{
+                      position: 'absolute',
+                      content: '""',
+                      height: '14px',
+                      width: '14px',
+                      left: chatMonitorEnabled ? '16px' : '2px',
                       bottom: '3px',
                       backgroundColor: 'white',
                       transition: '0.3s',
