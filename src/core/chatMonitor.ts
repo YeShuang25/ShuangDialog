@@ -85,7 +85,28 @@ function createChatMonitor(): ChatMonitor {
     const time = messageElement.dataset.time;
     const sender = messageElement.dataset.sender;
     const target = messageElement.dataset.target;
-    const messageContent = messageElement.querySelector('.chat-room-message-content')?.textContent;
+    
+    // 尝试获取消息内容
+    let messageContent = messageElement.querySelector('.chat-room-message-content')?.textContent;
+    
+    // 如果没有找到.chat-room-message-content，尝试直接获取文本内容（适用于Activity等类型）
+    if (!messageContent) {
+      // 获取所有子节点，过滤掉chat-room-metadata部分
+      const metadataElement = messageElement.querySelector('.chat-room-metadata');
+      if (metadataElement) {
+        // 创建一个克隆，移除metadata元素后获取文本
+        const clone = messageElement.cloneNode(true) as HTMLElement;
+        const cloneMetadata = clone.querySelector('.chat-room-metadata');
+        if (cloneMetadata) {
+          cloneMetadata.remove();
+          messageContent = clone.textContent?.trim();
+        }
+      } else {
+        // 如果没有metadata，直接获取文本
+        messageContent = messageElement.textContent?.trim();
+      }
+    }
+    
     const messageType = Array.from(messageElement.classList)
       .find(cls => cls.startsWith('ChatMessage'))
       ?.replace('ChatMessage', '') || 'Unknown';
