@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.4';
+export const APP_VERSION = 'v2.7.5';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -127,6 +127,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.4',
     date: '2026-03-13',
     description: '重构霜语文本框：使用createPortal将组件插入到#chat-room-div内部，使用flex布局和order属性控制显示顺序，继承游戏样式管理'
+  },
+  {
+    version: 'v2.7.5',
+    date: '2026-03-13',
+    description: '修复显示顺序：给输入框#chat-room-bot添加order:3，确保顺序为：霜语文本框(order:1) > 游戏文本框(order:2) > 输入框(order:3)'
   }
 ];
 

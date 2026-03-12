@@ -43,6 +43,10 @@ export const ShuangChatBox: React.FC = () => {
           flex-shrink: 0 !important;
           order: 2 !important;
         }
+        #chat-room-bot {
+          order: 3 !important;
+          flex-shrink: 0 !important;
+        }
         .shuang-chat-box-container {
           height: 33.33%;
           min-height: 80px;
