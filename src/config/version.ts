@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.3';
+export const APP_VERSION = 'v2.4';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -87,6 +87,11 @@ export const VERSION_HISTORY = [
     version: 'v2.3',
     date: '2026-03-12',
     description: '优化聊天导出：调整玩家名字粗细，暗色模式下描边改为白色，添加隐私消息过滤选项（悄悄话和私聊）'
+  },
+  {
+    version: 'v2.4',
+    date: '2026-03-12',
+    description: '优化字体样式：进一步减小玩家名字粗细，增大整体字体大小，提升可读性'
   }
 ];
 

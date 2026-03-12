@@ -260,20 +260,21 @@ function generateHTML(
     }
     
     .ChatMessageName {
-      font-weight: 500;
+      font-weight: 400;
       margin-right: 5px;
       color: var(--label-color, #333);
+      font-size: 15px;
       text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
     
     body.dark-mode .ChatMessageName {
-      font-weight: 500;
+      font-weight: 400;
       text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
     }
     
     .chat-room-message-content {
       color: #333;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.4;
     }
     
@@ -283,7 +284,7 @@ function generateHTML(
     
     .chat-room-message-original {
       color: #666;
-      font-size: 13px;
+      font-size: 14px;
       font-style: italic;
       margin-top: 5px;
       display: block;
