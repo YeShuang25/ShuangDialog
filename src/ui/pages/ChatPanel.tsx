@@ -318,8 +318,7 @@ export const ChatPanel: React.FC = () => {
                         
                         exportChatLogAsHTML({
                           includeStyles: true,
-                          includeInlineStyles: false,
-                          prettyPrint: true
+                          format: 'html'
                         });
                         
                         debug.info('聊天框导出成功', null, 'ChatPanel');
