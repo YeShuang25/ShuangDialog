@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.1';
+export const APP_VERSION = 'v2.2';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -77,6 +77,11 @@ export const VERSION_HISTORY = [
     version: 'v2.1',
     date: '2026-03-12',
     description: '修复聊天导出功能：解决时间和玩家ID贴在一起的问题，移除私聊末尾的多余信息，保留玩家名字颜色'
+  },
+  {
+    version: 'v2.2',
+    date: '2026-03-12',
+    description: '增强聊天导出功能：为玩家名字添加黑色描边解决白色文字与背景重叠问题，添加暗色模式支持，优化原始内容对齐排版'
   }
 ];
 

@@ -139,7 +139,14 @@ function generateHTML(messages: Array<{
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f5f5f5;
+      color: #333;
       padding: 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
     }
     
     .header {
@@ -149,6 +156,11 @@ function generateHTML(messages: Array<{
       border-radius: 8px 8px 0 0;
       margin-bottom: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    body.dark-mode .header {
+      background: #005a9e;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     .header h1 {
@@ -172,19 +184,34 @@ function generateHTML(messages: Array<{
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
+    body.dark-mode .chat-container {
+      background: #2d2d2d;
+      border: 1px solid #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
     .ChatMessage {
       margin-bottom: 15px;
       padding: 10px;
       border-bottom: 1px solid #f0f0f0;
     }
     
+    body.dark-mode .ChatMessage {
+      border-bottom: 1px solid #444;
+    }
+    
     .ChatMessage:hover {
       background-color: #f9f9f9;
+    }
+    
+    body.dark-mode .ChatMessage:hover {
+      background-color: #3a3a3a;
     }
     
     .chat-room-metadata {
       display: inline-block;
       margin-right: 10px;
+      min-width: 100px;
     }
     
     .chat-room-time {
@@ -192,15 +219,28 @@ function generateHTML(messages: Array<{
       font-size: 12px;
     }
     
+    body.dark-mode .chat-room-time {
+      color: #999;
+    }
+    
     .chat-room-sender {
       color: #666;
       font-size: 12px;
+    }
+    
+    body.dark-mode .chat-room-sender {
+      color: #999;
     }
     
     .ChatMessageName {
       font-weight: 600;
       margin-right: 5px;
       color: var(--label-color, #333);
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    }
+    
+    body.dark-mode .ChatMessageName {
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
     
     .chat-room-message-content {
@@ -209,12 +249,21 @@ function generateHTML(messages: Array<{
       line-height: 1.4;
     }
     
+    body.dark-mode .chat-room-message-content {
+      color: #e0e0e0;
+    }
+    
     .chat-room-message-original {
       color: #666;
       font-size: 13px;
       font-style: italic;
       margin-top: 5px;
       display: block;
+      margin-left: 110px;
+    }
+    
+    body.dark-mode .chat-room-message-original {
+      color: #999;
     }
     
     .menubar {
@@ -237,6 +286,28 @@ function generateHTML(messages: Array<{
       display: none;
     }
     
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #007acc;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    
+    body.dark-mode .theme-toggle {
+      background: #005a9e;
+    }
+    
     @media (max-width: 768px) {
       body {
         padding: 10px;
@@ -257,10 +328,19 @@ function generateHTML(messages: Array<{
       .ChatMessage {
         padding: 8px;
       }
+      
+      .chat-room-metadata {
+        min-width: 80px;
+      }
+      
+      .chat-room-message-original {
+        margin-left: 90px;
+      }
     }
   </style>` : ''}
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   <div class="header">
     <h1>聊天记录导出</h1>
     <p>导出时间: ${new Date().toLocaleString()} | 消息数量: ${messages.length}</p>
@@ -268,6 +348,33 @@ function generateHTML(messages: Array<{
   <div class="chat-container" id="TextAreaChatLog">
 ${messagesHTML}
   </div>
+  <script>
+    // 暗色模式切换
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle('dark-mode');
+      const button = document.querySelector('.theme-toggle');
+      if (body.classList.contains('dark-mode')) {
+        button.textContent = '☀️';
+        localStorage.setItem('chat-log-theme', 'dark');
+      } else {
+        button.textContent = '🌙';
+        localStorage.setItem('chat-log-theme', 'light');
+      }
+    }
+    
+    // 加载保存的主题
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedTheme = localStorage.getItem('chat-log-theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        const button = document.querySelector('.theme-toggle');
+        if (button) {
+          button.textContent = '☀️';
+        }
+      }
+    });
+  </script>
 </body>
 </html>`;
   
