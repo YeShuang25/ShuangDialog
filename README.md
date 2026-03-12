@@ -7,10 +7,9 @@
 ### 油猴脚本安装
 
 **方法一：一键安装（推荐）**
-1. 复制这个链接：`https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/loader.user.js`
-2. 在浏览器地址栏粘贴并访问
-3. Tampermonkey 会自动弹出安装界面
-4. 点击 **安装** 完成
+1. 点击这个链接：[https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/loader.user.js](https://raw.githubusercontent.com/YeShuang25/ShuangDialog/main/loader.user.js)
+2. Tampermonkey 会自动弹出安装界面
+3. 点击 **安装** 完成
 
 **方法二：手动安装**
 1. 点击这里下载脚本：[`loader.user.js`](loader.user.js)
