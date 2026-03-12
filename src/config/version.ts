@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.4';
+export const APP_VERSION = 'v2.5';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -92,6 +92,11 @@ export const VERSION_HISTORY = [
     version: 'v2.4',
     date: '2026-03-12',
     description: '优化字体样式：进一步减小玩家名字粗细，增大整体字体大小，提升可读性'
+  },
+  {
+    version: 'v2.5',
+    date: '2026-03-12',
+    description: '优化字体样式：进一步减小玩家名字粗细至300，增大所有字体大小（玩家名16px，内容16px，原始内容15px），解决笔画拥挤问题'
   }
 ];
 
