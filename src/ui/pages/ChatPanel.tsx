@@ -5,6 +5,8 @@ import { MessageList, Message, MessageInput } from '../features';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useActivityStore } from '../../store/useActivityStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
+import { exportChatLogAsHTML, isChatLogAvailable, getChatLogStats } from '../../utils/chatExporter';
+import { debug } from '../../store/useDebugStore';
 
 // 颜色主题
 const theme = {
@@ -286,6 +288,65 @@ export const ChatPanel: React.FC = () => {
                   </Button>
                   <div style={{ fontSize: '10px', color: theme.textLight }}>
                     已捕获: {useActivityStore.getState().activityPackets.length} 个数据包
+                  </div>
+                </div>
+              </div>
+
+              {/* 聊天框导出功能 */}
+              <div style={{
+                padding: '8px',
+                border: `1px solid ${theme.border}`,
+                borderRadius: '4px'
+              }}>
+                <div style={{ fontWeight: '600', color: theme.text, fontSize: '13px', marginBottom: '8px' }}>
+                  聊天框导出
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      try {
+                        if (!isChatLogAvailable()) {
+                          debug.error('聊天框组件未找到，请确保已进入聊天房间', null, 'ChatPanel');
+                          alert('聊天框组件未找到，请确保已进入聊天房间');
+                          return;
+                        }
+                        
+                        const stats = getChatLogStats();
+                        if (stats) {
+                          debug.info(`开始导出聊天框，共 ${stats.totalMessages} 条消息`, stats, 'ChatPanel');
+                        }
+                        
+                        exportChatLogAsHTML({
+                          includeStyles: true,
+                          includeInlineStyles: false,
+                          prettyPrint: true
+                        });
+                        
+                        debug.info('聊天框导出成功', null, 'ChatPanel');
+                        alert('聊天框导出成功！');
+                      } catch (error) {
+                        debug.error('聊天框导出失败', error, 'ChatPanel');
+                        alert('聊天框导出失败：' + (error as Error).message);
+                      }
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      backgroundColor: theme.primary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    导出聊天框为HTML
+                  </Button>
+                  <div style={{ fontSize: '10px', color: theme.textLight }}>
+                    {isChatLogAvailable() ? (
+                      `可用 - ${getChatLogStats()?.totalMessages || 0} 条消息`
+                    ) : (
+                      '未找到聊天框组件'
+                    )}
                   </div>
                 </div>
               </div>

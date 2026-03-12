@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.5';
+export const APP_VERSION = 'v1.7';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -32,6 +32,16 @@ export const VERSION_HISTORY = [
     version: 'v1.5',
     date: '2026-03-11',
     description: '修复聊天监控功能，支持Activity类型消息的正确解析'
+  },
+  {
+    version: 'v1.6',
+    date: '2026-03-11',
+    description: '优化聊天监控功能，只监控ChatMessageChat类型的消息'
+  },
+  {
+    version: 'v1.7',
+    date: '2026-03-11',
+    description: '添加聊天框导出功能，支持导出为HTML文件'
   }
 ];
 
