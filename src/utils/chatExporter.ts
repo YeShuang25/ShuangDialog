@@ -13,12 +13,8 @@ interface ExportOptions {
  * 提取聊天消息数据
  */
 function extractChatMessages(): Array<{
-  time: string;
-  sender: string;
-  content: string;
-  originalContent: string;
-  type: string;
   raw: HTMLElement;
+  type: string;
 }> {
   const chatLog = document.getElementById('TextAreaChatLog');
   if (!chatLog) {
@@ -26,67 +22,21 @@ function extractChatMessages(): Array<{
   }
   
   const messages: Array<{
-    time: string;
-    sender: string;
-    content: string;
-    originalContent: string;
-    type: string;
     raw: HTMLElement;
+    type: string;
   }> = [];
   
   // 遍历所有消息元素
   Array.from(chatLog.children).forEach(child => {
     if (child instanceof HTMLElement) {
-      const time = child.dataset.time || '';
-      const sender = child.dataset.sender || '';
       const type = Array.from(child.classList)
         .find(cls => cls.startsWith('ChatMessage') && cls !== 'ChatMessage')
         ?.replace('ChatMessage', '') || 'Unknown';
       
-      // 提取内容
-      let content = '';
-      let originalContent = '';
-      
-      // 对于Chat类型消息，获取消息内容
-      if (type === 'Chat' || type === 'Whisper') {
-        const contentElement = child.querySelector('.chat-room-message-content');
-        if (contentElement) {
-          content = contentElement.textContent || '';
-        }
-        
-        // 提取原始消息内容
-        const originalElement = child.querySelector('.chat-room-message-original');
-        if (originalElement) {
-          originalContent = originalElement.textContent || '';
-        }
-      } else {
-        // 对于其他类型消息，获取整个元素的文本（除了metadata）
-        const metadata = child.querySelector('.chat-room-metadata');
-        if (metadata) {
-          const clone = child.cloneNode(true) as HTMLElement;
-          const cloneMetadata = clone.querySelector('.chat-room-metadata');
-          if (cloneMetadata) {
-            cloneMetadata.remove();
-            content = clone.textContent || '';
-          }
-        } else {
-          content = child.textContent || '';
-        }
-      }
-      
-      content = content.trim();
-      originalContent = originalContent.trim();
-      
-      if (content || originalContent) {
-        messages.push({
-          time,
-          sender,
-          content,
-          originalContent,
-          type,
-          raw: child
-        });
-      }
+      messages.push({
+        raw: child,
+        type
+      });
     }
   });
   
@@ -134,37 +84,14 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
  * 生成HTML内容
  */
 function generateHTML(messages: Array<{
-  time: string;
-  sender: string;
-  content: string;
-  originalContent: string;
-  type: string;
   raw: HTMLElement;
+  type: string;
 }>, includeStyles: boolean): string {
-  // 生成消息HTML
+  // 生成消息HTML，直接使用原始HTML结构
   const messagesHTML = messages.map(msg => {
-    let cssClass = 'chat-message';
-    if (msg.type === 'Action') cssClass += ' chat-message-action';
-    if (msg.type === 'Activity') cssClass += ' chat-message-activity';
-    if (msg.type === 'Whisper') cssClass += ' chat-message-whisper';
-    if (msg.type === 'Chat') cssClass += ' chat-message-chat';
-    
-    let originalContentHTML = '';
-    if (msg.originalContent) {
-      originalContentHTML = `<div class="message-original">${escapeHTML(msg.originalContent)}</div>`;
-    }
-    
-    return `
-  <div class="${cssClass}">
-    <div class="message-header">
-      <span class="message-time">${msg.time}</span>
-      <span class="message-sender">${msg.sender}</span>
-      <span class="message-type">${msg.type}</span>
-    </div>
-    <div class="message-content">${escapeHTML(msg.content)}</div>
-    ${originalContentHTML}
-  </div>`;
-  }).join('');
+    const rawHTML = msg.raw.outerHTML;
+    return `  ${rawHTML}`;
+  }).join('\n');
   
   // 生成完整HTML
   const html = `<!DOCTYPE html>
@@ -211,88 +138,75 @@ function generateHTML(messages: Array<{
       background: white;
       border: 1px solid #ddd;
       border-radius: 0 0 8px 8px;
-      padding: 0;
+      padding: 20px;
       max-height: 80vh;
       overflow-y: auto;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
-    .chat-message {
-      padding: 16px;
+    .ChatMessage {
+      margin-bottom: 15px;
+      padding: 10px;
       border-bottom: 1px solid #f0f0f0;
-      transition: background-color 0.2s ease;
     }
     
-    .chat-message:hover {
+    .ChatMessage:hover {
       background-color: #f9f9f9;
     }
     
-    .chat-message-action {
-      background-color: #f8f9fa;
-      border-left: 4px solid #6c757d;
+    .chat-room-metadata {
+      display: inline-block;
+      margin-right: 10px;
     }
     
-    .chat-message-activity {
-      background-color: #f8fff8;
-      border-left: 4px solid #28a745;
-    }
-    
-    .chat-message-whisper {
-      background-color: #fffef8;
-      border-left: 4px solid #ffc107;
-    }
-    
-    .chat-message-chat {
-      background-color: #f8faff;
-      border-left: 4px solid #007acc;
-    }
-    
-    .message-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    
-    .message-time {
-      font-size: 12px;
+    .chat-room-time {
       color: #666;
-      flex-shrink: 0;
+      font-size: 12px;
     }
     
-    .message-sender {
-      font-size: 14px;
+    .chat-room-sender {
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .ChatMessageName {
       font-weight: 600;
+      margin-right: 5px;
+    }
+    
+    .chat-room-message-content {
       color: #333;
-      flex-shrink: 0;
-    }
-    
-    .message-type {
-      font-size: 12px;
-      color: #999;
-      background: #f0f0f0;
-      padding: 2px 8px;
-      border-radius: 10px;
-      flex-shrink: 0;
-    }
-    
-    .message-content {
-      font-size: 15px;
-      line-height: 1.6;
-      color: #333;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-    }
-    
-    .message-original {
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.4;
+    }
+    
+    .chat-room-message-original {
       color: #666;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #f0f0f0;
+      font-size: 13px;
       font-style: italic;
+      margin-top: 5px;
+      display: block;
+    }
+    
+    .menubar {
+      display: inline-block;
+      margin-left: 10px;
+    }
+    
+    .HideOnPopup {
+      display: inline-block;
+    }
+    
+    .blank-button {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+    }
+    
+    .button-tooltip {
+      display: none;
     }
     
     @media (max-width: 768px) {
@@ -308,24 +222,12 @@ function generateHTML(messages: Array<{
         font-size: 20px;
       }
       
-      .chat-message {
-        padding: 12px;
+      .chat-container {
+        padding: 10px;
       }
       
-      .message-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-      
-      .message-time,
-      .message-sender,
-      .message-type {
-        font-size: 12px;
-      }
-      
-      .message-content {
-        font-size: 14px;
+      .ChatMessage {
+        padding: 8px;
       }
     }
   </style>` : ''}
@@ -335,7 +237,7 @@ function generateHTML(messages: Array<{
     <h1>聊天记录导出</h1>
     <p>导出时间: ${new Date().toLocaleString()} | 消息数量: ${messages.length}</p>
   </div>
-  <div class="chat-container">
+  <div class="chat-container" id="TextAreaChatLog">
 ${messagesHTML}
   </div>
 </body>
@@ -348,19 +250,14 @@ ${messagesHTML}
  * 导出为纯文本
  */
 function exportAsText(messages: Array<{
-  time: string;
-  sender: string;
-  content: string;
-  originalContent: string;
-  type: string;
   raw: HTMLElement;
+  type: string;
 }>): void {
   const textContent = messages.map(msg => {
-    let line = `[${msg.time}] ${msg.sender}: ${msg.content}`;
-    if (msg.originalContent) {
-      line += `\n  Original: ${msg.originalContent}`;
-    }
-    return line;
+    const time = msg.raw.dataset.time || '';
+    const sender = msg.raw.dataset.sender || '';
+    const content = msg.raw.textContent || '';
+    return `[${time}] ${sender}: ${content}`;
   }).join('\n');
 
   
@@ -371,18 +268,6 @@ function exportAsText(messages: Array<{
   a.download = `chatlog_export_${Date.now()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-/**
- * 转义HTML特殊字符
- */
-function escapeHTML(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 /**
