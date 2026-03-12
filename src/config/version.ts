@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.9';
+export const APP_VERSION = 'v1.10';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -52,6 +52,11 @@ export const VERSION_HISTORY = [
     version: 'v1.9',
     date: '2026-03-12',
     description: '更新版本号至v1.9'
+  },
+  {
+    version: 'v1.10',
+    date: '2026-03-12',
+    description: '修复导出功能，支持原始消息内容的导出'
   }
 ];
 

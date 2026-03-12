@@ -16,6 +16,7 @@ function extractChatMessages(): Array<{
   time: string;
   sender: string;
   content: string;
+  originalContent: string;
   type: string;
   raw: HTMLElement;
 }> {
@@ -28,6 +29,7 @@ function extractChatMessages(): Array<{
     time: string;
     sender: string;
     content: string;
+    originalContent: string;
     type: string;
     raw: HTMLElement;
   }> = [];
@@ -43,12 +45,19 @@ function extractChatMessages(): Array<{
       
       // 提取内容
       let content = '';
+      let originalContent = '';
       
       // 对于Chat类型消息，获取消息内容
       if (type === 'Chat' || type === 'Whisper') {
         const contentElement = child.querySelector('.chat-room-message-content');
         if (contentElement) {
           content = contentElement.textContent || '';
+        }
+        
+        // 提取原始消息内容
+        const originalElement = child.querySelector('.chat-room-message-original');
+        if (originalElement) {
+          originalContent = originalElement.textContent || '';
         }
       } else {
         // 对于其他类型消息，获取整个元素的文本（除了metadata）
@@ -66,12 +75,14 @@ function extractChatMessages(): Array<{
       }
       
       content = content.trim();
+      originalContent = originalContent.trim();
       
-      if (content) {
+      if (content || originalContent) {
         messages.push({
           time,
           sender,
           content,
+          originalContent,
           type,
           raw: child
         });
@@ -126,6 +137,7 @@ function generateHTML(messages: Array<{
   time: string;
   sender: string;
   content: string;
+  originalContent: string;
   type: string;
   raw: HTMLElement;
 }>, includeStyles: boolean): string {
@@ -137,6 +149,11 @@ function generateHTML(messages: Array<{
     if (msg.type === 'Whisper') cssClass += ' chat-message-whisper';
     if (msg.type === 'Chat') cssClass += ' chat-message-chat';
     
+    let originalContentHTML = '';
+    if (msg.originalContent) {
+      originalContentHTML = `<div class="message-original">${escapeHTML(msg.originalContent)}</div>`;
+    }
+    
     return `
   <div class="${cssClass}">
     <div class="message-header">
@@ -145,6 +162,7 @@ function generateHTML(messages: Array<{
       <span class="message-type">${msg.type}</span>
     </div>
     <div class="message-content">${escapeHTML(msg.content)}</div>
+    ${originalContentHTML}
   </div>`;
   }).join('');
   
@@ -267,6 +285,16 @@ function generateHTML(messages: Array<{
       white-space: pre-wrap;
     }
     
+    .message-original {
+      font-size: 13px;
+      line-height: 1.4;
+      color: #666;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+      font-style: italic;
+    }
+    
     @media (max-width: 768px) {
       body {
         padding: 10px;
@@ -323,12 +351,18 @@ function exportAsText(messages: Array<{
   time: string;
   sender: string;
   content: string;
+  originalContent: string;
   type: string;
   raw: HTMLElement;
 }>): void {
   const textContent = messages.map(msg => {
-    return `[${msg.time}] ${msg.sender}: ${msg.content}`;
+    let line = `[${msg.time}] ${msg.sender}: ${msg.content}`;
+    if (msg.originalContent) {
+      line += `\n  Original: ${msg.originalContent}`;
+    }
+    return line;
   }).join('\n');
+
   
   const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
