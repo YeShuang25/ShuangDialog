@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.3';
+export const APP_VERSION = 'v2.7.4';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -122,6 +122,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.3',
     date: '2026-03-13',
     description: '修复游戏文本框高度不改变问题：直接操作元素style属性而非CSS注入；添加窗口resize监听，支持窗口大小改变时自动适配'
+  },
+  {
+    version: 'v2.7.4',
+    date: '2026-03-13',
+    description: '重构霜语文本框：使用createPortal将组件插入到#chat-room-div内部，使用flex布局和order属性控制显示顺序，继承游戏样式管理'
   }
 ];
 
