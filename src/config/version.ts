@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.0';
+export const APP_VERSION = 'v2.1';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -72,6 +72,11 @@ export const VERSION_HISTORY = [
     version: 'v2.0',
     date: '2026-03-12',
     description: '重构UI界面，简化悬浮球，删除聊天界面，改为菜单栏模式'
+  },
+  {
+    version: 'v2.1',
+    date: '2026-03-12',
+    description: '修复聊天导出功能：解决时间和玩家ID贴在一起的问题，移除私聊末尾的多余信息，保留玩家名字颜色'
   }
 ];
 

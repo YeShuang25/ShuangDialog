@@ -94,9 +94,30 @@ function generateHTML(messages: Array<{
   raw: HTMLElement;
   type: string;
 }>, includeStyles: boolean): string {
-  // 生成消息HTML，直接使用原始HTML结构
+  // 生成消息HTML，处理消息结构
   const messagesHTML = messages.map(msg => {
-    const rawHTML = msg.raw.outerHTML;
+    // 克隆元素以避免修改原始DOM
+    const clone = msg.raw.cloneNode(true) as HTMLElement;
+    
+    // 移除menubar元素（包含重复的时间戳和玩家ID）
+    const menubar = clone.querySelector('.menubar');
+    if (menubar) {
+      menubar.remove();
+    }
+    
+    // 处理时间和玩家ID之间的空格
+    const metadata = clone.querySelector('.chat-room-metadata');
+    if (metadata) {
+      const time = metadata.querySelector('.chat-room-time');
+      const sender = metadata.querySelector('.chat-room-sender');
+      if (time && sender) {
+        // 在时间和发送者之间添加空格
+        const space = document.createTextNode(' ');
+        time.parentNode?.insertBefore(space, sender);
+      }
+    }
+    
+    const rawHTML = clone.outerHTML;
     return `  ${rawHTML}`;
   }).join('\n');
   
@@ -179,6 +200,7 @@ function generateHTML(messages: Array<{
     .ChatMessageName {
       font-weight: 600;
       margin-right: 5px;
+      color: var(--label-color, #333);
     }
     
     .chat-room-message-content {
@@ -196,8 +218,7 @@ function generateHTML(messages: Array<{
     }
     
     .menubar {
-      display: inline-block;
-      margin-left: 10px;
+      display: none;
     }
     
     .HideOnPopup {
