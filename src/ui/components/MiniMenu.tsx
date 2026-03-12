@@ -1,15 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 
 export interface MiniMenuProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   children: React.ReactNode;
   position: { x: number; y: number };
 }
 
 export const MiniMenu: React.FC<MiniMenuProps> = ({
   isOpen,
-  onClose,
   children,
   position
 }) => {
