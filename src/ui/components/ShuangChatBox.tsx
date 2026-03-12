@@ -10,81 +10,64 @@ interface ChatBoxPosition {
 
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
-  const [gameChatBox, setGameChatBox] = useState<ChatBoxPosition | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [originalPosition, setOriginalPosition] = useState<ChatBoxPosition | null>(null);
   const styleElementRef = useRef<HTMLStyleElement | null>(null);
+  const isInitializedRef = useRef(false);
 
-  const updatePosition = useCallback(() => {
+  const captureOriginalPosition = useCallback(() => {
     const gameChatBoxElement = document.getElementById('chat-room-div');
     if (gameChatBoxElement) {
       const rect = gameChatBoxElement.getBoundingClientRect();
-      console.log('[ShuangDialog] 游戏文本框位置:', {
+      console.log('[ShuangDialog] 捕获原始位置:', {
         left: rect.left,
         top: rect.top,
         width: rect.width,
         height: rect.height
       });
-      setGameChatBox({
+      return {
         left: rect.left,
         top: rect.top,
         width: rect.width,
         height: rect.height
-      });
-      setIsVisible(true);
-    } else {
-      console.log('[ShuangDialog] 未找到游戏文本框元素');
-      setIsVisible(false);
+      };
     }
+    return null;
   }, []);
 
   useEffect(() => {
     console.log('[ShuangDialog] 霜语文本框开关状态:', chatBoxEnabled);
 
     if (!chatBoxEnabled) {
-      setGameChatBox(null);
-      setIsVisible(false);
+      setOriginalPosition(null);
+      isInitializedRef.current = false;
       if (styleElementRef.current) {
         styleElementRef.current.remove();
         styleElementRef.current = null;
+        console.log('[ShuangDialog] 已移除样式覆盖');
       }
       return;
     }
 
-    const gameChatBoxElement = document.getElementById('chat-room-div');
-    if (!gameChatBoxElement) {
+    if (isInitializedRef.current) {
+      console.log('[ShuangDialog] 已经初始化，跳过');
+      return;
+    }
+
+    const position = captureOriginalPosition();
+    if (!position) {
       console.warn('[ShuangDialog] 未找到游戏文本框元素 #chat-room-div');
       return;
     }
 
-    updatePosition();
+    setOriginalPosition(position);
+    isInitializedRef.current = true;
 
-    const resizeObserver = new ResizeObserver(() => {
-      updatePosition();
-    });
-
-    resizeObserver.observe(gameChatBoxElement);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updatePosition);
-      if (styleElementRef.current) {
-        styleElementRef.current.remove();
-        styleElementRef.current = null;
-      }
-    };
-  }, [chatBoxEnabled, updatePosition]);
-
-  useEffect(() => {
-    if (!chatBoxEnabled || !gameChatBox) {
-      return;
-    }
-
-    const shuangChatBoxHeight = gameChatBox.height / 3;
-    const adjustedGameChatBoxTop = gameChatBox.top + shuangChatBoxHeight;
-    const adjustedGameChatBoxHeight = gameChatBox.height - shuangChatBoxHeight;
+    const shuangChatBoxHeight = position.height / 3;
+    const adjustedGameChatBoxTop = position.top + shuangChatBoxHeight;
+    const adjustedGameChatBoxHeight = position.height - shuangChatBoxHeight;
 
     console.log('[ShuangDialog] 计算布局:', {
+      原始高度: position.height,
       霜语文本框高度: shuangChatBoxHeight,
       游戏文本框新位置: adjustedGameChatBoxTop,
       游戏文本框新高度: adjustedGameChatBoxHeight
@@ -113,27 +96,28 @@ export const ShuangChatBox: React.FC = () => {
         styleElementRef.current = null;
         console.log('[ShuangDialog] 已移除样式覆盖');
       }
+      isInitializedRef.current = false;
     };
-  }, [chatBoxEnabled, gameChatBox]);
+  }, [chatBoxEnabled, captureOriginalPosition]);
 
-  if (!chatBoxEnabled || !gameChatBox || !isVisible) {
+  if (!chatBoxEnabled || !originalPosition) {
     return null;
   }
 
-  const shuangChatBoxHeight = gameChatBox.height / 3;
+  const shuangChatBoxHeight = originalPosition.height / 3;
 
   return (
     <div
       style={{
         position: 'fixed',
-        left: gameChatBox.left,
-        top: gameChatBox.top,
-        width: gameChatBox.width,
+        left: originalPosition.left,
+        top: originalPosition.top,
+        width: originalPosition.width,
         height: shuangChatBoxHeight,
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         border: '1px solid #ccc',
-        borderRadius: '4px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        borderRadius: '4px 4px 0 0',
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
         zIndex: 9998,
         overflow: 'hidden',
         display: 'flex',

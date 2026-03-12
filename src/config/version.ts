@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.1';
+export const APP_VERSION = 'v2.7.2';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -112,6 +112,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.1',
     date: '2026-03-13',
     description: '修复霜语文本框：改用CSS样式注入方式调整游戏文本框位置，添加调试日志，移除可能导致无限循环的MutationObserver'
+  },
+  {
+    version: 'v2.7.2',
+    date: '2026-03-13',
+    description: '修复无限循环bug：移除ResizeObserver，只在开启时捕获一次原始位置，使用isInitializedRef防止重复初始化'
   }
 ];
 
