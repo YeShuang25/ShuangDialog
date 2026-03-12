@@ -11,8 +11,7 @@ interface ExportOptions {
   includePrivate?: boolean;
 }
 
-// 隐私消息类型
-const PRIVATE_MESSAGE_TYPES = ['Whisper', 'LocalMessage', 'Beep'];
+
 
 /**
  * 提取聊天消息数据

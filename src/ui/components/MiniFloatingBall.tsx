@@ -3,7 +3,7 @@ import { MiniMenu, MenuItem, MenuDivider } from './MiniMenu';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
-import { exportChatLogAsHTML, isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
+import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 
 export const MiniFloatingBall: React.FC = () => {
