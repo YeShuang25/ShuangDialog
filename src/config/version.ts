@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.6';
+export const APP_VERSION = 'v2.7';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -102,6 +102,11 @@ export const VERSION_HISTORY = [
     version: 'v2.6',
     date: '2026-03-12',
     description: '大幅优化字体显示：增大字号（玩家名18px，内容18px，原始内容16px），使用更精细的0.5px描边替代1px描边，增加8方向阴影使描边更均匀，解决白色文字与背景重叠问题'
+  },
+  {
+    version: 'v2.7',
+    date: '2026-03-13',
+    description: '新增霜语文本框功能：在菜单中添加开关选项，开启后在游戏文本框上方显示霜语文本框，占用原文本框高度的1/3，为后续消息筛选功能做准备'
   }
 ];
 

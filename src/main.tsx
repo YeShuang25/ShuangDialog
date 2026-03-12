@@ -5,6 +5,7 @@ import { initCore } from './core/socket';
 import { initChatMonitor } from './core/chatMonitor';
 import { createRoot } from 'react-dom/client';
 import { MiniFloatingBall } from './ui/components/MiniFloatingBall';
+import { ShuangChatBox } from './ui/components/ShuangChatBox';
 import './ui/style.css';
 import { debug } from './store/useDebugStore';
 
@@ -22,7 +23,12 @@ function main() {
   document.body.appendChild(container);
   
   const root = createRoot(container);
-  root.render(<MiniFloatingBall />);
+  root.render(
+    <>
+      <MiniFloatingBall />
+      <ShuangChatBox />
+    </>
+  );
   
   debug.log('[ShuangDialog] 插件已启动');
 }

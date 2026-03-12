@@ -3,6 +3,7 @@ import { MiniMenu, MenuItem, MenuDivider } from './MiniMenu';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
+import { useChatBoxStore } from '../../store/useChatBoxStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 
@@ -16,6 +17,7 @@ export const MiniFloatingBall: React.FC = () => {
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
+  const { chatBoxEnabled, toggleChatBox } = useChatBoxStore();
 
   // 从localStorage加载位置
   useEffect(() => {
@@ -188,6 +190,15 @@ export const MiniFloatingBall: React.FC = () => {
             setIsMenuOpen(false);
           }}
           active={chatMonitorEnabled}
+        />
+        <MenuItem
+          icon={chatBoxEnabled ? '💬' : '💭'}
+          label="霜语文本框"
+          onClick={() => {
+            toggleChatBox();
+            setIsMenuOpen(false);
+          }}
+          active={chatBoxEnabled}
         />
         <MenuDivider />
         <MenuItem
