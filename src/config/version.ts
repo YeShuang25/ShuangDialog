@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7';
+export const APP_VERSION = 'v2.7.1';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -107,6 +107,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7',
     date: '2026-03-13',
     description: '新增霜语文本框功能：在菜单中添加开关选项，开启后在游戏文本框上方显示霜语文本框，占用原文本框高度的1/3，为后续消息筛选功能做准备'
+  },
+  {
+    version: 'v2.7.1',
+    date: '2026-03-13',
+    description: '修复霜语文本框：改用CSS样式注入方式调整游戏文本框位置，添加调试日志，移除可能导致无限循环的MutationObserver'
   }
 ];
 

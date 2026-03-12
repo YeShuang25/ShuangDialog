@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
 
 interface ChatBoxPosition {
@@ -12,11 +12,18 @@ export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
   const [gameChatBox, setGameChatBox] = useState<ChatBoxPosition | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const styleElementRef = useRef<HTMLStyleElement | null>(null);
 
   const updatePosition = useCallback(() => {
     const gameChatBoxElement = document.getElementById('chat-room-div');
     if (gameChatBoxElement) {
       const rect = gameChatBoxElement.getBoundingClientRect();
+      console.log('[ShuangDialog] 游戏文本框位置:', {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      });
       setGameChatBox({
         left: rect.left,
         top: rect.top,
@@ -25,72 +32,86 @@ export const ShuangChatBox: React.FC = () => {
       });
       setIsVisible(true);
     } else {
+      console.log('[ShuangDialog] 未找到游戏文本框元素');
       setIsVisible(false);
     }
   }, []);
 
   useEffect(() => {
-    const gameChatBoxElement = document.getElementById('chat-room-div');
-    
-    if (!gameChatBoxElement) return;
+    console.log('[ShuangDialog] 霜语文本框开关状态:', chatBoxEnabled);
 
-    if (chatBoxEnabled) {
-      updatePosition();
-
-      const observer = new MutationObserver(() => {
-        updatePosition();
-      });
-
-      observer.observe(gameChatBoxElement, {
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      });
-
-      const resizeObserver = new ResizeObserver(() => {
-        updatePosition();
-      });
-
-      resizeObserver.observe(gameChatBoxElement);
-
-      window.addEventListener('resize', updatePosition);
-
-      return () => {
-        observer.disconnect();
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', updatePosition);
-      };
-    } else {
+    if (!chatBoxEnabled) {
       setGameChatBox(null);
       setIsVisible(false);
+      if (styleElementRef.current) {
+        styleElementRef.current.remove();
+        styleElementRef.current = null;
+      }
+      return;
     }
+
+    const gameChatBoxElement = document.getElementById('chat-room-div');
+    if (!gameChatBoxElement) {
+      console.warn('[ShuangDialog] 未找到游戏文本框元素 #chat-room-div');
+      return;
+    }
+
+    updatePosition();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updatePosition();
+    });
+
+    resizeObserver.observe(gameChatBoxElement);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updatePosition);
+      if (styleElementRef.current) {
+        styleElementRef.current.remove();
+        styleElementRef.current = null;
+      }
+    };
   }, [chatBoxEnabled, updatePosition]);
 
   useEffect(() => {
-    const gameChatBoxElement = document.getElementById('chat-room-div');
-    if (!gameChatBoxElement) return;
-
-    if (chatBoxEnabled && gameChatBox) {
-      const shuangChatBoxHeight = gameChatBox.height / 3;
-      const adjustedGameChatBoxTop = gameChatBox.top + shuangChatBoxHeight;
-      const adjustedGameChatBoxHeight = gameChatBox.height - shuangChatBoxHeight;
-
-      gameChatBoxElement.style.position = 'fixed';
-      gameChatBoxElement.style.left = `${gameChatBox.left}px`;
-      gameChatBoxElement.style.top = `${adjustedGameChatBoxTop}px`;
-      gameChatBoxElement.style.height = `${adjustedGameChatBoxHeight}px`;
-    } else {
-      gameChatBoxElement.style.position = '';
-      gameChatBoxElement.style.left = '';
-      gameChatBoxElement.style.top = '';
-      gameChatBoxElement.style.height = '';
+    if (!chatBoxEnabled || !gameChatBox) {
+      return;
     }
 
+    const shuangChatBoxHeight = gameChatBox.height / 3;
+    const adjustedGameChatBoxTop = gameChatBox.top + shuangChatBoxHeight;
+    const adjustedGameChatBoxHeight = gameChatBox.height - shuangChatBoxHeight;
+
+    console.log('[ShuangDialog] 计算布局:', {
+      霜语文本框高度: shuangChatBoxHeight,
+      游戏文本框新位置: adjustedGameChatBoxTop,
+      游戏文本框新高度: adjustedGameChatBoxHeight
+    });
+
+    if (styleElementRef.current) {
+      styleElementRef.current.remove();
+    }
+
+    const styleEl = document.createElement('style');
+    styleEl.id = 'shuang-chat-box-override-style';
+    styleEl.textContent = `
+      #chat-room-div {
+        top: ${adjustedGameChatBoxTop}px !important;
+        height: ${adjustedGameChatBoxHeight}px !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+    styleElementRef.current = styleEl;
+
+    console.log('[ShuangDialog] 已注入样式覆盖');
+
     return () => {
-      if (gameChatBoxElement) {
-        gameChatBoxElement.style.position = '';
-        gameChatBoxElement.style.left = '';
-        gameChatBoxElement.style.top = '';
-        gameChatBoxElement.style.height = '';
+      if (styleElementRef.current) {
+        styleElementRef.current.remove();
+        styleElementRef.current = null;
+        console.log('[ShuangDialog] 已移除样式覆盖');
       }
     };
   }, [chatBoxEnabled, gameChatBox]);
