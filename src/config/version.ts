@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.5';
+export const APP_VERSION = 'v2.7.6';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -132,6 +132,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.5',
     date: '2026-03-13',
     description: '修复显示顺序：给输入框#chat-room-bot添加order:3，确保顺序为：霜语文本框(order:1) > 游戏文本框(order:2) > 输入框(order:3)'
+  },
+  {
+    version: 'v2.7.6',
+    date: '2026-03-13',
+    description: '修复两个问题：1.使用flex比例替代固定百分比，让输入框高度不被压缩；2.使用:not([hidden])选择器避免覆盖hidden属性，添加MutationObserver同步隐藏状态'
   }
 ];
 

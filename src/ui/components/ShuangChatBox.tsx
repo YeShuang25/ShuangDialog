@@ -7,6 +7,7 @@ export const ShuangChatBox: React.FC = () => {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const styleElementRef = useRef<HTMLStyleElement | null>(null);
   const isAppliedRef = useRef(false);
+  const observerRef = useRef<MutationObserver | null>(null);
 
   useEffect(() => {
     console.log('[ShuangDialog] 霜语文本框开关状态:', chatBoxEnabled);
@@ -34,29 +35,25 @@ export const ShuangChatBox: React.FC = () => {
       const styleEl = document.createElement('style');
       styleEl.id = 'shuang-chat-box-style';
       styleEl.textContent = `
-        #chat-room-div {
+        #chat-room-div:not([hidden]) {
           display: flex !important;
           flex-direction: column !important;
         }
         #TextAreaChatLog {
-          height: 66.67% !important;
-          flex-shrink: 0 !important;
-          order: 2 !important;
+          flex: 2 !important;
+          min-height: 0 !important;
         }
         #chat-room-bot {
-          order: 3 !important;
           flex-shrink: 0 !important;
         }
         .shuang-chat-box-container {
-          height: 33.33%;
+          flex: 1;
           min-height: 80px;
           background-color: rgba(255, 255, 255, 0.95);
           border-bottom: 1px solid #ccc;
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          flex-shrink: 0;
-          order: 1 !important;
         }
         .shuang-chat-box-header {
           padding: 8px 12px;
@@ -74,15 +71,42 @@ export const ShuangChatBox: React.FC = () => {
           font-size: 14px;
           color: #333;
         }
+        #shuang-chat-box-portal[hidden] {
+          display: none !important;
+        }
       `;
       document.head.appendChild(styleEl);
       styleElementRef.current = styleEl;
 
       const container = document.createElement('div');
       container.id = 'shuang-chat-box-portal';
-      gameChatBoxElement.appendChild(container);
+      gameChatBoxElement.insertBefore(container, textAreaElement);
       setPortalContainer(container);
       isAppliedRef.current = true;
+
+      observerRef.current = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'hidden') {
+            const portalEl = document.getElementById('shuang-chat-box-portal');
+            if (gameChatBoxElement.hasAttribute('hidden')) {
+              console.log('[ShuangDialog] 检测到游戏隐藏，同步隐藏霜语文本框');
+              portalEl?.setAttribute('hidden', '');
+            } else {
+              console.log('[ShuangDialog] 检测到游戏显示，同步显示霜语文本框');
+              portalEl?.removeAttribute('hidden');
+            }
+          }
+        });
+      });
+
+      observerRef.current.observe(gameChatBoxElement, {
+        attributes: true,
+        attributeFilter: ['hidden']
+      });
+
+      if (gameChatBoxElement.hasAttribute('hidden')) {
+        container.setAttribute('hidden', '');
+      }
 
       console.log('[ShuangDialog] 已注入样式和容器');
 
@@ -93,6 +117,11 @@ export const ShuangChatBox: React.FC = () => {
         if (styleElementRef.current) {
           styleElementRef.current.remove();
           styleElementRef.current = null;
+        }
+
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+          observerRef.current = null;
         }
 
         const existingContainer = document.getElementById('shuang-chat-box-portal');
@@ -110,6 +139,10 @@ export const ShuangChatBox: React.FC = () => {
       if (styleElementRef.current) {
         styleElementRef.current.remove();
         styleElementRef.current = null;
+      }
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
       const existingContainer = document.getElementById('shuang-chat-box-portal');
       if (existingContainer) {
