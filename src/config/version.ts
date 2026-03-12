@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.2';
+export const APP_VERSION = 'v2.7.3';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -117,6 +117,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.2',
     date: '2026-03-13',
     description: '修复无限循环bug：移除ResizeObserver，只在开启时捕获一次原始位置，使用isInitializedRef防止重复初始化'
+  },
+  {
+    version: 'v2.7.3',
+    date: '2026-03-13',
+    description: '修复游戏文本框高度不改变问题：直接操作元素style属性而非CSS注入；添加窗口resize监听，支持窗口大小改变时自动适配'
   }
 ];
 
