@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.7';
+export const APP_VERSION = 'v1.8';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -42,6 +42,11 @@ export const VERSION_HISTORY = [
     version: 'v1.7',
     date: '2026-03-11',
     description: '添加聊天框导出功能，支持导出为HTML文件'
+  },
+  {
+    version: 'v1.8',
+    date: '2026-03-11',
+    description: '优化聊天框导出功能，改进HTML格式化和可读性'
   }
 ];
 
