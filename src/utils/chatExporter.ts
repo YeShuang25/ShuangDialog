@@ -7,15 +7,21 @@ interface ExportOptions {
   includeStyles?: boolean;
   prettyPrint?: boolean;
   format?: 'html' | 'text';
+  includeWhisper?: boolean;
+  includePrivate?: boolean;
 }
+
+// 隐私消息类型
+const PRIVATE_MESSAGE_TYPES = ['Whisper', 'LocalMessage', 'Beep'];
 
 /**
  * 提取聊天消息数据
  */
-function extractChatMessages(): Array<{
+function extractChatMessages(options: ExportOptions = {}): Array<{
   raw: HTMLElement;
   type: string;
 }> {
+  const { includeWhisper = true, includePrivate = true } = options;
   const chatLog = document.getElementById('TextAreaChatLog');
   if (!chatLog) {
     throw new Error('TextAreaChatLog 元素未找到');
@@ -33,6 +39,14 @@ function extractChatMessages(): Array<{
         .find(cls => cls.startsWith('ChatMessage') && cls !== 'ChatMessage')
         ?.replace('ChatMessage', '') || 'Unknown';
       
+      // 检查是否需要过滤隐私消息
+      if (!includeWhisper && type === 'Whisper') {
+        return;
+      }
+      if (!includePrivate && (type === 'LocalMessage' || type === 'Beep')) {
+        return;
+      }
+      
       messages.push({
         raw: child,
         type
@@ -49,7 +63,9 @@ function extractChatMessages(): Array<{
 export function exportChatLogAsHTML(options: ExportOptions = {}): void {
   const {
     includeStyles = true,
-    format = 'html'
+    format = 'html',
+    includeWhisper = true,
+    includePrivate = true
   } = options;
   
   // 查找TextAreaChatLog元素
@@ -59,7 +75,7 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
   }
   
   // 提取消息
-  const messages = extractChatMessages();
+  const messages = extractChatMessages({ includeWhisper, includePrivate });
   
   if (format === 'text') {
     // 导出为纯文本
@@ -69,7 +85,7 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
   }
   
   // 导出为HTML
-  const htmlContent = generateHTML(messages, includeStyles);
+  const htmlContent = generateHTML(messages, includeStyles, { includeWhisper, includePrivate });
   
   // 创建下载链接
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -90,10 +106,16 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
 /**
  * 生成HTML内容
  */
-function generateHTML(messages: Array<{
-  raw: HTMLElement;
-  type: string;
-}>, includeStyles: boolean): string {
+function generateHTML(
+  messages: Array<{
+    raw: HTMLElement;
+    type: string;
+  }>,
+  includeStyles: boolean,
+  options: { includeWhisper: boolean; includePrivate: boolean }
+): string {
+  const { includeWhisper, includePrivate } = options;
+  
   // 生成消息HTML，处理消息结构
   const messagesHTML = messages.map(msg => {
     // 克隆元素以避免修改原始DOM
@@ -120,6 +142,12 @@ function generateHTML(messages: Array<{
     const rawHTML = clone.outerHTML;
     return `  ${rawHTML}`;
   }).join('\n');
+  
+  // 生成过滤提示
+  const filterNotice = [];
+  if (!includeWhisper) filterNotice.push('已过滤悄悄话');
+  if (!includePrivate) filterNotice.push('已过滤私聊');
+  const filterText = filterNotice.length > 0 ? ` (${filterNotice.join('、')})` : '';
   
   // 生成完整HTML
   const html = `<!DOCTYPE html>
@@ -233,14 +261,15 @@ function generateHTML(messages: Array<{
     }
     
     .ChatMessageName {
-      font-weight: 600;
+      font-weight: 500;
       margin-right: 5px;
       color: var(--label-color, #333);
       text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
     
     body.dark-mode .ChatMessageName {
-      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+      font-weight: 500;
+      text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
     }
     
     .chat-room-message-content {
@@ -343,7 +372,7 @@ function generateHTML(messages: Array<{
   <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   <div class="header">
     <h1>聊天记录导出</h1>
-    <p>导出时间: ${new Date().toLocaleString()} | 消息数量: ${messages.length}</p>
+    <p>导出时间: ${new Date().toLocaleString()} | 消息数量: ${messages.length}${filterText}</p>
   </div>
   <div class="chat-container" id="TextAreaChatLog">
 ${messagesHTML}
@@ -483,4 +512,106 @@ export function getChatLogStats(): {
     messageTypes,
     totalCharacters
   };
+}
+
+/**
+ * 显示导出选项对话框
+ */
+export function showExportOptionsDialog(): void {
+  // 创建遮罩层
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  // 创建对话框
+  const dialog = document.createElement('div');
+  dialog.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    width: 320px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  `;
+  
+  dialog.innerHTML = `
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">导出聊天记录</h3>
+    <div style="margin-bottom: 16px;">
+      <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+        <input type="checkbox" id="include-whisper" checked style="margin-right: 8px;">
+        <span style="color: #333; font-size: 14px;">包含悄悄话</span>
+      </label>
+      <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+        <input type="checkbox" id="include-private" checked style="margin-right: 8px;">
+        <span style="color: #333; font-size: 14px;">包含私聊消息</span>
+      </label>
+    </div>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button id="cancel-export" style="
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      ">取消</button>
+      <button id="confirm-export" style="
+        padding: 8px 16px;
+        border: none;
+        background: #007acc;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      ">导出</button>
+    </div>
+  `;
+  
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  
+  // 绑定事件
+  const cancelBtn = dialog.querySelector('#cancel-export');
+  const confirmBtn = dialog.querySelector('#confirm-export');
+  const whisperCheckbox = dialog.querySelector('#include-whisper') as HTMLInputElement;
+  const privateCheckbox = dialog.querySelector('#include-private') as HTMLInputElement;
+  
+  cancelBtn?.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
+  
+  confirmBtn?.addEventListener('click', () => {
+    const includeWhisper = whisperCheckbox?.checked ?? true;
+    const includePrivate = privateCheckbox?.checked ?? true;
+    
+    try {
+      exportChatLogAsHTML({
+        includeStyles: true,
+        format: 'html',
+        includeWhisper,
+        includePrivate
+      });
+    } catch (error) {
+      console.error('[ShuangDialog] 导出失败:', error);
+      alert('导出失败：' + (error as Error).message);
+    }
+    
+    document.body.removeChild(overlay);
+  });
+  
+  // 点击遮罩关闭
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+    }
+  });
 }

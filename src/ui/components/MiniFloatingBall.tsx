@@ -3,7 +3,7 @@ import { MiniMenu, MenuItem, MenuDivider } from './MiniMenu';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
-import { exportChatLogAsHTML, isChatLogAvailable } from '../../utils/chatExporter';
+import { exportChatLogAsHTML, isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 
 export const MiniFloatingBall: React.FC = () => {
@@ -104,7 +104,7 @@ export const MiniFloatingBall: React.FC = () => {
         console.error('[ShuangDialog] 聊天框组件未找到');
         return;
       }
-      exportChatLogAsHTML({ includeStyles: true, format: 'html' });
+      showExportOptionsDialog();
     } catch (error) {
       console.error('[ShuangDialog] 导出失败:', error);
     }
