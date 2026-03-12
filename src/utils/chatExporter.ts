@@ -64,6 +64,7 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
   if (format === 'text') {
     // 导出为纯文本
     exportAsText(messages);
+    showExportSuccessNotification();
     return;
   }
   
@@ -76,8 +77,14 @@ export function exportChatLogAsHTML(options: ExportOptions = {}): void {
   const a = document.createElement('a');
   a.href = url;
   a.download = `chatlog_export_${Date.now()}.html`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  
+  // 显示成功提示
+  showExportSuccessNotification();
 }
 
 /**
@@ -260,13 +267,15 @@ function exportAsText(messages: Array<{
     return `[${time}] ${sender}: ${content}`;
   }).join('\n');
 
-  
   const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = `chatlog_export_${Date.now()}.txt`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
@@ -275,6 +284,46 @@ function exportAsText(messages: Array<{
  */
 export function isChatLogAvailable(): boolean {
   return document.getElementById('TextAreaChatLog') !== null;
+}
+
+/**
+ * 显示导出成功通知
+ */
+function showExportSuccessNotification(): void {
+  const notification = document.createElement('div');
+  notification.textContent = '聊天记录导出成功！';
+  notification.style.cssText = `
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10002;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+    max-width: 80%;
+    text-align: center;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  requestAnimationFrame(() => {
+    notification.style.opacity = '1';
+  });
+  
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
 }
 
 /**

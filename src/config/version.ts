@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v1.11';
+export const APP_VERSION = 'v2.0';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -62,6 +62,16 @@ export const VERSION_HISTORY = [
     version: 'v1.11',
     date: '2026-03-12',
     description: '重构导出功能，使用原始HTML结构保留完整信息'
+  },
+  {
+    version: 'v1.12',
+    date: '2026-03-12',
+    description: '优化导出功能，添加成功提示通知'
+  },
+  {
+    version: 'v2.0',
+    date: '2026-03-12',
+    description: '重构UI界面，简化悬浮球，删除聊天界面，改为菜单栏模式'
   }
 ];
 
