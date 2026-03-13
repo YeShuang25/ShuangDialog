@@ -164,13 +164,37 @@ export const ShuangChatBox: React.FC = () => {
           
           #TextAreaChatLog {
             flex: none !important;
-            height: var(--original-height, ${originalHeightRef.current}) !important;
+            height: ${originalHeightRef.current} !important;
             min-height: 0 !important;
             max-height: none !important;
           }
         `;
       }
     }
+  }, []);
+
+  const getOriginalHeight = useCallback((textAreaElement: HTMLElement): string => {
+    const inlineHeight = textAreaElement.style.height;
+    if (inlineHeight && inlineHeight !== 'auto' && !inlineHeight.includes('calc(')) {
+      log('SHUANG_CHAT_BOX', '使用内联高度:', inlineHeight);
+      return inlineHeight;
+    }
+    
+    const gameChatBoxElement = document.getElementById('chat-room-div');
+    if (gameChatBoxElement) {
+      const gameChatBoxHeight = gameChatBoxElement.getBoundingClientRect().height;
+      const chatRoomBot = document.getElementById('chat-room-bot');
+      const botHeight = chatRoomBot ? chatRoomBot.getBoundingClientRect().height : 50;
+      const calculatedHeight = gameChatBoxHeight - botHeight;
+      const heightValue = `${calculatedHeight}px`;
+      log('SHUANG_CHAT_BOX', '计算高度:', heightValue, '(游戏框:', gameChatBoxHeight, '- 输入框:', botHeight, ')');
+      return heightValue;
+    }
+    
+    const computedStyle = window.getComputedStyle(textAreaElement);
+    const computedHeight = computedStyle.height;
+    log('SHUANG_CHAT_BOX', '使用计算高度:', computedHeight);
+    return computedHeight;
   }, []);
 
   const initializeShuangChatBox = useCallback(() => {
@@ -193,17 +217,15 @@ export const ShuangChatBox: React.FC = () => {
     document.head.appendChild(styleEl);
     styleElementRef.current = styleEl;
 
+    const originalHeight = getOriginalHeight(textAreaElement);
+    originalHeightRef.current = originalHeight;
+    log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
+
     const container = document.createElement('div');
     container.id = 'shuang-chat-box-portal';
     gameChatBoxElement.insertBefore(container, textAreaElement);
     setPortalContainer(container);
     isInitializedRef.current = true;
-
-    const computedStyle = window.getComputedStyle(textAreaElement);
-    const originalHeight = computedStyle.height;
-    originalHeightRef.current = originalHeight;
-    textAreaElement.style.setProperty('--original-height', originalHeight);
-    log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
 
     observerRef.current = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -215,6 +237,16 @@ export const ShuangChatBox: React.FC = () => {
           } else if (chatBoxEnabled) {
             log('SHUANG_CHAT_BOX', '检测到游戏显示，同步显示霜语');
             portalEl?.removeAttribute('hidden');
+          }
+          
+          if (!gameChatBoxElement.hasAttribute('hidden')) {
+            const textArea = document.getElementById('TextAreaChatLog') as HTMLElement & { scrollTop?: number };
+            if (textArea && textArea.scrollTop !== undefined) {
+              setTimeout(() => {
+                textArea.scrollTop = textArea.scrollHeight;
+                log('SHUANG_CHAT_BOX', '游戏文本框重新显示，滚动到底部');
+              }, 100);
+            }
           }
         }
       });
@@ -233,7 +265,7 @@ export const ShuangChatBox: React.FC = () => {
 
     log('SHUANG_CHAT_BOX', '已初始化霜语组件');
     return true;
-  }, [chatBoxEnabled, heightRatio, fontScale, updateStyles]);
+  }, [chatBoxEnabled, heightRatio, fontScale, updateStyles, getOriginalHeight]);
 
   const startMessageFilter = useCallback(() => {
     if (!messageFilterStartedRef.current && chatBoxEnabled) {
@@ -275,6 +307,7 @@ export const ShuangChatBox: React.FC = () => {
           const textAreaElement = document.getElementById('TextAreaChatLog');
           if (textAreaElement && originalHeightRef.current) {
             textAreaElement.style.height = originalHeightRef.current;
+            log('SHUANG_CHAT_BOX', '恢复游戏文本框高度:', originalHeightRef.current);
           }
         }
       }

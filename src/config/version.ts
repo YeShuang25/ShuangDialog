@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.7';
+export const APP_VERSION = 'v2.8.8';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -227,6 +227,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.7',
     date: '2026-03-14',
     description: '新增功能：在霜语标题栏添加字体倍数调整功能。玩家可以通过输入框调整字体大小倍数（0.5-2.0），该倍数会在原有字体大小基础上进行缩放，设置会自动保存到本地存储'
+  },
+  {
+    version: 'v2.8.8',
+    date: '2026-03-14',
+    description: '修复两个关键问题：1.修复隐藏霜语后游戏文本框折叠的问题（优化高度获取逻辑，优先使用内联高度或计算高度）；2.修复游戏文本框重新显示时滚动条不定位到底部的问题（监听hidden属性变化，重新显示时自动滚动到底部）'
   }
 ];
 
