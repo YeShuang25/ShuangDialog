@@ -38,6 +38,7 @@ export class MessageFilter {
       this.observer.disconnect();
       this.observer = null;
     }
+    this.messageIdSet.clear();
     log('SHUANG_CHAT_BOX', '停止消息筛选器');
   }
 
@@ -51,14 +52,6 @@ export class MessageFilter {
   }
 
   private processMessage(messageElement: HTMLElement) {
-    const messageId = messageElement.getAttribute('msgid') || this.generateMessageId(messageElement);
-    
-    if (this.messageIdSet.has(messageId)) {
-      return;
-    }
-    
-    this.messageIdSet.add(messageId);
-
     const senderId = messageElement.getAttribute('data-sender');
     if (!senderId) {
       return;
@@ -69,18 +62,37 @@ export class MessageFilter {
       return;
     }
 
+    const messageId = this.getMessageId(messageElement);
+    
+    if (this.messageIdSet.has(messageId)) {
+      return;
+    }
+    
+    this.messageIdSet.add(messageId);
+
     const messageData = this.extractMessageData(messageElement, messageId);
     if (messageData) {
       useShuangMessagesStore.getState().addMessage(messageData);
-      log('SHUANG_CHAT_BOX', '添加关注玩家消息:', messageData.senderName, messageData.content);
+      log('SHUANG_CHAT_BOX', '添加关注玩家消息:', messageData.senderName || senderId);
     }
+  }
+
+  private getMessageId(element: HTMLElement): string {
+    const msgid = element.getAttribute('msgid');
+    if (msgid) {
+      return msgid;
+    }
+
+    const senderId = element.getAttribute('data-sender') || 'unknown';
+    const time = element.getAttribute('data-time') || Date.now().toString();
+    const content = element.textContent?.substring(0, 50) || '';
+    return `${senderId}-${time}-${content}`;
   }
 
   private extractMessageData(element: HTMLElement, messageId: string): ShuangMessage | null {
     const senderId = element.getAttribute('data-sender');
     const timeElement = element.querySelector('.chat-room-time');
     const nameButton = element.querySelector('.ChatMessageName');
-    const contentElement = element.querySelector('.chat-room-message-content');
 
     if (!senderId || !timeElement) {
       return null;
@@ -88,7 +100,6 @@ export class MessageFilter {
 
     const timestamp = timeElement.textContent || '';
     const senderName = nameButton?.textContent || senderId;
-    const content = contentElement?.textContent || '';
 
     let type: ShuangMessage['type'] = 'chat';
     if (element.classList.contains('ChatMessageActivity')) {
@@ -103,17 +114,11 @@ export class MessageFilter {
       id: messageId,
       senderId,
       senderName,
-      content,
+      content: '',
       timestamp,
-      originalElement: element,
+      originalElement: element.cloneNode(true) as HTMLElement,
       type
     };
-  }
-
-  private generateMessageId(element: HTMLElement): string {
-    const senderId = element.getAttribute('data-sender') || 'unknown';
-    const time = element.getAttribute('data-time') || Date.now().toString();
-    return `${senderId}-${time}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 

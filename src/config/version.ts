@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.0';
+export const APP_VERSION = 'v2.8.1';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -192,6 +192,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.0',
     date: '2026-03-13',
     description: '重大更新：实现特别关注玩家功能。1.创建消息状态管理；2.创建消息筛选器；3.创建用户配置管理；4.更新霜语UI显示筛选后的消息；5.添加玩家ID配置界面'
+  },
+  {
+    version: 'v2.8.1',
+    date: '2026-03-13',
+    description: '修复v2.8.0的bug：1.修复拖动高度时重复添加消息的问题（分离消息筛选器启动逻辑和高度调整逻辑）；2.改进消息显示方式，直接克隆整个消息元素保留原始样式和功能；3.添加消息ID去重机制'
   }
 ];
 

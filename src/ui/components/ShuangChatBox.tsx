@@ -23,6 +23,7 @@ export const ShuangChatBox: React.FC = () => {
   const originalHeightRef = useRef<string>('');
   const domWatcherRef = useRef<MutationObserver | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const messageFilterStartedRef = useRef(false);
 
   const updateStyles = useCallback((ratio: number, enabled: boolean) => {
     if (styleElementRef.current) {
@@ -69,7 +70,7 @@ export const ShuangChatBox: React.FC = () => {
           .shuang-content {
             flex: 1;
             overflow: auto;
-            padding: 8px;
+            padding: 4px;
             font-size: 14px;
             color: #333;
             min-height: 0;
@@ -91,35 +92,17 @@ export const ShuangChatBox: React.FC = () => {
             background-color: #004578;
           }
           
-          .shuang-message {
-            margin-bottom: 8px;
-            padding: 6px 8px;
-            background-color: rgba(0, 122, 204, 0.1);
+          .shuang-message-wrapper {
+            margin-bottom: 4px;
+            padding: 2px 4px;
+            background-color: rgba(0, 122, 204, 0.05);
             border-left: 3px solid #007acc;
             border-radius: 4px;
           }
           
-          .shuang-message-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 4px;
-            font-size: 12px;
-            color: #666;
-          }
-          
-          .shuang-message-time {
-            margin-right: 8px;
-          }
-          
-          .shuang-message-sender {
-            font-weight: 500;
-            color: #007acc;
-          }
-          
-          .shuang-message-content {
-            font-size: 14px;
-            line-height: 1.4;
-            word-wrap: break-word;
+          .shuang-message-wrapper .ChatMessage {
+            margin: 0;
+            padding: 2px 0;
           }
           
           .shuang-empty-hint {
@@ -129,7 +112,6 @@ export const ShuangChatBox: React.FC = () => {
             font-size: 13px;
           }
         `;
-        log('SHUANG_CHAT_BOX', 'CSS 样式已更新，霜语比例:', ratio, '游戏文本框比例:', 1 - ratio);
       } else {
         styleElementRef.current.textContent = `
           #TextAreaChatLog {
@@ -138,7 +120,6 @@ export const ShuangChatBox: React.FC = () => {
             min-height: 0 !important;
           }
         `;
-        log('SHUANG_CHAT_BOX', '已恢复游戏文本框原始高度:', originalHeightRef.current);
       }
     }
   }, []);
@@ -218,13 +199,21 @@ export const ShuangChatBox: React.FC = () => {
             portalEl.removeAttribute('hidden');
           }
           updateStyles(heightRatio, true);
-          messageFilter.start();
-          log('SHUANG_CHAT_BOX', '显示霜语');
+          
+          if (!messageFilterStartedRef.current) {
+            messageFilter.start();
+            messageFilterStartedRef.current = true;
+            log('SHUANG_CHAT_BOX', '启动消息筛选器');
+          }
         } else {
           portalEl.setAttribute('hidden', '');
           updateStyles(heightRatio, false);
-          messageFilter.stop();
-          log('SHUANG_CHAT_BOX', '隐藏霜语，恢复游戏文本框高度');
+          
+          if (messageFilterStartedRef.current) {
+            messageFilter.stop();
+            messageFilterStartedRef.current = false;
+            log('SHUANG_CHAT_BOX', '停止消息筛选器');
+          }
         }
       }
     } else {
@@ -264,9 +253,18 @@ export const ShuangChatBox: React.FC = () => {
         existingContainer.remove();
       }
       isInitializedRef.current = false;
-      messageFilter.stop();
+      if (messageFilterStartedRef.current) {
+        messageFilter.stop();
+        messageFilterStartedRef.current = false;
+      }
     };
-  }, [chatBoxEnabled, heightRatio, updateStyles, initializeShuangChatBox]);
+  }, [chatBoxEnabled]);
+
+  useEffect(() => {
+    if (isInitializedRef.current && chatBoxEnabled) {
+      updateStyles(heightRatio, true);
+    }
+  }, [heightRatio, chatBoxEnabled, updateStyles]);
 
   useEffect(() => {
     if (contentRef.current && messages.length > 0) {
@@ -286,14 +284,12 @@ export const ShuangChatBox: React.FC = () => {
       const deltaRatio = deltaY / gameRect.height;
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
-      log('SHUANG_CHAT_BOX', '拖拽中，新比例:', newRatio);
       setHeightRatio(newRatio);
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        log('SHUANG_CHAT_BOX', '拖拽结束，最终高度比例:', heightRatio);
       }
     };
 
@@ -306,14 +302,13 @@ export const ShuangChatBox: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, heightRatio]);
+  }, [isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
     dragStartYRef.current = e.clientY;
     dragStartRatioRef.current = heightRatio;
-    log('SHUANG_CHAT_BOX', '开始拖拽调整高度，当前比例:', heightRatio);
   };
 
   if (!portalContainer) {
@@ -332,13 +327,7 @@ export const ShuangChatBox: React.FC = () => {
           </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className="shuang-message">
-              <div className="shuang-message-header">
-                <span className="shuang-message-time">{msg.timestamp}</span>
-                <span className="shuang-message-sender">{msg.senderName}</span>
-              </div>
-              <div className="shuang-message-content">{msg.content}</div>
-            </div>
+            <div key={msg.id} className="shuang-message-wrapper" dangerouslySetInnerHTML={{ __html: msg.originalElement.outerHTML }} />
           ))
         )}
       </div>
