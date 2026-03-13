@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.10';
+export const APP_VERSION = 'v2.7.12';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -152,6 +152,21 @@ export const VERSION_HISTORY = [
     version: 'v2.7.9',
     date: '2026-03-13',
     description: '优化霜语文本框：1.使用ref直接引用容器元素；2.延迟更新flex样式确保DOM渲染完成；3.添加详细调试日志'
+  },
+  {
+    version: 'v2.7.10',
+    date: '2026-03-13',
+    description: '修复霜语高度问题：优化容器内部flex布局，确保内容区域能正确占满空间'
+  },
+  {
+    version: 'v2.7.11',
+    date: '2026-03-13',
+    description: '修复拖拽条位置：将拖拽条移至霜语内容区域和游戏文本框之间'
+  },
+  {
+    version: 'v2.7.12',
+    date: '2026-03-13',
+    description: '重写霜语文本框：简化结构，直接在portal容器上设置flex，确保拖拽调整高度功能正常工作'
   }
 ];
 

@@ -16,30 +16,6 @@ export const ShuangChatBox: React.FC = () => {
   const observerRef = useRef<MutationObserver | null>(null);
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
-  const currentRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
-  const shuangContainerRef = useRef<HTMLDivElement | null>(null);
-
-  // 直接更新 DOM 样式，实现实时拖拽效果
-  const updateFlexStyles = useCallback((ratio: number) => {
-    const shuangContainer = shuangContainerRef.current || document.querySelector('.shuang-chat-box-container') as HTMLElement;
-    const textAreaElement = document.getElementById('TextAreaChatLog') as HTMLElement;
-    
-    console.log('[ShuangDialog] 更新 flex 样式:', ratio, '霜语容器:', shuangContainer, '游戏文本框:', textAreaElement);
-    
-    if (shuangContainer) {
-      shuangContainer.style.flex = String(ratio);
-      console.log('[ShuangDialog] 霜语容器 flex 已设置为:', ratio);
-    } else {
-      console.warn('[ShuangDialog] 未找到霜语容器');
-    }
-    if (textAreaElement) {
-      // 移除固定高度，使用 flex 布局
-      textAreaElement.style.height = 'auto';
-      textAreaElement.style.flex = String(1 - ratio);
-      console.log('[ShuangDialog] 游戏文本框 flex 已设置为:', 1 - ratio);
-    }
-    currentRatioRef.current = ratio;
-  }, []);
 
   const updateStyles = useCallback((ratio: number) => {
     if (styleElementRef.current) {
@@ -48,71 +24,66 @@ export const ShuangChatBox: React.FC = () => {
           display: flex !important;
           flex-direction: column !important;
         }
+        
+        #shuang-chat-box-portal {
+          display: flex;
+          flex-direction: column;
+          flex: ${ratio};
+          min-height: 60px;
+          background-color: rgba(255, 255, 255, 0.95);
+          border-bottom: 2px solid #007acc;
+        }
+        
+        #shuang-chat-box-portal[hidden] {
+          display: none !important;
+        }
+        
         #TextAreaChatLog {
           flex: ${1 - ratio} !important;
-          min-height: 0 !important;
+          min-height: 60px !important;
           height: auto !important;
         }
+        
         #chat-room-bot {
           flex-shrink: 0 !important;
         }
-        .shuang-chat-box-container {
-          flex: ${ratio};
-          min-height: 80px;
-          background-color: rgba(255, 255, 255, 0.95);
-          border-bottom: 1px solid #ccc;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          z-index: 1;
-        }
-        .shuang-chat-box-header {
+        
+        .shuang-header {
           padding: 8px 12px;
           background-color: #007acc;
           color: white;
           font-size: 14px;
           font-weight: 500;
-          border-bottom: 1px solid #005a9e;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
           user-select: none;
+          flex-shrink: 0;
         }
-        .shuang-chat-box-resize-handle {
-          width: 100%;
-          height: 8px;
-          background-color: rgba(0, 0, 0, 0.2);
-          cursor: row-resize;
-          position: relative;
-          margin: 0 !important;
-          padding: 0 !important;
-          border: none !important;
-          transition: background-color 0.2s;
-          z-index: 2;
-        }
-        .shuang-chat-box-resize-handle:hover {
-          background-color: rgba(0, 0, 0, 0.4);
-        }
-        .shuang-chat-box-resize-handle.dragging {
-          background-color: rgba(0, 122, 204, 0.6);
-        }
-        .shuang-chat-box-content {
+        
+        .shuang-content {
           flex: 1;
           overflow: auto;
           padding: 8px;
           font-size: 14px;
           color: #333;
+          min-height: 30px;
         }
-        #shuang-chat-box-portal[hidden] {
-          display: none !important;
+        
+        .shuang-drag-handle {
+          height: 6px;
+          background-color: #007acc;
+          cursor: row-resize;
+          flex-shrink: 0;
+          transition: background-color 0.2s;
         }
-        #shuang-chat-box-portal {
-          display: flex;
-          flex-direction: column;
+        
+        .shuang-drag-handle:hover {
+          background-color: #005a9e;
+        }
+        
+        .shuang-drag-handle.dragging {
+          background-color: #004578;
         }
       `;
-      console.log('[ShuangDialog] CSS 样式已更新，比例:', ratio);
+      console.log('[ShuangDialog] CSS 样式已更新，霜语比例:', ratio, '游戏文本框比例:', 1 - ratio);
     }
   }, []);
 
@@ -179,12 +150,6 @@ export const ShuangChatBox: React.FC = () => {
           portalEl.removeAttribute('hidden');
         }
         updateStyles(heightRatio);
-        
-        // 延迟更新 flex 样式，确保 DOM 已渲染
-        setTimeout(() => {
-          updateFlexStyles(heightRatio);
-        }, 50);
-        
         console.log('[ShuangDialog] 显示霜语');
       } else {
         portalEl.setAttribute('hidden', '');
@@ -207,7 +172,7 @@ export const ShuangChatBox: React.FC = () => {
       }
       isInitializedRef.current = false;
     };
-  }, [chatBoxEnabled, heightRatio, updateStyles, updateFlexStyles]);
+  }, [chatBoxEnabled, heightRatio, updateStyles]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -222,16 +187,13 @@ export const ShuangChatBox: React.FC = () => {
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
       console.log('[ShuangDialog] 拖拽中，新比例:', newRatio);
-
-      // 实时更新 DOM 样式
-      updateFlexStyles(newRatio);
       setHeightRatio(newRatio);
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        console.log('[ShuangDialog] 拖拽结束，最终高度比例:', currentRatioRef.current);
+        console.log('[ShuangDialog] 拖拽结束，最终高度比例:', heightRatio);
       }
     };
 
@@ -244,7 +206,7 @@ export const ShuangChatBox: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, updateFlexStyles]);
+  }, [isDragging, heightRatio]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -259,24 +221,21 @@ export const ShuangChatBox: React.FC = () => {
   }
 
   return createPortal(
-    <div 
-      ref={shuangContainerRef}
-      className="shuang-chat-box-container"
-    >
-      <div className="shuang-chat-box-header">
-        <span>霜语</span>
+    <>
+      <div className="shuang-header">
+        霜语
       </div>
-      <div className="shuang-chat-box-content">
+      <div className="shuang-content">
         <div style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
           内容区域（待实现）
         </div>
       </div>
       <div 
-        className={`shuang-chat-box-resize-handle ${isDragging ? 'dragging' : ''}`}
+        className={`shuang-drag-handle ${isDragging ? 'dragging' : ''}`}
         onMouseDown={handleMouseDown}
         title="拖拽调整高度"
       />
-    </div>,
+    </>,
     portalContainer
   );
 };
