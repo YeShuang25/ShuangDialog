@@ -6,9 +6,10 @@ import { createPortal } from 'react-dom';
 import { log } from '../../config/debug';
 import { messageFilter } from '../../utils/messageFilter';
 
-const MIN_HEIGHT_RATIO = 0.1;
+const MIN_HEIGHT_RATIO = 0.02;
 const MAX_HEIGHT_RATIO = 0.9;
 const DEFAULT_HEIGHT_RATIO = 0.33;
+const COLLAPSED_THRESHOLD = 0.08;
 
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
@@ -23,7 +24,6 @@ export const ShuangChatBox: React.FC = () => {
   const observerRef = useRef<MutationObserver | null>(null);
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
-  const originalHeightRef = useRef<string>('');
   const domWatcherRef = useRef<MutationObserver | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const messageFilterStartedRef = useRef(false);
@@ -31,6 +31,8 @@ export const ShuangChatBox: React.FC = () => {
   const updateStyles = useCallback((ratio: number, enabled: boolean, scale: number) => {
     if (styleElementRef.current) {
       if (enabled) {
+        const isCollapsed = ratio < COLLAPSED_THRESHOLD;
+        
         styleElementRef.current.textContent = `
           #chat-room-div:not([hidden]) {
             display: flex !important;
@@ -41,13 +43,9 @@ export const ShuangChatBox: React.FC = () => {
             display: flex;
             flex-direction: column;
             flex: ${ratio};
-            min-height: 60px;
+            min-height: 20px;
             background-color: rgba(255, 255, 255, 0.95);
             border-bottom: 2px solid #007acc;
-          }
-          
-          #shuang-chat-box-portal[hidden] {
-            display: none !important;
           }
           
           #TextAreaChatLog {
@@ -68,7 +66,7 @@ export const ShuangChatBox: React.FC = () => {
             font-weight: 500;
             user-select: none;
             flex-shrink: 0;
-            display: flex;
+            display: ${isCollapsed ? 'none' : 'flex'};
             align-items: center;
             justify-content: space-between;
           }
@@ -118,14 +116,18 @@ export const ShuangChatBox: React.FC = () => {
             font-size: calc(1em * ${scale});
             color: #333;
             min-height: 0;
+            display: ${isCollapsed ? 'none' : 'block'};
           }
           
           .shuang-drag-handle {
-            height: 6px;
+            height: 10px;
             background-color: #007acc;
             cursor: row-resize;
             flex-shrink: 0;
             transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
           
           .shuang-drag-handle:hover {
@@ -134,6 +136,14 @@ export const ShuangChatBox: React.FC = () => {
           
           .shuang-drag-handle.dragging {
             background-color: #004578;
+          }
+          
+          .shuang-drag-handle::after {
+            content: '';
+            width: 30px;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 2px;
           }
           
           .shuang-message-wrapper {
@@ -169,45 +179,13 @@ export const ShuangChatBox: React.FC = () => {
           
           #TextAreaChatLog {
             flex: none !important;
-            height: ${originalHeightRef.current} !important;
+            height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
           }
         `;
       }
     }
-  }, []);
-
-  const getOriginalHeight = useCallback((textAreaElement: HTMLElement): string => {
-    const inlineHeight = textAreaElement.style.height;
-    if (inlineHeight && inlineHeight !== 'auto') {
-      const calcMatch = inlineHeight.match(/calc\(([\d.]+)px\)/);
-      if (calcMatch) {
-        const heightValue = `${calcMatch[1]}px`;
-        log('SHUANG_CHAT_BOX', '使用内联calc高度:', heightValue);
-        return heightValue;
-      }
-      if (!inlineHeight.includes('calc(')) {
-        log('SHUANG_CHAT_BOX', '使用内联高度:', inlineHeight);
-        return inlineHeight;
-      }
-    }
-    
-    const gameChatBoxElement = document.getElementById('chat-room-div');
-    if (gameChatBoxElement) {
-      const gameChatBoxHeight = gameChatBoxElement.getBoundingClientRect().height;
-      const chatRoomBot = document.getElementById('chat-room-bot');
-      const botHeight = chatRoomBot ? chatRoomBot.getBoundingClientRect().height : 50;
-      const calculatedHeight = gameChatBoxHeight - botHeight;
-      const heightValue = `${calculatedHeight}px`;
-      log('SHUANG_CHAT_BOX', '计算高度:', heightValue, '(游戏框:', gameChatBoxHeight, '- 输入框:', botHeight, ')');
-      return heightValue;
-    }
-    
-    const computedStyle = window.getComputedStyle(textAreaElement);
-    const computedHeight = computedStyle.height;
-    log('SHUANG_CHAT_BOX', '使用计算高度:', computedHeight);
-    return computedHeight;
   }, []);
 
   const initializeShuangChatBox = useCallback(() => {
@@ -229,10 +207,6 @@ export const ShuangChatBox: React.FC = () => {
     styleEl.id = 'shuang-chat-box-style';
     document.head.appendChild(styleEl);
     styleElementRef.current = styleEl;
-
-    const originalHeight = getOriginalHeight(textAreaElement);
-    originalHeightRef.current = originalHeight;
-    log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
 
     const container = document.createElement('div');
     container.id = 'shuang-chat-box-portal';
@@ -278,7 +252,7 @@ export const ShuangChatBox: React.FC = () => {
 
     log('SHUANG_CHAT_BOX', '已初始化霜语组件');
     return true;
-  }, [chatBoxEnabled, heightRatio, fontScale, updateStyles, getOriginalHeight]);
+  }, [chatBoxEnabled, heightRatio, fontScale, updateStyles]);
 
   const startMessageFilter = useCallback(() => {
     if (!messageFilterStartedRef.current && chatBoxEnabled) {
@@ -316,12 +290,6 @@ export const ShuangChatBox: React.FC = () => {
           portalEl.setAttribute('hidden', '');
           updateStyles(heightRatio, false, fontScale);
           stopMessageFilter();
-          
-          const textAreaElement = document.getElementById('TextAreaChatLog');
-          if (textAreaElement && originalHeightRef.current) {
-            textAreaElement.style.height = originalHeightRef.current;
-            log('SHUANG_CHAT_BOX', '恢复游戏文本框高度:', originalHeightRef.current);
-          }
         }
       }
     } else {
@@ -350,19 +318,9 @@ export const ShuangChatBox: React.FC = () => {
 
   useEffect(() => {
     if (isInitializedRef.current && chatBoxEnabled && styleElementRef.current) {
-      const cssText = styleElementRef.current.textContent;
-      const updatedCss = cssText
-        .replace(
-          /#shuang-chat-box-portal \{[^}]*flex: [\d.]+;/,
-          `#shuang-chat-box-portal {\n            display: flex;\n            flex-direction: column;\n            flex: ${heightRatio};`
-        )
-        .replace(
-          /#TextAreaChatLog \{[^}]*flex: [\d.]+ !important;/,
-          `#TextAreaChatLog {\n            flex: ${1 - heightRatio} !important;`
-        );
-      styleElementRef.current.textContent = updatedCss;
+      updateStyles(heightRatio, true, fontScale);
     }
-  }, [heightRatio, chatBoxEnabled]);
+  }, [heightRatio, chatBoxEnabled, fontScale, updateStyles]);
 
   const handleFontScaleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

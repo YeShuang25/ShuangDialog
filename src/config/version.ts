@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.10';
+export const APP_VERSION = 'v2.9.0';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -242,6 +242,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.10',
     date: '2026-03-14',
     description: '修复隐藏霜语后游戏文本框折叠的问题：隐藏霜语时清除portal容器的flex样式，避免影响游戏文本框高度计算'
+  },
+  {
+    version: 'v2.9.0',
+    date: '2026-03-14',
+    description: '重构霜语折叠逻辑：移除隐藏功能，改为允许用户将霜语拖动到最小高度（2%），此时标题栏和内容区域自动隐藏，只保留拖动条方便用户重新展开；拖动条高度增加到10px并添加视觉提示'
   }
 ];
 
