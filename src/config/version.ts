@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.1';
+export const APP_VERSION = 'v2.8.2';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -197,6 +197,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.1',
     date: '2026-03-13',
     description: '修复v2.8.0的bug：1.修复拖动高度时重复添加消息的问题（分离消息筛选器启动逻辑和高度调整逻辑）；2.改进消息显示方式，直接克隆整个消息元素保留原始样式和功能；3.添加消息ID去重机制'
+  },
+  {
+    version: 'v2.8.2',
+    date: '2026-03-13',
+    description: '修复消息筛选器无法获取消息的问题：1.将MutationObserver的subtree改为true；2.添加详细调试日志帮助诊断问题'
   }
 ];
 
