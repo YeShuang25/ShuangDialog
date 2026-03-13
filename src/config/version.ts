@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.8';
+export const APP_VERSION = 'v2.7.9';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -147,6 +147,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.8',
     date: '2026-03-13',
     description: '修复霜语文本框拖拽高度调整问题：使用直接DOM操作实现实时同步更新霜语和游戏文本框高度'
+  },
+  {
+    version: 'v2.7.9',
+    date: '2026-03-13',
+    description: '优化霜语文本框：1.使用ref直接引用容器元素；2.延迟更新flex样式确保DOM渲染完成；3.添加详细调试日志'
   }
 ];
 

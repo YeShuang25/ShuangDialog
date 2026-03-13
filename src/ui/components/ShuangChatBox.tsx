@@ -17,17 +17,24 @@ export const ShuangChatBox: React.FC = () => {
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
   const currentRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
+  const shuangContainerRef = useRef<HTMLDivElement | null>(null);
 
   // 直接更新 DOM 样式，实现实时拖拽效果
   const updateFlexStyles = useCallback((ratio: number) => {
-    const shuangContainer = document.querySelector('.shuang-chat-box-container') as HTMLElement;
+    const shuangContainer = shuangContainerRef.current || document.querySelector('.shuang-chat-box-container') as HTMLElement;
     const textAreaElement = document.getElementById('TextAreaChatLog') as HTMLElement;
+    
+    console.log('[ShuangDialog] 更新 flex 样式:', ratio, '霜语容器:', shuangContainer, '游戏文本框:', textAreaElement);
     
     if (shuangContainer) {
       shuangContainer.style.flex = String(ratio);
+      console.log('[ShuangDialog] 霜语容器 flex 已设置为:', ratio);
+    } else {
+      console.warn('[ShuangDialog] 未找到霜语容器');
     }
     if (textAreaElement) {
       textAreaElement.style.flex = String(1 - ratio);
+      console.log('[ShuangDialog] 游戏文本框 flex 已设置为:', 1 - ratio);
     }
     currentRatioRef.current = ratio;
   }, []);
@@ -103,6 +110,7 @@ export const ShuangChatBox: React.FC = () => {
           flex-direction: column;
         }
       `;
+      console.log('[ShuangDialog] CSS 样式已更新，比例:', ratio);
     }
   }, []);
 
@@ -169,7 +177,12 @@ export const ShuangChatBox: React.FC = () => {
           portalEl.removeAttribute('hidden');
         }
         updateStyles(heightRatio);
-        updateFlexStyles(heightRatio);
+        
+        // 延迟更新 flex 样式，确保 DOM 已渲染
+        setTimeout(() => {
+          updateFlexStyles(heightRatio);
+        }, 50);
+        
         console.log('[ShuangDialog] 显示霜语');
       } else {
         portalEl.setAttribute('hidden', '');
@@ -206,6 +219,8 @@ export const ShuangChatBox: React.FC = () => {
       const deltaRatio = deltaY / gameRect.height;
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
+      console.log('[ShuangDialog] 拖拽中，新比例:', newRatio);
+
       // 实时更新 DOM 样式
       updateFlexStyles(newRatio);
       setHeightRatio(newRatio);
@@ -234,7 +249,7 @@ export const ShuangChatBox: React.FC = () => {
     setIsDragging(true);
     dragStartYRef.current = e.clientY;
     dragStartRatioRef.current = heightRatio;
-    console.log('[ShuangDialog] 开始拖拽调整高度');
+    console.log('[ShuangDialog] 开始拖拽调整高度，当前比例:', heightRatio);
   };
 
   if (!portalContainer) {
@@ -242,7 +257,10 @@ export const ShuangChatBox: React.FC = () => {
   }
 
   return createPortal(
-    <div className="shuang-chat-box-container">
+    <div 
+      ref={shuangContainerRef}
+      className="shuang-chat-box-container"
+    >
       <div className="shuang-chat-box-header">
         <span>霜语</span>
         <div 
