@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
 import { createPortal } from 'react-dom';
+import { log } from '../../config/debug';
 
 const MIN_HEIGHT_RATIO = 0.1;
 const MAX_HEIGHT_RATIO = 0.9;
@@ -17,78 +18,89 @@ export const ShuangChatBox: React.FC = () => {
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
 
-  const updateStyles = useCallback((ratio: number) => {
+  const updateStyles = useCallback((ratio: number, enabled: boolean) => {
     if (styleElementRef.current) {
-      styleElementRef.current.textContent = `
-        #chat-room-div:not([hidden]) {
-          display: flex !important;
-          flex-direction: column !important;
-        }
-        
-        #shuang-chat-box-portal {
-          display: flex;
-          flex-direction: column;
-          flex: ${ratio};
-          min-height: 60px;
-          background-color: rgba(255, 255, 255, 0.95);
-          border-bottom: 2px solid #007acc;
-        }
-        
-        #shuang-chat-box-portal[hidden] {
-          display: none !important;
-        }
-        
-        #TextAreaChatLog {
-          flex: ${1 - ratio} !important;
-          min-height: 60px !important;
-          height: auto !important;
-        }
-        
-        #chat-room-bot {
-          flex-shrink: 0 !important;
-        }
-        
-        .shuang-header {
-          padding: 8px 12px;
-          background-color: #007acc;
-          color: white;
-          font-size: 14px;
-          font-weight: 500;
-          user-select: none;
-          flex-shrink: 0;
-        }
-        
-        .shuang-content {
-          flex: 1;
-          overflow: auto;
-          padding: 8px;
-          font-size: 14px;
-          color: #333;
-          min-height: 30px;
-        }
-        
-        .shuang-drag-handle {
-          height: 6px;
-          background-color: #007acc;
-          cursor: row-resize;
-          flex-shrink: 0;
-          transition: background-color 0.2s;
-        }
-        
-        .shuang-drag-handle:hover {
-          background-color: #005a9e;
-        }
-        
-        .shuang-drag-handle.dragging {
-          background-color: #004578;
-        }
-      `;
-      console.log('[ShuangDialog] CSS 样式已更新，霜语比例:', ratio, '游戏文本框比例:', 1 - ratio);
+      if (enabled) {
+        styleElementRef.current.textContent = `
+          #chat-room-div:not([hidden]) {
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          
+          #shuang-chat-box-portal {
+            display: flex;
+            flex-direction: column;
+            flex: ${ratio};
+            min-height: 60px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-bottom: 2px solid #007acc;
+          }
+          
+          #shuang-chat-box-portal[hidden] {
+            display: none !important;
+          }
+          
+          #TextAreaChatLog {
+            flex: ${1 - ratio} !important;
+            min-height: 60px !important;
+            height: auto !important;
+          }
+          
+          #chat-room-bot {
+            flex-shrink: 0 !important;
+          }
+          
+          .shuang-header {
+            padding: 8px 12px;
+            background-color: #007acc;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            user-select: none;
+            flex-shrink: 0;
+          }
+          
+          .shuang-content {
+            flex: 1;
+            overflow: auto;
+            padding: 8px;
+            font-size: 14px;
+            color: #333;
+            min-height: 30px;
+          }
+          
+          .shuang-drag-handle {
+            height: 6px;
+            background-color: #007acc;
+            cursor: row-resize;
+            flex-shrink: 0;
+            transition: background-color 0.2s;
+          }
+          
+          .shuang-drag-handle:hover {
+            background-color: #005a9e;
+          }
+          
+          .shuang-drag-handle.dragging {
+            background-color: #004578;
+          }
+        `;
+        log('SHUANG_CHAT_BOX', 'CSS 样式已更新，霜语比例:', ratio, '游戏文本框比例:', 1 - ratio);
+      } else {
+        styleElementRef.current.textContent = `
+          #TextAreaChatLog {
+            flex: none !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+        `;
+        log('SHUANG_CHAT_BOX', '已恢复游戏文本框原始样式');
+      }
     }
   }, []);
 
   useEffect(() => {
-    console.log('[ShuangDialog] 霜语开关状态:', chatBoxEnabled);
+    log('SHUANG_CHAT_BOX', '霜语开关状态:', chatBoxEnabled);
 
     const gameChatBoxElement = document.getElementById('chat-room-div');
     const textAreaElement = document.getElementById('TextAreaChatLog');
@@ -99,7 +111,7 @@ export const ShuangChatBox: React.FC = () => {
     }
 
     if (!isInitializedRef.current) {
-      console.log('[ShuangDialog] 初始化霜语组件');
+      log('SHUANG_CHAT_BOX', '初始化霜语组件');
 
       const styleEl = document.createElement('style');
       styleEl.id = 'shuang-chat-box-style';
@@ -117,10 +129,10 @@ export const ShuangChatBox: React.FC = () => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'hidden') {
             const portalEl = document.getElementById('shuang-chat-box-portal');
             if (gameChatBoxElement.hasAttribute('hidden')) {
-              console.log('[ShuangDialog] 检测到游戏隐藏，同步隐藏霜语');
+              log('SHUANG_CHAT_BOX', '检测到游戏隐藏，同步隐藏霜语');
               portalEl?.setAttribute('hidden', '');
             } else if (chatBoxEnabled) {
-              console.log('[ShuangDialog] 检测到游戏显示，同步显示霜语');
+              log('SHUANG_CHAT_BOX', '检测到游戏显示，同步显示霜语');
               portalEl?.removeAttribute('hidden');
             }
           }
@@ -136,9 +148,9 @@ export const ShuangChatBox: React.FC = () => {
         container.setAttribute('hidden', '');
       }
 
-      updateStyles(heightRatio);
+      updateStyles(heightRatio, chatBoxEnabled);
 
-      console.log('[ShuangDialog] 已初始化霜语组件');
+      log('SHUANG_CHAT_BOX', '已初始化霜语组件');
     }
 
     const portalEl = document.getElementById('shuang-chat-box-portal');
@@ -149,11 +161,12 @@ export const ShuangChatBox: React.FC = () => {
         } else {
           portalEl.removeAttribute('hidden');
         }
-        updateStyles(heightRatio);
-        console.log('[ShuangDialog] 显示霜语');
+        updateStyles(heightRatio, true);
+        log('SHUANG_CHAT_BOX', '显示霜语');
       } else {
         portalEl.setAttribute('hidden', '');
-        console.log('[ShuangDialog] 隐藏霜语');
+        updateStyles(heightRatio, false);
+        log('SHUANG_CHAT_BOX', '隐藏霜语，恢复游戏文本框高度');
       }
     }
 
@@ -186,14 +199,14 @@ export const ShuangChatBox: React.FC = () => {
       const deltaRatio = deltaY / gameRect.height;
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
-      console.log('[ShuangDialog] 拖拽中，新比例:', newRatio);
+      log('SHUANG_CHAT_BOX', '拖拽中，新比例:', newRatio);
       setHeightRatio(newRatio);
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        console.log('[ShuangDialog] 拖拽结束，最终高度比例:', heightRatio);
+        log('SHUANG_CHAT_BOX', '拖拽结束，最终高度比例:', heightRatio);
       }
     };
 
@@ -213,7 +226,7 @@ export const ShuangChatBox: React.FC = () => {
     setIsDragging(true);
     dragStartYRef.current = e.clientY;
     dragStartRatioRef.current = heightRatio;
-    console.log('[ShuangDialog] 开始拖拽调整高度，当前比例:', heightRatio);
+    log('SHUANG_CHAT_BOX', '开始拖拽调整高度，当前比例:', heightRatio);
   };
 
   if (!portalContainer) {

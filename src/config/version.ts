@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.12';
+export const APP_VERSION = 'v2.7.13';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -167,6 +167,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.12',
     date: '2026-03-13',
     description: '重写霜语文本框：简化结构，直接在portal容器上设置flex，确保拖拽调整高度功能正常工作'
+  },
+  {
+    version: 'v2.7.13',
+    date: '2026-03-13',
+    description: '优化调试系统：1.创建调试配置文件控制日志输出；2.修复关闭霜语后游戏文本框高度未恢复的问题'
   }
 ];
 
