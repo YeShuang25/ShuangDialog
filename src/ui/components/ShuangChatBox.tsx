@@ -18,6 +18,7 @@ export const ShuangChatBox: React.FC = () => {
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
   const originalHeightRef = useRef<string>('');
+  const domWatcherRef = useRef<MutationObserver | null>(null);
 
   const updateStyles = useCallback((ratio: number, enabled: boolean) => {
     if (styleElementRef.current) {
@@ -100,78 +101,104 @@ export const ShuangChatBox: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    log('SHUANG_CHAT_BOX', '霜语开关状态:', chatBoxEnabled);
-
+  const initializeShuangChatBox = useCallback(() => {
     const gameChatBoxElement = document.getElementById('chat-room-div');
     const textAreaElement = document.getElementById('TextAreaChatLog');
 
     if (!gameChatBoxElement || !textAreaElement) {
-      console.warn('[ShuangDialog] 未找到游戏文本框元素');
-      return;
+      log('SHUANG_CHAT_BOX', '聊天框元素尚未出现，等待中...');
+      return false;
     }
 
-    if (!isInitializedRef.current) {
-      log('SHUANG_CHAT_BOX', '初始化霜语组件');
+    if (isInitializedRef.current) {
+      return true;
+    }
 
-      const styleEl = document.createElement('style');
-      styleEl.id = 'shuang-chat-box-style';
-      document.head.appendChild(styleEl);
-      styleElementRef.current = styleEl;
+    log('SHUANG_CHAT_BOX', '初始化霜语组件');
 
-      const container = document.createElement('div');
-      container.id = 'shuang-chat-box-portal';
-      gameChatBoxElement.insertBefore(container, textAreaElement);
-      setPortalContainer(container);
-      isInitializedRef.current = true;
+    const styleEl = document.createElement('style');
+    styleEl.id = 'shuang-chat-box-style';
+    document.head.appendChild(styleEl);
+    styleElementRef.current = styleEl;
 
-      const originalHeight = textAreaElement.style.height || 'auto';
-      originalHeightRef.current = originalHeight;
-      log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
+    const container = document.createElement('div');
+    container.id = 'shuang-chat-box-portal';
+    gameChatBoxElement.insertBefore(container, textAreaElement);
+    setPortalContainer(container);
+    isInitializedRef.current = true;
 
-      observerRef.current = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'hidden') {
-            const portalEl = document.getElementById('shuang-chat-box-portal');
-            if (gameChatBoxElement.hasAttribute('hidden')) {
-              log('SHUANG_CHAT_BOX', '检测到游戏隐藏，同步隐藏霜语');
-              portalEl?.setAttribute('hidden', '');
-            } else if (chatBoxEnabled) {
-              log('SHUANG_CHAT_BOX', '检测到游戏显示，同步显示霜语');
-              portalEl?.removeAttribute('hidden');
-            }
+    const originalHeight = textAreaElement.style.height || 'auto';
+    originalHeightRef.current = originalHeight;
+    log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
+
+    observerRef.current = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'hidden') {
+          const portalEl = document.getElementById('shuang-chat-box-portal');
+          if (gameChatBoxElement.hasAttribute('hidden')) {
+            log('SHUANG_CHAT_BOX', '检测到游戏隐藏，同步隐藏霜语');
+            portalEl?.setAttribute('hidden', '');
+          } else if (chatBoxEnabled) {
+            log('SHUANG_CHAT_BOX', '检测到游戏显示，同步显示霜语');
+            portalEl?.removeAttribute('hidden');
+          }
+        }
+      });
+    });
+
+    observerRef.current.observe(gameChatBoxElement, {
+      attributes: true,
+      attributeFilter: ['hidden']
+    });
+
+    if (gameChatBoxElement.hasAttribute('hidden')) {
+      container.setAttribute('hidden', '');
+    }
+
+    updateStyles(heightRatio, chatBoxEnabled);
+
+    log('SHUANG_CHAT_BOX', '已初始化霜语组件');
+    return true;
+  }, [chatBoxEnabled, heightRatio, updateStyles]);
+
+  useEffect(() => {
+    log('SHUANG_CHAT_BOX', '霜语开关状态:', chatBoxEnabled);
+
+    if (initializeShuangChatBox()) {
+      const gameChatBoxElement = document.getElementById('chat-room-div');
+      const portalEl = document.getElementById('shuang-chat-box-portal');
+      
+      if (portalEl && gameChatBoxElement) {
+        if (chatBoxEnabled) {
+          if (gameChatBoxElement.hasAttribute('hidden')) {
+            portalEl.setAttribute('hidden', '');
+          } else {
+            portalEl.removeAttribute('hidden');
+          }
+          updateStyles(heightRatio, true);
+          log('SHUANG_CHAT_BOX', '显示霜语');
+        } else {
+          portalEl.setAttribute('hidden', '');
+          updateStyles(heightRatio, false);
+          log('SHUANG_CHAT_BOX', '隐藏霜语，恢复游戏文本框高度');
+        }
+      }
+    } else {
+      if (!domWatcherRef.current) {
+        log('SHUANG_CHAT_BOX', '启动 DOM 监听器，等待聊天框出现');
+        
+        domWatcherRef.current = new MutationObserver(() => {
+          if (initializeShuangChatBox()) {
+            log('SHUANG_CHAT_BOX', '聊天框已出现，停止 DOM 监听');
+            domWatcherRef.current?.disconnect();
+            domWatcherRef.current = null;
           }
         });
-      });
 
-      observerRef.current.observe(gameChatBoxElement, {
-        attributes: true,
-        attributeFilter: ['hidden']
-      });
-
-      if (gameChatBoxElement.hasAttribute('hidden')) {
-        container.setAttribute('hidden', '');
-      }
-
-      updateStyles(heightRatio, chatBoxEnabled);
-
-      log('SHUANG_CHAT_BOX', '已初始化霜语组件');
-    }
-
-    const portalEl = document.getElementById('shuang-chat-box-portal');
-    if (portalEl) {
-      if (chatBoxEnabled) {
-        if (gameChatBoxElement.hasAttribute('hidden')) {
-          portalEl.setAttribute('hidden', '');
-        } else {
-          portalEl.removeAttribute('hidden');
-        }
-        updateStyles(heightRatio, true);
-        log('SHUANG_CHAT_BOX', '显示霜语');
-      } else {
-        portalEl.setAttribute('hidden', '');
-        updateStyles(heightRatio, false);
-        log('SHUANG_CHAT_BOX', '隐藏霜语，恢复游戏文本框高度');
+        domWatcherRef.current.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
       }
     }
 
@@ -184,13 +211,17 @@ export const ShuangChatBox: React.FC = () => {
         observerRef.current.disconnect();
         observerRef.current = null;
       }
+      if (domWatcherRef.current) {
+        domWatcherRef.current.disconnect();
+        domWatcherRef.current = null;
+      }
       const existingContainer = document.getElementById('shuang-chat-box-portal');
       if (existingContainer) {
         existingContainer.remove();
       }
       isInitializedRef.current = false;
     };
-  }, [chatBoxEnabled, heightRatio, updateStyles]);
+  }, [chatBoxEnabled, heightRatio, updateStyles, initializeShuangChatBox]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

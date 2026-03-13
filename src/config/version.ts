@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.15';
+export const APP_VERSION = 'v2.7.16';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -182,6 +182,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.15',
     date: '2026-03-13',
     description: '优化霜语内容区域：移除占位提示文本，添加min-height确保内容区域不会被压缩；默认打开霜语'
+  },
+  {
+    version: 'v2.7.16',
+    date: '2026-03-13',
+    description: '修复登录界面初始化失败问题：添加DOM监听器，等待聊天框组件出现后再初始化霜语'
   }
 ];
 
