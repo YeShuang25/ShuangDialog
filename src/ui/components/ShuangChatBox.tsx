@@ -17,6 +17,7 @@ export const ShuangChatBox: React.FC = () => {
   const observerRef = useRef<MutationObserver | null>(null);
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
+  const originalHeightRef = useRef<string>('');
 
   const updateStyles = useCallback((ratio: number, enabled: boolean) => {
     if (styleElementRef.current) {
@@ -90,11 +91,11 @@ export const ShuangChatBox: React.FC = () => {
         styleElementRef.current.textContent = `
           #TextAreaChatLog {
             flex: none !important;
-            height: auto !important;
+            height: ${originalHeightRef.current} !important;
             min-height: 0 !important;
           }
         `;
-        log('SHUANG_CHAT_BOX', '已恢复游戏文本框原始样式');
+        log('SHUANG_CHAT_BOX', '已恢复游戏文本框原始高度:', originalHeightRef.current);
       }
     }
   }, []);
@@ -123,6 +124,10 @@ export const ShuangChatBox: React.FC = () => {
       gameChatBoxElement.insertBefore(container, textAreaElement);
       setPortalContainer(container);
       isInitializedRef.current = true;
+
+      const originalHeight = textAreaElement.style.height || 'auto';
+      originalHeightRef.current = originalHeight;
+      log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
 
       observerRef.current = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
