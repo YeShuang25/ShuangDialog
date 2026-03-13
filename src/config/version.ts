@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.9';
+export const APP_VERSION = 'v2.8.10';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -237,6 +237,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.9',
     date: '2026-03-14',
     description: '修复隐藏霜语后游戏文本框折叠的问题：正确解析calc()格式的高度值（如calc(466.472px)），提取实际像素值用于恢复高度'
+  },
+  {
+    version: 'v2.8.10',
+    date: '2026-03-14',
+    description: '修复隐藏霜语后游戏文本框折叠的问题：隐藏霜语时清除portal容器的flex样式，避免影响游戏文本框高度计算'
   }
 ];
 

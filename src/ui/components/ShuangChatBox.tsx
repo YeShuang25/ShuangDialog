@@ -162,6 +162,11 @@ export const ShuangChatBox: React.FC = () => {
             display: block !important;
           }
           
+          #shuang-chat-box-portal {
+            display: none !important;
+            flex: none !important;
+          }
+          
           #TextAreaChatLog {
             flex: none !important;
             height: ${originalHeightRef.current} !important;
