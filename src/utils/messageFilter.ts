@@ -59,6 +59,11 @@ export class MessageFilter {
   }
 
   private processMessage(messageElement: HTMLElement) {
+    if (messageElement.classList.contains('bce-pending')) {
+      console.log('[ShuangDialog:MessageFilter] 跳过正在发送中的消息:', messageElement);
+      return;
+    }
+
     const senderId = messageElement.getAttribute('data-sender');
     if (!senderId) {
       console.log('[ShuangDialog:MessageFilter] 消息没有senderId:', messageElement);

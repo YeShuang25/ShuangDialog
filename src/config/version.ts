@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.9.0';
+export const APP_VERSION = 'v2.9.2';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -247,6 +247,16 @@ export const VERSION_HISTORY = [
     version: 'v2.9.0',
     date: '2026-03-14',
     description: '重构霜语折叠逻辑：移除隐藏功能，改为允许用户将霜语拖动到最小高度（2%），此时标题栏和内容区域自动隐藏，只保留拖动条方便用户重新展开；拖动条高度增加到10px并添加视觉提示'
+  },
+  {
+    version: 'v2.9.1',
+    date: '2026-03-14',
+    description: '更新README文档：按照安装教程-功能介绍-开发相关的顺序重新组织文档结构，添加霜语文本框、特别关注、聊天记录导出等功能的详细说明'
+  },
+  {
+    version: 'v2.9.2',
+    date: '2026-03-14',
+    description: '修复特别关注自己的问题：跳过bce-pending类（正在发送中）的消息，避免霜语监控未发送完成的消息导致游戏文本框中的消息无法正常消失'
   }
 ];
 
