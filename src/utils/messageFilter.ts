@@ -66,10 +66,16 @@ export class MessageFilter {
     }
 
     const followedPlayerIds = useShuangConfigStore.getState().followedPlayerIds;
-    const isFollowed = followedPlayerIds.includes(senderId);
-    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 是否关注: ${isFollowed}, 关注列表:`, followedPlayerIds);
+    const isSenderFollowed = followedPlayerIds.includes(senderId);
     
-    if (!isFollowed) {
+    let isTargetFollowed = false;
+    if (!isSenderFollowed && messageElement.classList.contains('ChatMessageActivity')) {
+      isTargetFollowed = this.checkTargetPlayer(messageElement, followedPlayerIds);
+    }
+    
+    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 目标是否关注: ${isTargetFollowed}, 关注列表:`, followedPlayerIds);
+    
+    if (!isSenderFollowed && !isTargetFollowed) {
       return;
     }
 
@@ -88,6 +94,31 @@ export class MessageFilter {
       console.log('[ShuangDialog:MessageFilter] 添加关注玩家消息:', messageData.senderName || senderId);
       console.log('[ShuangDialog:MessageFilter] 当前消息列表:', useShuangMessagesStore.getState().messages);
     }
+  }
+
+  private checkTargetPlayer(messageElement: HTMLElement, followedPlayerIds: string[]): boolean {
+    const textContent = messageElement.textContent || '';
+    
+    const nameButtons = document.querySelectorAll('.ChatMessageName');
+    const playerIdMap = new Map<string, string>();
+    
+    nameButtons.forEach((btn) => {
+      const name = btn.textContent?.trim();
+      const message = btn.closest('.ChatMessage');
+      const id = message?.getAttribute('data-sender');
+      if (name && id) {
+        playerIdMap.set(name, id);
+      }
+    });
+    
+    for (const [name, id] of playerIdMap) {
+      if (followedPlayerIds.includes(id) && textContent.includes(name)) {
+        console.log(`[ShuangDialog:MessageFilter] 检测到目标玩家 ${name} (${id}) 在消息中`);
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   private getMessageId(element: HTMLElement): string {

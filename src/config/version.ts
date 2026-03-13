@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.5';
+export const APP_VERSION = 'v2.8.7';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -217,6 +217,16 @@ export const VERSION_HISTORY = [
     version: 'v2.8.5',
     date: '2026-03-13',
     description: '修复多个问题：1.修复拖动条占用大量位置的问题（优化CSS替换逻辑）；2.修复重开霜语后内容消失的问题（添加chatBoxEnabled依赖触发渲染）；3.修复重开时重复添加消息的问题（停止时不清空messageIdSet）；4.修复reply按钮失灵的问题（为克隆按钮重新绑定点击事件，转发到原始按钮）'
+  },
+  {
+    version: 'v2.8.6',
+    date: '2026-03-14',
+    description: '修复多个问题：1.修复霜语隐藏后游戏聊天框无限延长的问题（使用getComputedStyle获取实际高度，关闭时直接设置style.height）；2.修复reply按钮不起作用的问题（添加preventDefault和stopPropagation）；3.修复霜语字体大小不随窗口缩放的问题（使用em单位继承父元素字体大小）；4.实现目标玩家相关的消息筛选功能（检测活动消息中是否包含关注玩家的名字）'
+  },
+  {
+    version: 'v2.8.7',
+    date: '2026-03-14',
+    description: '新增功能：在霜语标题栏添加字体倍数调整功能。玩家可以通过输入框调整字体大小倍数（0.5-2.0），该倍数会在原有字体大小基础上进行缩放，设置会自动保存到本地存储'
   }
 ];
 

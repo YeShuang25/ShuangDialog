@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
 import { useShuangMessagesStore } from '../../store/useShuangMessagesStore';
+import { useShuangConfigStore } from '../../store/useShuangConfigStore';
 import { createPortal } from 'react-dom';
 import { log } from '../../config/debug';
 import { messageFilter } from '../../utils/messageFilter';
@@ -12,9 +13,11 @@ const DEFAULT_HEIGHT_RATIO = 0.33;
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
   const messages = useShuangMessagesStore((state) => state.messages);
+  const { fontScale, setFontScale } = useShuangConfigStore();
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [heightRatio, setHeightRatio] = useState(DEFAULT_HEIGHT_RATIO);
   const [isDragging, setIsDragging] = useState(false);
+  const [localFontScale, setLocalFontScale] = useState(fontScale.toString());
   const styleElementRef = useRef<HTMLStyleElement | null>(null);
   const isInitializedRef = useRef(false);
   const observerRef = useRef<MutationObserver | null>(null);
@@ -25,7 +28,7 @@ export const ShuangChatBox: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const messageFilterStartedRef = useRef(false);
 
-  const updateStyles = useCallback((ratio: number, enabled: boolean) => {
+  const updateStyles = useCallback((ratio: number, enabled: boolean, scale: number) => {
     if (styleElementRef.current) {
       if (enabled) {
         styleElementRef.current.textContent = `
@@ -61,17 +64,58 @@ export const ShuangChatBox: React.FC = () => {
             padding: 8px 12px;
             background-color: #007acc;
             color: white;
-            font-size: 14px;
+            font-size: 0.7em;
             font-weight: 500;
             user-select: none;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          
+          .shuang-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          
+          .shuang-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          
+          .shuang-font-scale-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+          }
+          
+          .shuang-font-scale-input {
+            width: 45px;
+            padding: 2px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9em;
+            text-align: center;
+          }
+          
+          .shuang-font-scale-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(255, 255, 255, 0.2);
+          }
+          
+          .shuang-font-scale-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
           }
           
           .shuang-content {
             flex: 1;
             overflow: auto;
             padding: 4px;
-            font-size: 14px;
+            font-size: calc(1em * ${scale});
             color: #333;
             min-height: 0;
           }
@@ -109,7 +153,7 @@ export const ShuangChatBox: React.FC = () => {
             color: #999;
             text-align: center;
             margin-top: 20px;
-            font-size: 13px;
+            font-size: 0.9em;
           }
         `;
       } else {
@@ -120,8 +164,9 @@ export const ShuangChatBox: React.FC = () => {
           
           #TextAreaChatLog {
             flex: none !important;
-            height: ${originalHeightRef.current} !important;
+            height: var(--original-height, ${originalHeightRef.current}) !important;
             min-height: 0 !important;
+            max-height: none !important;
           }
         `;
       }
@@ -154,8 +199,10 @@ export const ShuangChatBox: React.FC = () => {
     setPortalContainer(container);
     isInitializedRef.current = true;
 
-    const originalHeight = textAreaElement.style.height || 'auto';
+    const computedStyle = window.getComputedStyle(textAreaElement);
+    const originalHeight = computedStyle.height;
     originalHeightRef.current = originalHeight;
+    textAreaElement.style.setProperty('--original-height', originalHeight);
     log('SHUANG_CHAT_BOX', '保存游戏文本框原始高度:', originalHeight);
 
     observerRef.current = new MutationObserver((mutations) => {
@@ -182,11 +229,11 @@ export const ShuangChatBox: React.FC = () => {
       container.setAttribute('hidden', '');
     }
 
-    updateStyles(heightRatio, chatBoxEnabled);
+    updateStyles(heightRatio, chatBoxEnabled, fontScale);
 
     log('SHUANG_CHAT_BOX', '已初始化霜语组件');
     return true;
-  }, [chatBoxEnabled, heightRatio, updateStyles]);
+  }, [chatBoxEnabled, heightRatio, fontScale, updateStyles]);
 
   const startMessageFilter = useCallback(() => {
     if (!messageFilterStartedRef.current && chatBoxEnabled) {
@@ -218,12 +265,17 @@ export const ShuangChatBox: React.FC = () => {
           } else {
             portalEl.removeAttribute('hidden');
           }
-          updateStyles(heightRatio, true);
+          updateStyles(heightRatio, true, fontScale);
           startMessageFilter();
         } else {
           portalEl.setAttribute('hidden', '');
-          updateStyles(heightRatio, false);
+          updateStyles(heightRatio, false, fontScale);
           stopMessageFilter();
+          
+          const textAreaElement = document.getElementById('TextAreaChatLog');
+          if (textAreaElement && originalHeightRef.current) {
+            textAreaElement.style.height = originalHeightRef.current;
+          }
         }
       }
     } else {
@@ -248,7 +300,7 @@ export const ShuangChatBox: React.FC = () => {
         });
       }
     }
-  }, [chatBoxEnabled]);
+  }, [chatBoxEnabled, fontScale]);
 
   useEffect(() => {
     if (isInitializedRef.current && chatBoxEnabled && styleElementRef.current) {
@@ -266,6 +318,27 @@ export const ShuangChatBox: React.FC = () => {
     }
   }, [heightRatio, chatBoxEnabled]);
 
+  const handleFontScaleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalFontScale(value);
+    
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0.5 && numValue <= 2.0) {
+      setFontScale(numValue);
+    }
+  }, [setFontScale]);
+
+  const handleFontScaleBlur = useCallback(() => {
+    const numValue = parseFloat(localFontScale);
+    if (isNaN(numValue) || numValue < 0.5) {
+      setLocalFontScale('0.5');
+      setFontScale(0.5);
+    } else if (numValue > 2.0) {
+      setLocalFontScale('2.0');
+      setFontScale(2.0);
+    }
+  }, [localFontScale, setFontScale]);
+
   const renderMessages = useCallback(() => {
     if (!contentRef.current) return;
 
@@ -282,15 +355,26 @@ export const ShuangChatBox: React.FC = () => {
         wrapper.className = 'shuang-message-wrapper';
         const clonedElement = msg.originalElement.cloneNode(true) as HTMLElement;
         
-        const replyButtons = clonedElement.querySelectorAll('button[name="reply"]');
-        replyButtons.forEach((clonedButton) => {
-          clonedButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const originalReplyButton = msg.originalElement.querySelector('button[name="reply"]');
-            if (originalReplyButton) {
-              (originalReplyButton as HTMLElement).click();
-            }
-          });
+        clonedElement.querySelectorAll('button[name="reply"]').forEach((clonedButton) => {
+          const originalButton = msg.originalElement.querySelector('button[name="reply"]');
+          if (originalButton) {
+            clonedButton.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              (originalButton as HTMLElement).click();
+            });
+          }
+        });
+        
+        clonedElement.querySelectorAll('.ChatMessageName').forEach((clonedNameBtn) => {
+          const originalNameBtn = msg.originalElement.querySelector('.ChatMessageName');
+          if (originalNameBtn) {
+            clonedNameBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              (originalNameBtn as HTMLElement).click();
+            });
+          }
         });
         
         wrapper.appendChild(clonedElement);
@@ -380,7 +464,24 @@ export const ShuangChatBox: React.FC = () => {
   return createPortal(
     <>
       <div className="shuang-header">
-        霜语 {messages.length > 0 && `(${messages.length})`}
+        <div className="shuang-header-title">
+          霜语 {messages.length > 0 && `(${messages.length})`}
+        </div>
+        <div className="shuang-header-controls">
+          <span className="shuang-font-scale-label">字体:</span>
+          <input
+            type="number"
+            className="shuang-font-scale-input"
+            value={localFontScale}
+            onChange={handleFontScaleChange}
+            onBlur={handleFontScaleBlur}
+            placeholder="1.0"
+            min="0.5"
+            max="2.0"
+            step="0.1"
+            title="字体倍数 (0.5-2.0)"
+          />
+        </div>
       </div>
       <div className="shuang-content" ref={contentRef}></div>
       <div 
