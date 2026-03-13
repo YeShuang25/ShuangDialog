@@ -248,42 +248,62 @@ export const ShuangChatBox: React.FC = () => {
         });
       }
     }
-
-    return () => {
-      if (styleElementRef.current) {
-        styleElementRef.current.remove();
-        styleElementRef.current = null;
-      }
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-      if (domWatcherRef.current) {
-        domWatcherRef.current.disconnect();
-        domWatcherRef.current = null;
-      }
-      const existingContainer = document.getElementById('shuang-chat-box-portal');
-      if (existingContainer) {
-        existingContainer.remove();
-      }
-      isInitializedRef.current = false;
-      stopMessageFilter();
-    };
   }, [chatBoxEnabled]);
 
   useEffect(() => {
     if (isInitializedRef.current && chatBoxEnabled && styleElementRef.current) {
-      const currentRatio = heightRatio;
-      styleElementRef.current.textContent = styleElementRef.current.textContent.replace(
-        /flex: [\d.]+;/g,
-        `flex: ${currentRatio};`
-      );
-      styleElementRef.current.textContent = styleElementRef.current.textContent.replace(
-        /flex: [\d.]+ !important;/g,
-        `flex: ${1 - currentRatio} !important;`
-      );
+      const cssText = styleElementRef.current.textContent;
+      const updatedCss = cssText
+        .replace(
+          /#shuang-chat-box-portal \{[^}]*flex: [\d.]+;/,
+          `#shuang-chat-box-portal {\n            display: flex;\n            flex-direction: column;\n            flex: ${heightRatio};`
+        )
+        .replace(
+          /#TextAreaChatLog \{[^}]*flex: [\d.]+ !important;/,
+          `#TextAreaChatLog {\n            flex: ${1 - heightRatio} !important;`
+        );
+      styleElementRef.current.textContent = updatedCss;
     }
   }, [heightRatio, chatBoxEnabled]);
+
+  const renderMessages = useCallback(() => {
+    if (!contentRef.current) return;
+
+    contentRef.current.innerHTML = '';
+
+    if (messages.length === 0) {
+      const emptyHint = document.createElement('div');
+      emptyHint.className = 'shuang-empty-hint';
+      emptyHint.textContent = '暂无关注的消息';
+      contentRef.current.appendChild(emptyHint);
+    } else {
+      messages.forEach((msg) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'shuang-message-wrapper';
+        const clonedElement = msg.originalElement.cloneNode(true) as HTMLElement;
+        
+        const replyButtons = clonedElement.querySelectorAll('button[name="reply"]');
+        replyButtons.forEach((clonedButton) => {
+          clonedButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const originalReplyButton = msg.originalElement.querySelector('button[name="reply"]');
+            if (originalReplyButton) {
+              (originalReplyButton as HTMLElement).click();
+            }
+          });
+        });
+        
+        wrapper.appendChild(clonedElement);
+        contentRef.current!.appendChild(wrapper);
+      });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (chatBoxEnabled) {
+      renderMessages();
+    }
+  }, [chatBoxEnabled, renderMessages]);
 
   useEffect(() => {
     if (contentRef.current && messages.length > 0) {
@@ -331,24 +351,27 @@ export const ShuangChatBox: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!contentRef.current) return;
-
-    contentRef.current.innerHTML = '';
-
-    if (messages.length === 0) {
-      const emptyHint = document.createElement('div');
-      emptyHint.className = 'shuang-empty-hint';
-      emptyHint.textContent = '暂无关注的消息';
-      contentRef.current.appendChild(emptyHint);
-    } else {
-      messages.forEach((msg) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'shuang-message-wrapper';
-        wrapper.appendChild(msg.originalElement.cloneNode(true));
-        contentRef.current!.appendChild(wrapper);
-      });
-    }
-  }, [messages]);
+    return () => {
+      if (styleElementRef.current) {
+        styleElementRef.current.remove();
+        styleElementRef.current = null;
+      }
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      if (domWatcherRef.current) {
+        domWatcherRef.current.disconnect();
+        domWatcherRef.current = null;
+      }
+      const existingContainer = document.getElementById('shuang-chat-box-portal');
+      if (existingContainer) {
+        existingContainer.remove();
+      }
+      isInitializedRef.current = false;
+      stopMessageFilter();
+    };
+  }, [stopMessageFilter]);
 
   if (!portalContainer) {
     return null;

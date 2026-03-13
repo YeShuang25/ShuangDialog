@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.4';
+export const APP_VERSION = 'v2.8.5';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -212,6 +212,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.4',
     date: '2026-03-13',
     description: '修复三个关键问题：1.修复霜语隐藏后游戏聊天框高度未恢复的问题（添加display:block样式）；2.修复拖动高度时重复添加消息的问题（使用正则替换CSS而非重新生成）；3.修复reply按钮失灵的问题（使用DOM操作替代dangerouslySetInnerHTML）'
+  },
+  {
+    version: 'v2.8.5',
+    date: '2026-03-13',
+    description: '修复多个问题：1.修复拖动条占用大量位置的问题（优化CSS替换逻辑）；2.修复重开霜语后内容消失的问题（添加chatBoxEnabled依赖触发渲染）；3.修复重开时重复添加消息的问题（停止时不清空messageIdSet）；4.修复reply按钮失灵的问题（为克隆按钮重新绑定点击事件，转发到原始按钮）'
   }
 ];
 

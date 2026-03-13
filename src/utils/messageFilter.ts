@@ -45,8 +45,7 @@ export class MessageFilter {
       this.observer.disconnect();
       this.observer = null;
     }
-    this.messageIdSet.clear();
-    console.log('[ShuangDialog:MessageFilter] 停止消息筛选器');
+    console.log('[ShuangDialog:MessageFilter] 停止消息筛选器（保留消息ID记录）');
   }
 
   private processExistingMessages(textAreaElement: HTMLElement) {
