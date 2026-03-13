@@ -6,6 +6,7 @@ import { useActivityStore } from '../../store/useActivityStore';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
+import { PlayerIdConfig } from './PlayerIdConfig';
 
 export const MiniFloatingBall: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ export const MiniFloatingBall: React.FC = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragDistance, setDragDistance] = useState(0);
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
+  const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
@@ -200,6 +202,14 @@ export const MiniFloatingBall: React.FC = () => {
           }}
           active={chatBoxEnabled}
         />
+        <MenuItem
+          icon="👤"
+          label="特别关注玩家"
+          onClick={() => {
+            setIsPlayerIdConfigOpen(true);
+            setIsMenuOpen(false);
+          }}
+        />
         <MenuDivider />
         <MenuItem
           icon="📥"
@@ -226,6 +236,11 @@ export const MiniFloatingBall: React.FC = () => {
           {APP_VERSION}
         </div>
       </MiniMenu>
+
+      <PlayerIdConfig
+        isOpen={isPlayerIdConfigOpen}
+        onClose={() => setIsPlayerIdConfigOpen(false)}
+      />
     </>
   );
 };

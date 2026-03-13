@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
+import { useShuangMessagesStore } from '../../store/useShuangMessagesStore';
 import { createPortal } from 'react-dom';
 import { log } from '../../config/debug';
+import { messageFilter } from '../../utils/messageFilter';
 
 const MIN_HEIGHT_RATIO = 0.1;
 const MAX_HEIGHT_RATIO = 0.9;
@@ -9,6 +11,7 @@ const DEFAULT_HEIGHT_RATIO = 0.33;
 
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
+  const { messages } = useShuangMessagesStore();
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [heightRatio, setHeightRatio] = useState(DEFAULT_HEIGHT_RATIO);
   const [isDragging, setIsDragging] = useState(false);
@@ -19,6 +22,7 @@ export const ShuangChatBox: React.FC = () => {
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
   const originalHeightRef = useRef<string>('');
   const domWatcherRef = useRef<MutationObserver | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const updateStyles = useCallback((ratio: number, enabled: boolean) => {
     if (styleElementRef.current) {
@@ -85,6 +89,44 @@ export const ShuangChatBox: React.FC = () => {
           
           .shuang-drag-handle.dragging {
             background-color: #004578;
+          }
+          
+          .shuang-message {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            background-color: rgba(0, 122, 204, 0.1);
+            border-left: 3px solid #007acc;
+            border-radius: 4px;
+          }
+          
+          .shuang-message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #666;
+          }
+          
+          .shuang-message-time {
+            margin-right: 8px;
+          }
+          
+          .shuang-message-sender {
+            font-weight: 500;
+            color: #007acc;
+          }
+          
+          .shuang-message-content {
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+          }
+          
+          .shuang-empty-hint {
+            color: #999;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
           }
         `;
         log('SHUANG_CHAT_BOX', 'CSS 样式已更新，霜语比例:', ratio, '游戏文本框比例:', 1 - ratio);
@@ -176,10 +218,12 @@ export const ShuangChatBox: React.FC = () => {
             portalEl.removeAttribute('hidden');
           }
           updateStyles(heightRatio, true);
+          messageFilter.start();
           log('SHUANG_CHAT_BOX', '显示霜语');
         } else {
           portalEl.setAttribute('hidden', '');
           updateStyles(heightRatio, false);
+          messageFilter.stop();
           log('SHUANG_CHAT_BOX', '隐藏霜语，恢复游戏文本框高度');
         }
       }
@@ -220,8 +264,15 @@ export const ShuangChatBox: React.FC = () => {
         existingContainer.remove();
       }
       isInitializedRef.current = false;
+      messageFilter.stop();
     };
   }, [chatBoxEnabled, heightRatio, updateStyles, initializeShuangChatBox]);
+
+  useEffect(() => {
+    if (contentRef.current && messages.length > 0) {
+      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -272,9 +323,24 @@ export const ShuangChatBox: React.FC = () => {
   return createPortal(
     <>
       <div className="shuang-header">
-        霜语
+        霜语 {messages.length > 0 && `(${messages.length})`}
       </div>
-      <div className="shuang-content">
+      <div className="shuang-content" ref={contentRef}>
+        {messages.length === 0 ? (
+          <div className="shuang-empty-hint">
+            暂无关注的消息
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div key={msg.id} className="shuang-message">
+              <div className="shuang-message-header">
+                <span className="shuang-message-time">{msg.timestamp}</span>
+                <span className="shuang-message-sender">{msg.senderName}</span>
+              </div>
+              <div className="shuang-message-content">{msg.content}</div>
+            </div>
+          ))
+        )}
       </div>
       <div 
         className={`shuang-drag-handle ${isDragging ? 'dragging' : ''}`}
