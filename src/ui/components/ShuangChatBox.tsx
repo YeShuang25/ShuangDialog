@@ -16,6 +16,21 @@ export const ShuangChatBox: React.FC = () => {
   const observerRef = useRef<MutationObserver | null>(null);
   const dragStartYRef = useRef(0);
   const dragStartRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
+  const currentRatioRef = useRef(DEFAULT_HEIGHT_RATIO);
+
+  // 直接更新 DOM 样式，实现实时拖拽效果
+  const updateFlexStyles = useCallback((ratio: number) => {
+    const shuangContainer = document.querySelector('.shuang-chat-box-container') as HTMLElement;
+    const textAreaElement = document.getElementById('TextAreaChatLog') as HTMLElement;
+    
+    if (shuangContainer) {
+      shuangContainer.style.flex = String(ratio);
+    }
+    if (textAreaElement) {
+      textAreaElement.style.flex = String(1 - ratio);
+    }
+    currentRatioRef.current = ratio;
+  }, []);
 
   const updateStyles = useCallback((ratio: number) => {
     if (styleElementRef.current) {
@@ -154,6 +169,7 @@ export const ShuangChatBox: React.FC = () => {
           portalEl.removeAttribute('hidden');
         }
         updateStyles(heightRatio);
+        updateFlexStyles(heightRatio);
         console.log('[ShuangDialog] 显示霜语');
       } else {
         portalEl.setAttribute('hidden', '');
@@ -176,7 +192,7 @@ export const ShuangChatBox: React.FC = () => {
       }
       isInitializedRef.current = false;
     };
-  }, [chatBoxEnabled, heightRatio, updateStyles]);
+  }, [chatBoxEnabled, heightRatio, updateStyles, updateFlexStyles]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -190,13 +206,15 @@ export const ShuangChatBox: React.FC = () => {
       const deltaRatio = deltaY / gameRect.height;
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
+      // 实时更新 DOM 样式
+      updateFlexStyles(newRatio);
       setHeightRatio(newRatio);
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        console.log('[ShuangDialog] 拖拽结束，最终高度比例:', heightRatio);
+        console.log('[ShuangDialog] 拖拽结束，最终高度比例:', currentRatioRef.current);
       }
     };
 
@@ -209,7 +227,7 @@ export const ShuangChatBox: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, heightRatio]);
+  }, [isDragging, updateFlexStyles]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();

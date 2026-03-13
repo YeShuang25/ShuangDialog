@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.7';
+export const APP_VERSION = 'v2.7.8';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -142,6 +142,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.7',
     date: '2026-03-13',
     description: '霜语文本框功能增强：1.关闭时仅隐藏组件而非删除；2.标题改为霜语；3.添加拖拽调整高度功能，支持用户自定义霜语和游戏文本框占比（10%-90%）'
+  },
+  {
+    version: 'v2.7.8',
+    date: '2026-03-13',
+    description: '修复霜语文本框拖拽高度调整问题：使用直接DOM操作实现实时同步更新霜语和游戏文本框高度'
   }
 ];
 
