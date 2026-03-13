@@ -175,9 +175,17 @@ export const ShuangChatBox: React.FC = () => {
 
   const getOriginalHeight = useCallback((textAreaElement: HTMLElement): string => {
     const inlineHeight = textAreaElement.style.height;
-    if (inlineHeight && inlineHeight !== 'auto' && !inlineHeight.includes('calc(')) {
-      log('SHUANG_CHAT_BOX', '使用内联高度:', inlineHeight);
-      return inlineHeight;
+    if (inlineHeight && inlineHeight !== 'auto') {
+      const calcMatch = inlineHeight.match(/calc\(([\d.]+)px\)/);
+      if (calcMatch) {
+        const heightValue = `${calcMatch[1]}px`;
+        log('SHUANG_CHAT_BOX', '使用内联calc高度:', heightValue);
+        return heightValue;
+      }
+      if (!inlineHeight.includes('calc(')) {
+        log('SHUANG_CHAT_BOX', '使用内联高度:', inlineHeight);
+        return inlineHeight;
+      }
     }
     
     const gameChatBoxElement = document.getElementById('chat-room-div');
