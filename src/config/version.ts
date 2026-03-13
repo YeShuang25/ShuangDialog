@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.6';
+export const APP_VERSION = 'v2.7.7';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -137,6 +137,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.6',
     date: '2026-03-13',
     description: '修复两个问题：1.使用flex比例替代固定百分比，让输入框高度不被压缩；2.使用:not([hidden])选择器避免覆盖hidden属性，添加MutationObserver同步隐藏状态'
+  },
+  {
+    version: 'v2.7.7',
+    date: '2026-03-13',
+    description: '霜语文本框功能增强：1.关闭时仅隐藏组件而非删除；2.标题改为霜语；3.添加拖拽调整高度功能，支持用户自定义霜语和游戏文本框占比（10%-90%）'
   }
 ];
 
