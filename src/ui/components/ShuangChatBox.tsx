@@ -184,6 +184,22 @@ export const ShuangChatBox: React.FC = () => {
     return true;
   }, [chatBoxEnabled, heightRatio, updateStyles]);
 
+  const startMessageFilter = useCallback(() => {
+    if (!messageFilterStartedRef.current && chatBoxEnabled) {
+      messageFilter.start();
+      messageFilterStartedRef.current = true;
+      log('SHUANG_CHAT_BOX', '启动消息筛选器');
+    }
+  }, [chatBoxEnabled]);
+
+  const stopMessageFilter = useCallback(() => {
+    if (messageFilterStartedRef.current) {
+      messageFilter.stop();
+      messageFilterStartedRef.current = false;
+      log('SHUANG_CHAT_BOX', '停止消息筛选器');
+    }
+  }, []);
+
   useEffect(() => {
     log('SHUANG_CHAT_BOX', '霜语开关状态:', chatBoxEnabled);
 
@@ -199,21 +215,11 @@ export const ShuangChatBox: React.FC = () => {
             portalEl.removeAttribute('hidden');
           }
           updateStyles(heightRatio, true);
-          
-          if (!messageFilterStartedRef.current) {
-            messageFilter.start();
-            messageFilterStartedRef.current = true;
-            log('SHUANG_CHAT_BOX', '启动消息筛选器');
-          }
+          startMessageFilter();
         } else {
           portalEl.setAttribute('hidden', '');
           updateStyles(heightRatio, false);
-          
-          if (messageFilterStartedRef.current) {
-            messageFilter.stop();
-            messageFilterStartedRef.current = false;
-            log('SHUANG_CHAT_BOX', '停止消息筛选器');
-          }
+          stopMessageFilter();
         }
       }
     } else {
@@ -225,6 +231,10 @@ export const ShuangChatBox: React.FC = () => {
             log('SHUANG_CHAT_BOX', '聊天框已出现，停止 DOM 监听');
             domWatcherRef.current?.disconnect();
             domWatcherRef.current = null;
+            
+            if (chatBoxEnabled) {
+              startMessageFilter();
+            }
           }
         });
 
@@ -253,12 +263,9 @@ export const ShuangChatBox: React.FC = () => {
         existingContainer.remove();
       }
       isInitializedRef.current = false;
-      if (messageFilterStartedRef.current) {
-        messageFilter.stop();
-        messageFilterStartedRef.current = false;
-      }
+      stopMessageFilter();
     };
-  }, [chatBoxEnabled]);
+  }, [chatBoxEnabled, initializeShuangChatBox, updateStyles, startMessageFilter, stopMessageFilter]);
 
   useEffect(() => {
     if (isInitializedRef.current && chatBoxEnabled) {

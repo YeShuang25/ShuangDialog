@@ -1,5 +1,5 @@
 export const DEBUG_CONFIG = {
-  SHUANG_CHAT_BOX: false,
+  SHUANG_CHAT_BOX: true,
   CHAT_EXPORTER: false,
   FLOATING_BALL: false,
 };

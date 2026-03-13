@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.2';
+export const APP_VERSION = 'v2.8.3';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -202,6 +202,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.2',
     date: '2026-03-13',
     description: '修复消息筛选器无法获取消息的问题：1.将MutationObserver的subtree改为true；2.添加详细调试日志帮助诊断问题'
+  },
+  {
+    version: 'v2.8.3',
+    date: '2026-03-13',
+    description: '修复消息筛选器启动问题：1.修复聊天框延迟出现时messageFilter.start()未被调用的问题；2.将所有调试日志改为console.log确保输出；3.添加更多调试信息'
   }
 ];
 
