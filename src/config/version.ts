@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.9';
+export const APP_VERSION = 'v2.7.10';
 
 // 版本历史记录
 export const VERSION_HISTORY = [

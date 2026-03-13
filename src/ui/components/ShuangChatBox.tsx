@@ -33,6 +33,8 @@ export const ShuangChatBox: React.FC = () => {
       console.warn('[ShuangDialog] 未找到霜语容器');
     }
     if (textAreaElement) {
+      // 移除固定高度，使用 flex 布局
+      textAreaElement.style.height = 'auto';
       textAreaElement.style.flex = String(1 - ratio);
       console.log('[ShuangDialog] 游戏文本框 flex 已设置为:', 1 - ratio);
     }
@@ -49,6 +51,7 @@ export const ShuangChatBox: React.FC = () => {
         #TextAreaChatLog {
           flex: ${1 - ratio} !important;
           min-height: 0 !important;
+          height: auto !important;
         }
         #chat-room-bot {
           flex-shrink: 0 !important;
@@ -75,25 +78,24 @@ export const ShuangChatBox: React.FC = () => {
           align-items: center;
           justify-content: space-between;
           user-select: none;
-          position: relative;
         }
         .shuang-chat-box-resize-handle {
           width: 100%;
           height: 8px;
-          background-color: rgba(255, 255, 255, 0.5);
+          background-color: rgba(0, 0, 0, 0.2);
           cursor: row-resize;
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
+          position: relative;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
           transition: background-color 0.2s;
           z-index: 2;
         }
         .shuang-chat-box-resize-handle:hover {
-          background-color: rgba(255, 255, 255, 0.8);
+          background-color: rgba(0, 0, 0, 0.4);
         }
         .shuang-chat-box-resize-handle.dragging {
-          background-color: #ffffff;
+          background-color: rgba(0, 122, 204, 0.6);
         }
         .shuang-chat-box-content {
           flex: 1;
@@ -263,17 +265,17 @@ export const ShuangChatBox: React.FC = () => {
     >
       <div className="shuang-chat-box-header">
         <span>霜语</span>
-        <div 
-          className={`shuang-chat-box-resize-handle ${isDragging ? 'dragging' : ''}`}
-          onMouseDown={handleMouseDown}
-          title="拖拽调整高度"
-        />
       </div>
       <div className="shuang-chat-box-content">
         <div style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
           内容区域（待实现）
         </div>
       </div>
+      <div 
+        className={`shuang-chat-box-resize-handle ${isDragging ? 'dragging' : ''}`}
+        onMouseDown={handleMouseDown}
+        title="拖拽调整高度"
+      />
     </div>,
     portalContainer
   );
