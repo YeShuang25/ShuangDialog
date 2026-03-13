@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.8.3';
+export const APP_VERSION = 'v2.8.4';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -207,6 +207,11 @@ export const VERSION_HISTORY = [
     version: 'v2.8.3',
     date: '2026-03-13',
     description: '修复消息筛选器启动问题：1.修复聊天框延迟出现时messageFilter.start()未被调用的问题；2.将所有调试日志改为console.log确保输出；3.添加更多调试信息'
+  },
+  {
+    version: 'v2.8.4',
+    date: '2026-03-13',
+    description: '修复三个关键问题：1.修复霜语隐藏后游戏聊天框高度未恢复的问题（添加display:block样式）；2.修复拖动高度时重复添加消息的问题（使用正则替换CSS而非重新生成）；3.修复reply按钮失灵的问题（使用DOM操作替代dangerouslySetInnerHTML）'
   }
 ];
 

@@ -11,7 +11,7 @@ const DEFAULT_HEIGHT_RATIO = 0.33;
 
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
-  const { messages } = useShuangMessagesStore();
+  const messages = useShuangMessagesStore((state) => state.messages);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [heightRatio, setHeightRatio] = useState(DEFAULT_HEIGHT_RATIO);
   const [isDragging, setIsDragging] = useState(false);
@@ -114,6 +114,10 @@ export const ShuangChatBox: React.FC = () => {
         `;
       } else {
         styleElementRef.current.textContent = `
+          #chat-room-div:not([hidden]) {
+            display: block !important;
+          }
+          
           #TextAreaChatLog {
             flex: none !important;
             height: ${originalHeightRef.current} !important;
@@ -265,13 +269,21 @@ export const ShuangChatBox: React.FC = () => {
       isInitializedRef.current = false;
       stopMessageFilter();
     };
-  }, [chatBoxEnabled, initializeShuangChatBox, updateStyles, startMessageFilter, stopMessageFilter]);
+  }, [chatBoxEnabled]);
 
   useEffect(() => {
-    if (isInitializedRef.current && chatBoxEnabled) {
-      updateStyles(heightRatio, true);
+    if (isInitializedRef.current && chatBoxEnabled && styleElementRef.current) {
+      const currentRatio = heightRatio;
+      styleElementRef.current.textContent = styleElementRef.current.textContent.replace(
+        /flex: [\d.]+;/g,
+        `flex: ${currentRatio};`
+      );
+      styleElementRef.current.textContent = styleElementRef.current.textContent.replace(
+        /flex: [\d.]+ !important;/g,
+        `flex: ${1 - currentRatio} !important;`
+      );
     }
-  }, [heightRatio, chatBoxEnabled, updateStyles]);
+  }, [heightRatio, chatBoxEnabled]);
 
   useEffect(() => {
     if (contentRef.current && messages.length > 0) {
@@ -318,6 +330,26 @@ export const ShuangChatBox: React.FC = () => {
     dragStartRatioRef.current = heightRatio;
   };
 
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    contentRef.current.innerHTML = '';
+
+    if (messages.length === 0) {
+      const emptyHint = document.createElement('div');
+      emptyHint.className = 'shuang-empty-hint';
+      emptyHint.textContent = '暂无关注的消息';
+      contentRef.current.appendChild(emptyHint);
+    } else {
+      messages.forEach((msg) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'shuang-message-wrapper';
+        wrapper.appendChild(msg.originalElement.cloneNode(true));
+        contentRef.current!.appendChild(wrapper);
+      });
+    }
+  }, [messages]);
+
   if (!portalContainer) {
     return null;
   }
@@ -327,17 +359,7 @@ export const ShuangChatBox: React.FC = () => {
       <div className="shuang-header">
         霜语 {messages.length > 0 && `(${messages.length})`}
       </div>
-      <div className="shuang-content" ref={contentRef}>
-        {messages.length === 0 ? (
-          <div className="shuang-empty-hint">
-            暂无关注的消息
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <div key={msg.id} className="shuang-message-wrapper" dangerouslySetInnerHTML={{ __html: msg.originalElement.outerHTML }} />
-          ))
-        )}
-      </div>
+      <div className="shuang-content" ref={contentRef}></div>
       <div 
         className={`shuang-drag-handle ${isDragging ? 'dragging' : ''}`}
         onMouseDown={handleMouseDown}
