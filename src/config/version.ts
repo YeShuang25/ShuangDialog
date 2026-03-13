@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.9.2';
+export const APP_VERSION = 'v2.9.3';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -257,6 +257,11 @@ export const VERSION_HISTORY = [
     version: 'v2.9.2',
     date: '2026-03-14',
     description: '修复特别关注自己的问题：跳过bce-pending类（正在发送中）的消息，避免霜语监控未发送完成的消息导致游戏文本框中的消息无法正常消失'
+  },
+  {
+    version: 'v2.9.3',
+    date: '2026-03-14',
+    description: '优化字体倍数输入框宽度：从45px增加到60px，确保0.5这样的数字能够完整显示'
   }
 ];
 

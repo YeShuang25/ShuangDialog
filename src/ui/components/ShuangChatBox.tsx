@@ -89,7 +89,7 @@ export const ShuangChatBox: React.FC = () => {
           }
           
           .shuang-font-scale-input {
-            width: 45px;
+            width: 60px;
             padding: 2px 4px;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 3px;
