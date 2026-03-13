@@ -67,7 +67,7 @@ export const ShuangChatBox: React.FC = () => {
             padding: 8px;
             font-size: 14px;
             color: #333;
-            min-height: 30px;
+            min-height: 0;
           }
           
           .shuang-drag-handle {
@@ -244,9 +244,6 @@ export const ShuangChatBox: React.FC = () => {
         霜语
       </div>
       <div className="shuang-content">
-        <div style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-          内容区域（待实现）
-        </div>
       </div>
       <div 
         className={`shuang-drag-handle ${isDragging ? 'dragging' : ''}`}

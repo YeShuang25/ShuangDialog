@@ -1,5 +1,5 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.7.14';
+export const APP_VERSION = 'v2.7.15';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
@@ -177,6 +177,11 @@ export const VERSION_HISTORY = [
     version: 'v2.7.14',
     date: '2026-03-13',
     description: '修复关闭霜语后游戏文本框高度无限延长的问题：保存并恢复游戏文本框的原始高度值'
+  },
+  {
+    version: 'v2.7.15',
+    date: '2026-03-13',
+    description: '优化霜语内容区域：移除占位提示文本，添加min-height确保内容区域不会被压缩；默认打开霜语'
   }
 ];
 

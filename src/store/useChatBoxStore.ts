@@ -7,7 +7,7 @@ interface ChatBoxState {
 }
 
 export const useChatBoxStore = create<ChatBoxState>((set) => ({
-  chatBoxEnabled: false,
+  chatBoxEnabled: true,
   toggleChatBox: () => set((state) => ({ chatBoxEnabled: !state.chatBoxEnabled })),
   setChatBoxEnabled: (enabled: boolean) => set({ chatBoxEnabled: enabled })
 }));
