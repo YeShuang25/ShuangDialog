@@ -355,7 +355,7 @@ export const ShuangChatBox: React.FC = () => {
         wrapper.className = 'shuang-message-wrapper';
         
         const template = document.createElement('template');
-        template.innerHTML = msg.originalHTML.trim();
+        template.innerHTML = msg.originalElement.outerHTML.trim();
         const clonedElement = template.content.firstChild as HTMLElement;
         
         if (clonedElement) {
@@ -377,6 +377,28 @@ export const ShuangChatBox: React.FC = () => {
                 e.stopPropagation();
                 e.preventDefault();
                 (originalNameBtn as HTMLElement).click();
+              });
+            }
+          });
+          
+          clonedElement.querySelectorAll('.chat-room-sep-collapse').forEach((clonedBtn) => {
+            const originalBtn = msg.originalElement.querySelector('.chat-room-sep-collapse');
+            if (originalBtn) {
+              clonedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                (originalBtn as HTMLElement).click();
+              });
+            }
+          });
+          
+          clonedElement.querySelectorAll('.chat-room-sep-header').forEach((clonedBtn) => {
+            const originalBtn = msg.originalElement.querySelector('.chat-room-sep-header');
+            if (originalBtn) {
+              clonedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                (originalBtn as HTMLElement).click();
               });
             }
           });

@@ -175,8 +175,7 @@ export class MessageFilter {
       senderName,
       content: '',
       timestamp,
-      originalElement: element.cloneNode(true) as HTMLElement,
-      originalHTML: element.outerHTML,
+      originalElement: element,
       type
     };
   }
