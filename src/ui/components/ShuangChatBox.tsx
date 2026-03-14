@@ -120,6 +120,7 @@ export const ShuangChatBox: React.FC = () => {
             flex: 1;
             overflow: auto;
             padding: ${Math.max(1, Math.floor(sizes.padding / 2))}px ${sizes.padding}px;
+            padding-bottom: ${sizes.dragHandleHeight + Math.max(1, Math.floor(sizes.padding / 2))}px;
             font-size: calc(1em * ${scale});
             color: #333;
             min-height: 0;
@@ -352,31 +353,37 @@ export const ShuangChatBox: React.FC = () => {
       messages.forEach((msg) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'shuang-message-wrapper';
-        const clonedElement = msg.originalElement.cloneNode(true) as HTMLElement;
         
-        clonedElement.querySelectorAll('button[name="reply"]').forEach((clonedButton) => {
-          const originalButton = msg.originalElement.querySelector('button[name="reply"]');
-          if (originalButton) {
-            clonedButton.addEventListener('click', (e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              (originalButton as HTMLElement).click();
-            });
-          }
-        });
+        const template = document.createElement('template');
+        template.innerHTML = msg.originalHTML.trim();
+        const clonedElement = template.content.firstChild as HTMLElement;
         
-        clonedElement.querySelectorAll('.ChatMessageName').forEach((clonedNameBtn) => {
-          const originalNameBtn = msg.originalElement.querySelector('.ChatMessageName');
-          if (originalNameBtn) {
-            clonedNameBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              (originalNameBtn as HTMLElement).click();
-            });
-          }
-        });
+        if (clonedElement) {
+          clonedElement.querySelectorAll('button[name="reply"]').forEach((clonedButton) => {
+            const originalButton = msg.originalElement.querySelector('button[name="reply"]');
+            if (originalButton) {
+              clonedButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                (originalButton as HTMLElement).click();
+              });
+            }
+          });
+          
+          clonedElement.querySelectorAll('.ChatMessageName').forEach((clonedNameBtn) => {
+            const originalNameBtn = msg.originalElement.querySelector('.ChatMessageName');
+            if (originalNameBtn) {
+              clonedNameBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                (originalNameBtn as HTMLElement).click();
+              });
+            }
+          });
+          
+          wrapper.appendChild(clonedElement);
+        }
         
-        wrapper.appendChild(clonedElement);
         contentRef.current!.appendChild(wrapper);
       });
     }

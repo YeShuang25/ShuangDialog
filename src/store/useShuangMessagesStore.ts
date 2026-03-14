@@ -7,6 +7,7 @@ export interface ShuangMessage {
   content: string;
   timestamp: string;
   originalElement: HTMLElement;
+  originalHTML: string;
   type: 'chat' | 'activity' | 'whisper' | 'private';
 }
 
