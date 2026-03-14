@@ -14,7 +14,9 @@ export default defineConfig({
       output: {
         entryFileNames: 'main.js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
+        assetFileNames: '[name].[ext]',
+        format: 'iife',
+        inlineDynamicImports: true
       }
     },
     minify: 'terser',
@@ -37,6 +39,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true
+    host: true,
+    cors: true
+  },
+  preview: {
+    port: 3000,
+    host: true,
+    cors: true
   }
 });
