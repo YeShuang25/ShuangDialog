@@ -33,6 +33,21 @@ export const ShuangChatBox: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const messageFilterStartedRef = useRef(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const isAtBottomRef = useRef(true);
+
+  const scrollToBottom = useCallback(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    }
+  }, []);
+
+  const checkIfAtBottom = useCallback(() => {
+    if (contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      return scrollHeight - scrollTop - clientHeight < 10;
+    }
+    return true;
+  }, []);
 
   const calculateDynamicSizes = useCallback((containerHeight: number) => {
     const headerHeight = Math.max(MIN_HEADER_HEIGHT, Math.round(containerHeight * HEADER_HEIGHT_RATIO));
@@ -222,6 +237,10 @@ export const ShuangChatBox: React.FC = () => {
                 log('SHUANG_CHAT_BOX', '游戏文本框重新显示，滚动到底部');
               }, 100);
             }
+            setTimeout(() => {
+              scrollToBottom();
+              log('SHUANG_CHAT_BOX', '霜语文本框重新显示，滚动到底部');
+            }, 100);
           }
         }
       });
@@ -362,9 +381,25 @@ export const ShuangChatBox: React.FC = () => {
 
   useEffect(() => {
     if (contentRef.current && messages.length > 0) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+      if (isAtBottomRef.current) {
+        scrollToBottom();
+      }
     }
-  }, [messages]);
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const handleScroll = () => {
+      isAtBottomRef.current = checkIfAtBottom();
+    };
+
+    content.addEventListener('scroll', handleScroll);
+    return () => {
+      content.removeEventListener('scroll', handleScroll);
+    };
+  }, [checkIfAtBottom]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -379,6 +414,10 @@ export const ShuangChatBox: React.FC = () => {
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
       setHeightRatio(newRatio);
+      
+      if (isAtBottomRef.current) {
+        scrollToBottom();
+      }
     };
 
     const handleMouseUp = () => {
@@ -396,7 +435,7 @@ export const ShuangChatBox: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, scrollToBottom]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
