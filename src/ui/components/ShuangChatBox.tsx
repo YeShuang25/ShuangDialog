@@ -79,9 +79,10 @@ export const ShuangChatBox: React.FC = () => {
             display: flex;
             flex-direction: column;
             flex: ${ratio};
-            min-height: 20px;
+            min-height: ${sizes.dragHandleHeight}px;
             background-color: rgba(255, 255, 255, 0.95);
             border-bottom: 2px solid #007acc;
+            position: relative;
           }
           
           #TextAreaChatLog {
@@ -95,7 +96,7 @@ export const ShuangChatBox: React.FC = () => {
           }
           
           .shuang-header {
-            height: ${sizes.headerHeight}px;
+            height: ${isCollapsed ? 0 : sizes.headerHeight}px;
             padding: 0 ${sizes.padding}px;
             background-color: #007acc;
             color: white;
@@ -103,8 +104,11 @@ export const ShuangChatBox: React.FC = () => {
             font-weight: 500;
             user-select: none;
             flex-shrink: 0;
-            display: ${isCollapsed ? 'none' : 'flex'};
+            display: flex;
             align-items: center;
+            overflow: hidden;
+            transition: height 0.15s ease, opacity 0.15s ease;
+            opacity: ${isCollapsed ? 0 : 1};
           }
           
           .shuang-header-title {
@@ -123,14 +127,19 @@ export const ShuangChatBox: React.FC = () => {
           }
           
           .shuang-drag-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             height: ${sizes.dragHandleHeight}px;
             background-color: #007acc;
             cursor: row-resize;
             flex-shrink: 0;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, height 0.15s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 10;
           }
           
           .shuang-drag-handle:hover {
