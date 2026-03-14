@@ -1,5 +1,5 @@
 import { useShuangMessagesStore, ShuangMessage } from '../store/useShuangMessagesStore';
-import { useShuangConfigStore } from '../store/useShuangConfigStore';
+import { useShuangConfigStore, MessageTypeFilter } from '../store/useShuangConfigStore';
 
 export class MessageFilter {
   private observer: MutationObserver | null = null;
@@ -16,8 +16,8 @@ export class MessageFilter {
 
     console.log('[ShuangDialog:MessageFilter] 找到游戏文本框，启动消息筛选器');
     
-    const followedPlayerIds = useShuangConfigStore.getState().followedPlayerIds;
-    console.log('[ShuangDialog:MessageFilter] 当前关注的玩家ID列表:', followedPlayerIds);
+    const followedPlayers = useShuangConfigStore.getState().followedPlayers;
+    console.log('[ShuangDialog:MessageFilter] 当前关注的玩家列表:', followedPlayers);
 
     this.observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -58,6 +58,19 @@ export class MessageFilter {
     });
   }
 
+  private getMessageType(element: HTMLElement): MessageTypeFilter {
+    if (element.classList.contains('ChatMessageChat')) {
+      return 'chat';
+    }
+    if (element.classList.contains('ChatMessageEmote')) {
+      return 'emote';
+    }
+    if (element.classList.contains('ChatMessageActivity')) {
+      return 'activity';
+    }
+    return 'other';
+  }
+
   private processMessage(messageElement: HTMLElement) {
     if (messageElement.classList.contains('bce-pending')) {
       console.log('[ShuangDialog:MessageFilter] 跳过正在发送中的消息:', messageElement);
@@ -70,15 +83,35 @@ export class MessageFilter {
       return;
     }
 
-    const followedPlayerIds = useShuangConfigStore.getState().followedPlayerIds;
-    const isSenderFollowed = followedPlayerIds.includes(senderId);
+    const messageType = this.getMessageType(messageElement);
+    const followedPlayers = useShuangConfigStore.getState().followedPlayers;
+    const senderPlayer = followedPlayers.find(p => p.id === senderId);
     
-    let isTargetFollowed = false;
-    if (!isSenderFollowed && messageElement.classList.contains('ChatMessageActivity')) {
-      isTargetFollowed = this.checkTargetPlayer(messageElement, followedPlayerIds);
+    const isSenderFollowed = !!senderPlayer;
+    const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
+    
+    if (isSenderFollowed && !isMessageTypeEnabled) {
+      console.log(`[ShuangDialog:MessageFilter] 玩家 ${senderId} 的消息类型 ${messageType} 未启用，跳过`);
+      return;
     }
     
-    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 目标是否关注: ${isTargetFollowed}, 关注列表:`, followedPlayerIds);
+    let isTargetFollowed = false;
+    let targetPlayerId: string | null = null;
+    if (!isSenderFollowed && messageElement.classList.contains('ChatMessageActivity')) {
+      const result = this.checkTargetPlayerWithId(messageElement, followedPlayers);
+      isTargetFollowed = result.isFollowed;
+      targetPlayerId = result.playerId;
+      
+      if (isTargetFollowed && targetPlayerId) {
+        const targetPlayer = followedPlayers.find(p => p.id === targetPlayerId);
+        if (targetPlayer && !targetPlayer.messageTypes.includes(messageType)) {
+          console.log(`[ShuangDialog:MessageFilter] 目标玩家 ${targetPlayerId} 的消息类型 ${messageType} 未启用，跳过`);
+          return;
+        }
+      }
+    }
+    
+    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 目标是否关注: ${isTargetFollowed}`);
     
     if (!isSenderFollowed && !isTargetFollowed) {
       return;
@@ -93,7 +126,7 @@ export class MessageFilter {
     
     this.messageIdSet.add(messageId);
 
-    const messageData = this.extractMessageData(messageElement, messageId);
+    const messageData = this.extractMessageData(messageElement, messageId, messageType);
     if (messageData) {
       useShuangMessagesStore.getState().addMessage(messageData);
       console.log('[ShuangDialog:MessageFilter] 添加关注玩家消息:', messageData.senderName || senderId);
@@ -101,7 +134,7 @@ export class MessageFilter {
     }
   }
 
-  private checkTargetPlayer(messageElement: HTMLElement, followedPlayerIds: string[]): boolean {
+  private checkTargetPlayerWithId(messageElement: HTMLElement, followedPlayers: { id: string; messageTypes: MessageTypeFilter[] }[]): { isFollowed: boolean; playerId: string | null } {
     const textContent = messageElement.textContent || '';
     
     const nameButtons = document.querySelectorAll('.ChatMessageName');
@@ -117,13 +150,14 @@ export class MessageFilter {
     });
     
     for (const [name, id] of playerIdMap) {
-      if (followedPlayerIds.includes(id) && textContent.includes(name)) {
+      const player = followedPlayers.find(p => p.id === id);
+      if (player && textContent.includes(name)) {
         console.log(`[ShuangDialog:MessageFilter] 检测到目标玩家 ${name} (${id}) 在消息中`);
-        return true;
+        return { isFollowed: true, playerId: id };
       }
     }
     
-    return false;
+    return { isFollowed: false, playerId: null };
   }
 
   private getMessageId(element: HTMLElement): string {
@@ -141,7 +175,7 @@ export class MessageFilter {
     return `${senderId}-${time}-${content}`;
   }
 
-  private extractMessageData(element: HTMLElement, messageId: string): ShuangMessage | null {
+  private extractMessageData(element: HTMLElement, messageId: string, _messageType: MessageTypeFilter): ShuangMessage | null {
     const senderId = element.getAttribute('data-sender');
     const timeElement = element.querySelector('.chat-room-time');
     const nameButton = element.querySelector('.ChatMessageName');
@@ -161,6 +195,8 @@ export class MessageFilter {
     let type: ShuangMessage['type'] = 'chat';
     if (element.classList.contains('ChatMessageActivity')) {
       type = 'activity';
+    } else if (element.classList.contains('ChatMessageEmote')) {
+      type = 'emote';
     } else if (element.classList.contains('ChatMessageWhisper')) {
       type = 'whisper';
     } else if (element.classList.contains('ChatMessagePrivate')) {

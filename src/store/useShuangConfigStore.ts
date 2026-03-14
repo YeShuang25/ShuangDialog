@@ -1,45 +1,101 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type MessageTypeFilter = 'chat' | 'emote' | 'activity' | 'other';
+
+export interface FollowedPlayer {
+  id: string;
+  name: string;
+  messageTypes: MessageTypeFilter[];
+}
+
+export const ALL_MESSAGE_TYPES: MessageTypeFilter[] = ['chat', 'emote', 'activity', 'other'];
+
+const MESSAGE_TYPE_LABELS: Record<MessageTypeFilter, string> = {
+  chat: '对话',
+  emote: 'Emote',
+  activity: '动作',
+  other: '其他'
+};
+
+export const getMessageTypeLabel = (type: MessageTypeFilter): string => MESSAGE_TYPE_LABELS[type];
+
 interface ShuangConfigState {
-  followedPlayerIds: string[];
+  followedPlayers: FollowedPlayer[];
   fontScale: number;
-  addFollowedPlayerId: (playerId: string) => void;
-  removeFollowedPlayerId: (playerId: string) => void;
-  setFollowedPlayerIds: (playerIds: string[]) => void;
-  isPlayerFollowed: (playerId: string) => boolean;
+  addFollowedPlayer: (id: string, name?: string) => void;
+  removeFollowedPlayer: (id: string) => void;
+  updatePlayerName: (id: string, name: string) => void;
+  togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => void;
+  setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => void;
+  isPlayerFollowed: (id: string) => boolean;
+  getPlayerMessageTypes: (id: string) => MessageTypeFilter[];
   setFontScale: (scale: number) => void;
 }
 
 export const useShuangConfigStore = create<ShuangConfigState>()(
   persist(
     (set, get) => ({
-      followedPlayerIds: [],
+      followedPlayers: [],
       fontScale: 1.0,
       
-      addFollowedPlayerId: (playerId: string) => {
+      addFollowedPlayer: (id: string, name: string = '') => {
         set((state) => {
-          if (state.followedPlayerIds.includes(playerId)) {
+          if (state.followedPlayers.some(p => p.id === id)) {
             return state;
           }
           return {
-            followedPlayerIds: [...state.followedPlayerIds, playerId]
+            followedPlayers: [...state.followedPlayers, {
+              id,
+              name: name || id,
+              messageTypes: [...ALL_MESSAGE_TYPES]
+            }]
           };
         });
       },
       
-      removeFollowedPlayerId: (playerId: string) => {
+      removeFollowedPlayer: (id: string) => {
         set((state) => ({
-          followedPlayerIds: state.followedPlayerIds.filter(id => id !== playerId)
+          followedPlayers: state.followedPlayers.filter(p => p.id !== id)
         }));
       },
       
-      setFollowedPlayerIds: (playerIds: string[]) => {
-        set({ followedPlayerIds: playerIds });
+      updatePlayerName: (id: string, name: string) => {
+        set((state) => ({
+          followedPlayers: state.followedPlayers.map(p => 
+            p.id === id ? { ...p, name } : p
+          )
+        }));
       },
       
-      isPlayerFollowed: (playerId: string) => {
-        return get().followedPlayerIds.includes(playerId);
+      togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => {
+        set((state) => ({
+          followedPlayers: state.followedPlayers.map(p => {
+            if (p.id !== playerId) return p;
+            const types = p.messageTypes;
+            const newTypes = types.includes(messageType)
+              ? types.filter(t => t !== messageType)
+              : [...types, messageType];
+            return { ...p, messageTypes: newTypes };
+          })
+        }));
+      },
+      
+      setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => {
+        set((state) => ({
+          followedPlayers: state.followedPlayers.map(p => 
+            p.id === playerId ? { ...p, messageTypes } : p
+          )
+        }));
+      },
+      
+      isPlayerFollowed: (id: string) => {
+        return get().followedPlayers.some(p => p.id === id);
+      },
+      
+      getPlayerMessageTypes: (id: string) => {
+        const player = get().followedPlayers.find(p => p.id === id);
+        return player ? player.messageTypes : [];
       },
       
       setFontScale: (scale: number) => {
@@ -48,6 +104,17 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
     }),
     {
       name: 'shuang-config-storage',
+      migrate: (persisted: any) => {
+        if (persisted.followedPlayerIds && Array.isArray(persisted.followedPlayerIds)) {
+          persisted.followedPlayers = persisted.followedPlayerIds.map((id: string) => ({
+            id,
+            name: id,
+            messageTypes: [...ALL_MESSAGE_TYPES]
+          }));
+          delete persisted.followedPlayerIds;
+        }
+        return persisted;
+      }
     }
   )
 );
