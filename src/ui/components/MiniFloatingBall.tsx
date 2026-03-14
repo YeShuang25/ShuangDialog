@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MiniMenu, MenuItem, MenuDivider } from './MiniMenu';
+import { MiniMenu, MenuItem, MenuDivider, MenuCollapse, MenuSlider } from './MiniMenu';
 import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
 import { useChatBoxStore } from '../../store/useChatBoxStore';
+import { useShuangConfigStore } from '../../store/useShuangConfigStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 import { PlayerIdConfig } from './PlayerIdConfig';
@@ -16,10 +17,16 @@ export const MiniFloatingBall: React.FC = () => {
   const [dragDistance, setDragDistance] = useState(0);
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
+  const [openCollapseKey, setOpenCollapseKey] = useState<string | null>(null);
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
   const { chatBoxEnabled, toggleChatBox } = useChatBoxStore();
+  const { fontScale, setFontScale } = useShuangConfigStore();
+
+  const handleCollapseToggle = (key: string) => {
+    setOpenCollapseKey(prev => prev === key ? null : key);
+  };
 
   // 从localStorage加载位置
   useEffect(() => {
@@ -175,57 +182,82 @@ export const MiniFloatingBall: React.FC = () => {
         onClose={() => setIsMenuOpen(false)}
         position={position}
       >
-        <MenuItem
-          icon={debugMode ? '🔵' : '⚪'}
-          label="调试模式"
-          onClick={() => {
-            toggleDebugMode();
-            setIsMenuOpen(false);
-          }}
-          active={debugMode}
-        />
-        <MenuItem
-          icon={chatMonitorEnabled ? '👁️' : '🚫'}
-          label="聊天监控"
-          onClick={() => {
-            toggleChatMonitor();
-            setIsMenuOpen(false);
-          }}
-          active={chatMonitorEnabled}
-        />
-        <MenuItem
-          icon={chatBoxEnabled ? '💬' : '💭'}
-          label="霜语文本框"
-          onClick={() => {
-            toggleChatBox();
-            setIsMenuOpen(false);
-          }}
-          active={chatBoxEnabled}
-        />
-        <MenuItem
-          icon="👤"
-          label="特别关注玩家"
-          onClick={() => {
-            setIsPlayerIdConfigOpen(true);
-            setIsMenuOpen(false);
-          }}
-        />
+        <MenuCollapse 
+          icon="💬" 
+          label="霜语文本框" 
+          isOpen={openCollapseKey === 'chatbox'}
+          onToggle={() => handleCollapseToggle('chatbox')}
+        >
+          <MenuItem
+            icon={chatBoxEnabled ? '✅' : '⬜'}
+            label={chatBoxEnabled ? '关闭文本框' : '打开文本框'}
+            onClick={() => {
+              toggleChatBox();
+            }}
+          />
+          <MenuSlider
+            label="字体大小"
+            value={fontScale}
+            min={0.5}
+            max={2.0}
+            step={0.1}
+            onChange={(value) => setFontScale(value)}
+            displayValue={`${fontScale.toFixed(1)}x`}
+          />
+          <MenuItem
+            icon="👤"
+            label="特别关注玩家"
+            onClick={() => {
+              setIsPlayerIdConfigOpen(true);
+              setIsMenuOpen(false);
+            }}
+          />
+        </MenuCollapse>
+        
         <MenuDivider />
+        
         <MenuItem
           icon="📥"
           label="导出聊天框"
           onClick={handleExport}
         />
-        <MenuItem
-          icon="📦"
-          label="下载Activity"
-          onClick={handleDownloadActivity}
-        />
-        <MenuItem
-          icon="🗑️"
-          label="清空Activity"
-          onClick={handleClearActivity}
-        />
+        
+        <MenuDivider />
+        
+        <MenuCollapse 
+          icon="🔧" 
+          label="调试工具"
+          isOpen={openCollapseKey === 'debug'}
+          onToggle={() => handleCollapseToggle('debug')}
+        >
+          <MenuItem
+            icon={debugMode ? '🔵' : '⚪'}
+            label="调试模式"
+            onClick={() => {
+              toggleDebugMode();
+            }}
+            active={debugMode}
+          />
+          <MenuItem
+            icon={chatMonitorEnabled ? '👁️' : '🚫'}
+            label="聊天监控"
+            onClick={() => {
+              toggleChatMonitor();
+            }}
+            active={chatMonitorEnabled}
+          />
+          <MenuItem
+            icon="📦"
+            label="下载Activity"
+            onClick={handleDownloadActivity}
+          />
+          <MenuItem
+            icon="🗑️"
+            label="清空Activity"
+            onClick={handleClearActivity}
+          />
+        </MenuCollapse>
+        
         <MenuDivider />
         <div style={{
           padding: '8px 12px',

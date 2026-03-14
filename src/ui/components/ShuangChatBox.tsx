@@ -19,11 +19,10 @@ const MIN_DRAG_HANDLE_HEIGHT = 3;
 export const ShuangChatBox: React.FC = () => {
   const { chatBoxEnabled } = useChatBoxStore();
   const messages = useShuangMessagesStore((state) => state.messages);
-  const { fontScale, setFontScale } = useShuangConfigStore();
+  const { fontScale } = useShuangConfigStore();
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const [heightRatio, setHeightRatio] = useState(DEFAULT_HEIGHT_RATIO);
   const [isDragging, setIsDragging] = useState(false);
-  const [localFontScale, setLocalFontScale] = useState(fontScale.toString());
   const [chatBoxHeight, setChatBoxHeight] = useState(300);
   const styleElementRef = useRef<HTMLStyleElement | null>(null);
   const isInitializedRef = useRef(false);
@@ -40,16 +39,12 @@ export const ShuangChatBox: React.FC = () => {
     const dragHandleHeight = Math.max(MIN_DRAG_HANDLE_HEIGHT, Math.round(containerHeight * DRAG_HANDLE_HEIGHT_RATIO));
     const fontSize = Math.max(8, Math.round(headerHeight * 0.6));
     const padding = Math.max(1, Math.round(headerHeight * 0.15));
-    const gap = Math.max(1, Math.round(headerHeight * 0.1));
-    const inputWidth = Math.max(25, Math.round(headerHeight * 2.5));
     
     return {
       headerHeight,
       dragHandleHeight,
       fontSize,
-      padding,
-      gap,
-      inputWidth
+      padding
     };
   }, []);
 
@@ -95,45 +90,11 @@ export const ShuangChatBox: React.FC = () => {
             flex-shrink: 0;
             display: ${isCollapsed ? 'none' : 'flex'};
             align-items: center;
-            justify-content: space-between;
           }
           
           .shuang-header-title {
             display: flex;
             align-items: center;
-            gap: ${sizes.gap}px;
-          }
-          
-          .shuang-header-controls {
-            display: flex;
-            align-items: center;
-            gap: ${sizes.gap}px;
-          }
-          
-          .shuang-font-scale-label {
-            font-size: ${Math.max(8, sizes.fontSize - 2)}px;
-            opacity: 0.9;
-          }
-          
-          .shuang-font-scale-input {
-            width: ${sizes.inputWidth}px;
-            padding: ${Math.max(1, Math.floor(sizes.padding / 3))}px ${Math.max(2, Math.floor(sizes.padding / 2))}px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: ${Math.max(8, sizes.fontSize - 2)}px;
-            text-align: center;
-          }
-          
-          .shuang-font-scale-input:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.6);
-            background-color: rgba(255, 255, 255, 0.2);
-          }
-          
-          .shuang-font-scale-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
           }
           
           .shuang-content {
@@ -349,27 +310,6 @@ export const ShuangChatBox: React.FC = () => {
     }
   }, [heightRatio, chatBoxEnabled, fontScale, chatBoxHeight, updateStyles]);
 
-  const handleFontScaleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalFontScale(value);
-    
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0.5 && numValue <= 2.0) {
-      setFontScale(numValue);
-    }
-  }, [setFontScale]);
-
-  const handleFontScaleBlur = useCallback(() => {
-    const numValue = parseFloat(localFontScale);
-    if (isNaN(numValue) || numValue < 0.5) {
-      setLocalFontScale('0.5');
-      setFontScale(0.5);
-    } else if (numValue > 2.0) {
-      setLocalFontScale('2.0');
-      setFontScale(2.0);
-    }
-  }, [localFontScale, setFontScale]);
-
   const renderMessages = useCallback(() => {
     if (!contentRef.current) return;
 
@@ -501,21 +441,6 @@ export const ShuangChatBox: React.FC = () => {
       <div className="shuang-header">
         <div className="shuang-header-title">
           霜语 {messages.length > 0 && `(${messages.length})`}
-        </div>
-        <div className="shuang-header-controls">
-          <span className="shuang-font-scale-label">字体:</span>
-          <input
-            type="number"
-            className="shuang-font-scale-input"
-            value={localFontScale}
-            onChange={handleFontScaleChange}
-            onBlur={handleFontScaleBlur}
-            placeholder="1.0"
-            min="0.5"
-            max="2.0"
-            step="0.1"
-            title="字体倍数 (0.5-2.0)"
-          />
         </div>
       </div>
       <div className="shuang-content" ref={contentRef}></div>
