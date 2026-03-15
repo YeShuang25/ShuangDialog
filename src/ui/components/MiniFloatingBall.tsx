@@ -8,6 +8,7 @@ import { useShuangConfigStore } from '../../store/useShuangConfigStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 import { PlayerIdConfig } from './PlayerIdConfig';
+import { getAllDebugModules, toggleDebugModule, DebugModule } from '../../config/debug';
 
 export const MiniFloatingBall: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,11 +19,27 @@ export const MiniFloatingBall: React.FC = () => {
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
   const [openCollapseKey, setOpenCollapseKey] = useState<string | null>(null);
+  const [debugModules, setDebugModules] = useState(() => getAllDebugModules());
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
   const { chatBoxEnabled, toggleChatBox } = useChatBoxStore();
   const { fontScale, setFontScale } = useShuangConfigStore();
+
+  const handleToggleDebugModule = (module: DebugModule) => {
+    toggleDebugModule(module);
+    setDebugModules(getAllDebugModules());
+  };
+
+  const getDebugModuleLabel = (module: DebugModule): string => {
+    const labels: Record<DebugModule, string> = {
+      SHUANG_CHAT_BOX: '聊天框',
+      CHAT_EXPORTER: '导出',
+      FLOATING_BALL: '悬浮球',
+      MESSAGE_FILTER: '消息筛选'
+    };
+    return labels[module];
+  };
 
   const handleCollapseToggle = (key: string) => {
     setOpenCollapseKey(prev => prev === key ? null : key);
@@ -256,6 +273,19 @@ export const MiniFloatingBall: React.FC = () => {
             label="清空Activity"
             onClick={handleClearActivity}
           />
+          <MenuDivider />
+          <div style={{ padding: '4px 12px', fontSize: '11px', color: '#888' }}>
+            调试日志开关
+          </div>
+          {debugModules.map(({ module, enabled }) => (
+            <MenuItem
+              key={module}
+              icon={enabled ? '📝' : '⬜'}
+              label={getDebugModuleLabel(module)}
+              onClick={() => handleToggleDebugModule(module)}
+              active={enabled}
+            />
+          ))}
         </MenuCollapse>
         
         <MenuDivider />
