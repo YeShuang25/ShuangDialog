@@ -440,6 +440,39 @@ export const ShuangChatBox: React.FC = () => {
   }, [checkIfAtBottom]);
 
   useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const content = contentRef.current;
+      if (!content) return;
+      
+      const containerHeight = content.clientHeight;
+      const scrollAmount = Math.max(20, containerHeight * 0.1);
+      
+      const delta = e.deltaY > 0 ? scrollAmount : -scrollAmount;
+      content.scrollTop += delta;
+    };
+
+    const content = contentRef.current;
+    if (!content) {
+      const interval = setInterval(() => {
+        const contentEl = contentRef.current;
+        if (contentEl) {
+          clearInterval(interval);
+          contentEl.addEventListener('wheel', handleWheel, { passive: false });
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+    
+    content.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      content.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
 
