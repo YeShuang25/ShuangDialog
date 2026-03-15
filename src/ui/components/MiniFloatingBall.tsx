@@ -9,14 +9,10 @@ import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExp
 import { APP_VERSION } from '../../config/version';
 import { PlayerIdConfig } from './PlayerIdConfig';
 import { getAllDebugModules, toggleDebugModule, DebugModule } from '../../config/debug';
+import { useSimpleDrag } from '../hooks/useDrag';
 
 export const MiniFloatingBall: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 100 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [dragDistance, setDragDistance] = useState(0);
-  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
   const [openCollapseKey, setOpenCollapseKey] = useState<string | null>(null);
   const [debugModules, setDebugModules] = useState(() => getAllDebugModules());
@@ -45,12 +41,15 @@ export const MiniFloatingBall: React.FC = () => {
     setOpenCollapseKey(prev => prev === key ? null : key);
   };
 
+  const { position, setPosition, isDragging, bindDragEvents, getDragDistance } = useSimpleDrag(20, 100);
+
   // 从localStorage加载位置
   useEffect(() => {
     try {
       const saved = localStorage.getItem('shuang-dialog-position');
       if (saved) {
-        setPosition(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setPosition({ x: parsed.x, y: parsed.y });
       }
     } catch (error) {
       console.warn('Failed to load position:', error);
@@ -66,64 +65,18 @@ export const MiniFloatingBall: React.FC = () => {
     }
   }, []);
 
-  // 拖拽处理
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-    setMouseDownPos({ x: e.clientX, y: e.clientY });
-    setDragDistance(0);
-    e.preventDefault();
-  }, [position]);
-
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        let newX = e.clientX - dragStart.x;
-        let newY = e.clientY - dragStart.y;
-
-        // 限制在屏幕内
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-
-        newX = Math.max(0, Math.min(screenWidth - 60, newX));
-        newY = Math.max(0, Math.min(screenHeight - 30, newY));
-
-        const newPosition = { x: newX, y: newY };
-        setPosition(newPosition);
-        savePosition(newPosition);
-
-        const distance = Math.sqrt(
-          Math.pow(e.clientX - mouseDownPos.x, 2) +
-          Math.pow(e.clientY - mouseDownPos.y, 2)
-        );
-        setDragDistance(distance);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+    if (!isDragging) {
+      savePosition(position);
     }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragStart, mouseDownPos, savePosition]);
+  }, [position, isDragging, savePosition]);
 
   // 点击悬浮球
   const handleClick = useCallback(() => {
-    if (dragDistance < 5) {
+    if (getDragDistance() < 5) {
       setIsMenuOpen(!isMenuOpen);
     }
-  }, [dragDistance, isMenuOpen]);
+  }, [isMenuOpen, getDragDistance]);
 
   // 处理导出
   const handleExport = () => {
@@ -165,7 +118,7 @@ export const MiniFloatingBall: React.FC = () => {
     <>
       {/* 悬浮球 */}
       <div
-        onMouseDown={handleMouseDown}
+        {...bindDragEvents}
         onClick={handleClick}
         style={{
           position: 'fixed',
@@ -185,6 +138,7 @@ export const MiniFloatingBall: React.FC = () => {
           fontSize: '12px',
           fontWeight: 500,
           userSelect: 'none',
+          touchAction: 'none',
           transition: isDragging ? 'none' : 'transform 0.1s ease',
           transform: isDragging ? 'scale(1.05)' : 'scale(1)'
         }}

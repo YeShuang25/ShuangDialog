@@ -141,6 +141,7 @@ export const ShuangChatBox: React.FC = () => {
             align-items: center;
             justify-content: center;
             z-index: 10;
+            touch-action: none;
           }
           
           .shuang-drag-handle:hover {
@@ -472,15 +473,30 @@ export const ShuangChatBox: React.FC = () => {
     };
   }, []);
 
+  const getPositionFromEvent = (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): number => {
+    if ('touches' in e) {
+      const touches = 'nativeEvent' in e ? e.nativeEvent.touches : e.touches;
+      if (touches && touches.length > 0) {
+        return touches[0].clientY;
+      }
+    }
+    if ('clientY' in e) {
+      return e.clientY;
+    }
+    return 0;
+  };
+
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!isDragging) return;
+      e.preventDefault();
 
       const gameChatBoxElement = document.getElementById('chat-room-div');
       if (!gameChatBoxElement) return;
 
+      const clientY = getPositionFromEvent(e);
       const gameRect = gameChatBoxElement.getBoundingClientRect();
-      const deltaY = e.clientY - dragStartYRef.current;
+      const deltaY = clientY - dragStartYRef.current;
       const deltaRatio = deltaY / gameRect.height;
       const newRatio = Math.max(MIN_HEIGHT_RATIO, Math.min(MAX_HEIGHT_RATIO, dragStartRatioRef.current + deltaRatio));
 
@@ -491,27 +507,31 @@ export const ShuangChatBox: React.FC = () => {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       if (isDragging) {
         setIsDragging(false);
       }
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', handleEnd);
+      document.addEventListener('touchmove', handleMove, { passive: false });
+      document.addEventListener('touchend', handleEnd);
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
     };
   }, [isDragging, scrollToBottom]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    dragStartYRef.current = e.clientY;
+    dragStartYRef.current = getPositionFromEvent(e);
     dragStartRatioRef.current = heightRatio;
   };
 
@@ -556,7 +576,8 @@ export const ShuangChatBox: React.FC = () => {
       <div className="shuang-content" ref={contentRef}></div>
       <div 
         className={`shuang-drag-handle ${isDragging ? 'dragging' : ''}`}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
         title="拖拽调整高度"
       />
     </>,

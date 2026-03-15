@@ -29,7 +29,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   showHeader = true,
   showVersion = true
 }) => {
-  // 从localStorage加载保存的位置，如果没有则使用默认位置
   const loadSavedPosition = () => {
     try {
       const saved = localStorage.getItem(`floating-window-${title}-position`);
@@ -42,14 +41,13 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     return defaultPosition;
   };
 
-  // 从localStorage加载保存的最小化状态
   const loadSavedMinimized = () => {
     try {
       const saved = localStorage.getItem(`floating-window-${title}-minimized`);
-      return saved ? JSON.parse(saved) : true; // 默认最小化
+      return saved ? JSON.parse(saved) : true;
     } catch (error) {
       console.warn('Failed to load saved minimized state:', error);
-      return true; // 默认最小化
+      return true;
     }
   };
 
@@ -66,192 +64,202 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   const windowRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
-  // 拖拽逻辑
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const getPositionFromEvent = (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): { clientX: number; clientY: number } => {
+    if ('touches' in e) {
+      const touches = 'nativeEvent' in e ? e.nativeEvent.touches : e.touches;
+      if (touches && touches.length > 0) {
+        return {
+          clientX: touches[0].clientX,
+          clientY: touches[0].clientY
+        };
+      }
+    }
+    if ('clientX' in e) {
+      return {
+        clientX: e.clientX,
+        clientY: e.clientY
+      };
+    }
+    return { clientX: 0, clientY: 0 };
+  };
+
+  const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const pos = getPositionFromEvent(e);
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
+      x: pos.clientX - position.x,
+      y: pos.clientY - position.y
     });
-    setMouseDownPos({ x: e.clientX, y: e.clientY });
+    setMouseDownPos({ x: pos.clientX, y: pos.clientY });
     setDragDistance(0);
-
     e.preventDefault();
   }, [position]);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging) {
-      let newX = e.clientX - dragStart.x;
-      let newY = e.clientY - dragStart.y;
-      
-      // 限制窗口不超出屏幕范围
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      
-      const windowWidth = isMinimized ? 120 : size.width;
-      const windowHeight = isMinimized ? 40 : size.height;
-       
-      // 确保窗口不会超出左边界
-      newX = Math.max(0, newX);
-      // 确保窗口不会超出上边界
-      newY = Math.max(0, newY);
-      // 确保窗口不会超出右边界
-      newX = Math.min(screenWidth - windowWidth, newX);
-      // 确保窗口不会超出下边界
-      newY = Math.min(screenHeight - windowHeight, newY);
-      
-      const newPosition = { x: newX, y: newY };
-      setPosition(newPosition);
-      
-      // 保存位置到localStorage
-      try {
-        localStorage.setItem(`floating-window-${title}-position`, JSON.stringify(newPosition));
-      } catch (error) {
-        console.warn('Failed to save position:', error);
-      }
-      
-      // 计算拖拽距离
-      const distance = Math.sqrt(
-        Math.pow(e.clientX - mouseDownPos.x, 2) + 
-        Math.pow(e.clientY - mouseDownPos.y, 2)
-      );
-      setDragDistance(distance);
+  const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const pos = getPositionFromEvent(e);
+    let newX = pos.clientX - dragStart.x;
+    let newY = pos.clientY - dragStart.y;
+    
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    const windowWidth = isMinimized ? 120 : size.width;
+    const windowHeight = isMinimized ? 40 : size.height;
+     
+    newX = Math.max(0, newX);
+    newY = Math.max(0, newY);
+    newX = Math.min(screenWidth - windowWidth, newX);
+    newY = Math.min(screenHeight - windowHeight, newY);
+    
+    const newPosition = { x: newX, y: newY };
+    setPosition(newPosition);
+    
+    try {
+      localStorage.setItem(`floating-window-${title}-position`, JSON.stringify(newPosition));
+    } catch (error) {
+      console.warn('Failed to save position:', error);
     }
+    
+    const distance = Math.sqrt(
+      Math.pow(pos.clientX - mouseDownPos.x, 2) + 
+      Math.pow(pos.clientY - mouseDownPos.y, 2)
+    );
+    setDragDistance(distance);
   }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized, title]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  // 处理悬浮球点击（区分拖拽和点击）
   const handleMinimizeClick = useCallback(() => {
-    // 如果拖拽距离小于5px，认为是点击，否则是拖拽
     if (dragDistance < 5) {
       toggleMinimize();
     }
   }, [dragDistance]);
 
-  // 调整大小逻辑
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, direction: string) => {
     if (isMinimized) return;
 
+    const pos = getPositionFromEvent(e);
     setIsResizing(true);
     setResizeDirection(direction);
     setDragStart({
-      x: e.clientX,
-      y: e.clientY
+      x: pos.clientX,
+      y: pos.clientY
     });
 
     e.preventDefault();
     e.stopPropagation();
   }, [isMinimized]);
 
-  const handleResizeMouseMove = useCallback((e: MouseEvent) => {
-    if (isResizing && resizeDirection) {
-      const deltaX = e.clientX - dragStart.x;
-      const deltaY = e.clientY - dragStart.y;
-      
-      let newWidth = size.width;
-      let newHeight = size.height;
-      let newX = position.x;
-      let newY = position.y;
+  const handleResizeMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isResizing || !resizeDirection) return;
+    e.preventDefault();
+    
+    const pos = getPositionFromEvent(e);
+    const deltaX = pos.clientX - dragStart.x;
+    const deltaY = pos.clientY - dragStart.y;
+    
+    let newWidth = size.width;
+    let newHeight = size.height;
+    let newX = position.x;
+    let newY = position.y;
 
-      // 根据拖拽方向调整大小和位置
-      switch (resizeDirection) {
-        case 'n': // 上
-          newHeight = Math.max(minSize.height, size.height - deltaY);
-          newY = position.y + (size.height - newHeight);
-          break;
-        case 's': // 下
-          newHeight = Math.max(minSize.height, size.height + deltaY);
-          break;
-        case 'e': // 右
-          newWidth = Math.max(minSize.width, size.width + deltaX);
-          break;
-        case 'w': // 左
-          newWidth = Math.max(minSize.width, size.width - deltaX);
-          newX = position.x + (size.width - newWidth);
-          break;
-        case 'ne': // 右上
-          newWidth = Math.max(minSize.width, size.width + deltaX);
-          newHeight = Math.max(minSize.height, size.height - deltaY);
-          newY = position.y + (size.height - newHeight);
-          break;
-        case 'nw': // 左上
-          newWidth = Math.max(minSize.width, size.width - deltaX);
-          newHeight = Math.max(minSize.height, size.height - deltaY);
-          newX = position.x + (size.width - newWidth);
-          newY = position.y + (size.height - newHeight);
-          break;
-        case 'se': // 右下
-          newWidth = Math.max(minSize.width, size.width + deltaX);
-          newHeight = Math.max(minSize.height, size.height + deltaY);
-          break;
-        case 'sw': // 左下
-          newWidth = Math.max(minSize.width, size.width - deltaX);
-          newHeight = Math.max(minSize.height, size.height + deltaY);
-          newX = position.x + (size.width - newWidth);
-          break;
-      }
-
-      // 限制窗口不超出屏幕范围
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      
-      // 确保窗口不会超出左边界
-      newX = Math.max(0, newX);
-      // 确保窗口不会超出上边界
-      newY = Math.max(0, newY);
-      // 确保窗口不会超出右边界
-      newX = Math.min(screenWidth - newWidth, newX);
-      // 确保窗口不会超出下边界
-      newY = Math.min(screenHeight - newHeight, newY);
-      
-      // 如果位置调整导致窗口超出边界，调整窗口大小
-      if (newX < 0) {
-        newWidth = Math.max(minSize.width, newWidth + newX);
-        newX = 0;
-      }
-      if (newY < 0) {
-        newHeight = Math.max(minSize.height, newHeight + newY);
-        newY = 0;
-      }
-      if (newX + newWidth > screenWidth) {
-        newWidth = Math.max(minSize.width, screenWidth - newX);
-      }
-      if (newY + newHeight > screenHeight) {
-        newHeight = Math.max(minSize.height, screenHeight - newY);
-      }
-
-      setSize({ width: newWidth, height: newHeight });
-      setPosition({ x: newX, y: newY });
-      setDragStart({ x: e.clientX, y: e.clientY });
+    switch (resizeDirection) {
+      case 'n':
+        newHeight = Math.max(minSize.height, size.height - deltaY);
+        newY = position.y + (size.height - newHeight);
+        break;
+      case 's':
+        newHeight = Math.max(minSize.height, size.height + deltaY);
+        break;
+      case 'e':
+        newWidth = Math.max(minSize.width, size.width + deltaX);
+        break;
+      case 'w':
+        newWidth = Math.max(minSize.width, size.width - deltaX);
+        newX = position.x + (size.width - newWidth);
+        break;
+      case 'ne':
+        newWidth = Math.max(minSize.width, size.width + deltaX);
+        newHeight = Math.max(minSize.height, size.height - deltaY);
+        newY = position.y + (size.height - newHeight);
+        break;
+      case 'nw':
+        newWidth = Math.max(minSize.width, size.width - deltaX);
+        newHeight = Math.max(minSize.height, size.height - deltaY);
+        newX = position.x + (size.width - newWidth);
+        newY = position.y + (size.height - newHeight);
+        break;
+      case 'se':
+        newWidth = Math.max(minSize.width, size.width + deltaX);
+        newHeight = Math.max(minSize.height, size.height + deltaY);
+        break;
+      case 'sw':
+        newWidth = Math.max(minSize.width, size.width - deltaX);
+        newHeight = Math.max(minSize.height, size.height + deltaY);
+        newX = position.x + (size.width - newWidth);
+        break;
     }
+
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    newX = Math.max(0, newX);
+    newY = Math.max(0, newY);
+    newX = Math.min(screenWidth - newWidth, newX);
+    newY = Math.min(screenHeight - newHeight, newY);
+    
+    if (newX < 0) {
+      newWidth = Math.max(minSize.width, newWidth + newX);
+      newX = 0;
+    }
+    if (newY < 0) {
+      newHeight = Math.max(minSize.height, newHeight + newY);
+      newY = 0;
+    }
+    if (newX + newWidth > screenWidth) {
+      newWidth = Math.max(minSize.width, screenWidth - newX);
+    }
+    if (newY + newHeight > screenHeight) {
+      newHeight = Math.max(minSize.height, screenHeight - newY);
+    }
+
+    setSize({ width: newWidth, height: newHeight });
+    setPosition({ x: newX, y: newY });
+    setDragStart({ x: pos.clientX, y: pos.clientY });
   }, [isResizing, resizeDirection, dragStart, size, position, minSize]);
 
-  const handleResizeMouseUp = useCallback(() => {
+  const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
   }, []);
 
-  // 事件监听器
   React.useEffect(() => {
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', isDragging ? handleMouseMove : handleResizeMouseMove);
-      document.addEventListener('mouseup', isDragging ? handleMouseUp : handleResizeMouseUp);
+      const moveHandler = isDragging ? handleMove : handleResizeMove;
+      const endHandler = isDragging ? handleEnd : handleResizeEnd;
+      
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mouseup', endHandler);
+      document.addEventListener('touchmove', moveHandler, { passive: false });
+      document.addEventListener('touchend', endHandler);
 
       return () => {
-        document.removeEventListener('mousemove', isDragging ? handleMouseMove : handleResizeMouseMove);
-        document.removeEventListener('mouseup', isDragging ? handleMouseUp : handleResizeMouseUp);
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', endHandler);
+        document.removeEventListener('touchmove', moveHandler);
+        document.removeEventListener('touchend', endHandler);
       };
     }
-  }, [isDragging, isResizing, handleMouseMove, handleMouseUp, handleResizeMouseMove, handleResizeMouseUp]);
+  }, [isDragging, isResizing, handleMove, handleEnd, handleResizeMove, handleResizeEnd]);
 
-  // 最小化按钮
   const toggleMinimize = () => {
     const newMinimized = !isMinimized;
     setIsMinimized(newMinimized);
     
-    // 保存最小化状态到localStorage
     try {
       localStorage.setItem(`floating-window-${title}-minimized`, JSON.stringify(newMinimized));
     } catch (error) {
@@ -259,7 +267,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     }
   };
 
-  // 最小化状态的样式
   const minimizedStyle: React.CSSProperties = {
     position: 'fixed',
     left: position.x,
@@ -276,10 +283,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
     zIndex: 10001,
     fontSize: '14px',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    touchAction: 'none'
   };
 
-  // 正常状态的样式
   const normalStyle: React.CSSProperties = {
     position: 'fixed',
     left: position.x,
@@ -293,6 +300,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     display: 'flex',
     flexDirection: 'column',
     zIndex: 10000,
+    touchAction: 'none',
     ...style
   };
 
@@ -300,7 +308,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     return (
       <div
         style={minimizedStyle}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
         onClick={handleMinimizeClick}
         className={className}
       >
@@ -315,7 +324,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       style={normalStyle}
       className={className}
     >
-      {/* 标题栏 */}
       {showHeader && (
         <div
           ref={headerRef}
@@ -330,11 +338,12 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
             cursor: 'move',
             userSelect: 'none',
             height: '24px',
-            minHeight: '24px'
+            minHeight: '24px',
+            touchAction: 'none'
           }}
-          onMouseDown={handleMouseDown}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
         >
-          {/* 左侧：标题和最小化图标 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div 
               onClick={toggleMinimize}
@@ -383,7 +392,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
             </div>
           </div>
           
-          {/* 右侧：设置按钮和关闭按钮 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {onSettings && (
               <button
@@ -449,13 +457,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         </div>
       )}
 
-      {/* 内容区域 */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {children}
       </div>
 
-      {/* 调整大小手柄 - 四周 */}
-      {/* 上 */}
       <div
         style={{
           position: 'absolute',
@@ -465,10 +470,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '4px',
           cursor: 'n-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'n')}
+        onMouseDown={(e) => handleResizeStart(e, 'n')}
+        onTouchStart={(e) => handleResizeStart(e, 'n')}
       />
       
-      {/* 下 */}
       <div
         style={{
           position: 'absolute',
@@ -478,10 +483,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '4px',
           cursor: 's-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 's')}
+        onMouseDown={(e) => handleResizeStart(e, 's')}
+        onTouchStart={(e) => handleResizeStart(e, 's')}
       />
       
-      {/* 左 */}
       <div
         style={{
           position: 'absolute',
@@ -491,10 +496,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           width: '4px',
           cursor: 'w-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
+        onMouseDown={(e) => handleResizeStart(e, 'w')}
+        onTouchStart={(e) => handleResizeStart(e, 'w')}
       />
       
-      {/* 右 */}
       <div
         style={{
           position: 'absolute',
@@ -504,10 +509,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           width: '4px',
           cursor: 'e-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
+        onMouseDown={(e) => handleResizeStart(e, 'e')}
+        onTouchStart={(e) => handleResizeStart(e, 'e')}
       />
       
-      {/* 左上 */}
       <div
         style={{
           position: 'absolute',
@@ -517,10 +522,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '8px',
           cursor: 'nw-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
+        onMouseDown={(e) => handleResizeStart(e, 'nw')}
+        onTouchStart={(e) => handleResizeStart(e, 'nw')}
       />
       
-      {/* 右上 */}
       <div
         style={{
           position: 'absolute',
@@ -530,10 +535,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '8px',
           cursor: 'ne-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
+        onMouseDown={(e) => handleResizeStart(e, 'ne')}
+        onTouchStart={(e) => handleResizeStart(e, 'ne')}
       />
       
-      {/* 左下 */}
       <div
         style={{
           position: 'absolute',
@@ -543,10 +548,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '8px',
           cursor: 'sw-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
+        onMouseDown={(e) => handleResizeStart(e, 'sw')}
+        onTouchStart={(e) => handleResizeStart(e, 'sw')}
       />
       
-      {/* 右下 */}
       <div
         style={{
           position: 'absolute',
@@ -556,7 +561,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           height: '8px',
           cursor: 'se-resize'
         }}
-        onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
+        onMouseDown={(e) => handleResizeStart(e, 'se')}
+        onTouchStart={(e) => handleResizeStart(e, 'se')}
       />
     </div>
   );
