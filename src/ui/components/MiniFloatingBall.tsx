@@ -10,12 +10,14 @@ import { APP_VERSION } from '../../config/version';
 import { PlayerIdConfig } from './PlayerIdConfig';
 import { getAllDebugModules, toggleDebugModule, DebugModule } from '../../config/debug';
 import { useSimpleDrag } from '../hooks/useDrag';
+import { useScale } from '../context/ScaleContext';
 
 export const MiniFloatingBall: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
   const [openCollapseKey, setOpenCollapseKey] = useState<string | null>(null);
   const [debugModules, setDebugModules] = useState(() => getAllDebugModules());
+  const scale = useScale();
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
@@ -41,9 +43,13 @@ export const MiniFloatingBall: React.FC = () => {
     setOpenCollapseKey(prev => prev === key ? null : key);
   };
 
-  const { position, setPosition, isDragging, bindDragEvents, getDragDistance } = useSimpleDrag(20, 100);
+  const { position, setPosition, isDragging, bindDragEvents, getDragDistance } = useSimpleDrag(
+    Math.round(20 * scale), 
+    Math.round(100 * scale),
+    Math.round(60 * scale),
+    Math.round(30 * scale)
+  );
 
-  // 从localStorage加载位置
   useEffect(() => {
     try {
       const saved = localStorage.getItem('shuang-dialog-position');
@@ -56,7 +62,6 @@ export const MiniFloatingBall: React.FC = () => {
     }
   }, []);
 
-  // 保存位置
   const savePosition = useCallback((newPos: { x: number; y: number }) => {
     try {
       localStorage.setItem('shuang-dialog-position', JSON.stringify(newPos));
@@ -71,14 +76,12 @@ export const MiniFloatingBall: React.FC = () => {
     }
   }, [position, isDragging, savePosition]);
 
-  // 点击悬浮球
   const handleClick = useCallback(() => {
     if (getDragDistance() < 5) {
       setIsMenuOpen(!isMenuOpen);
     }
   }, [isMenuOpen, getDragDistance]);
 
-  // 处理导出
   const handleExport = () => {
     try {
       if (!isChatLogAvailable()) {
@@ -92,7 +95,6 @@ export const MiniFloatingBall: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  // 下载Activity数据包
   const handleDownloadActivity = () => {
     const jsonData = useActivityStore.getState().getActivityPacketsAsJSON();
     const blob = new Blob([jsonData], { type: 'application/json' });
@@ -108,7 +110,6 @@ export const MiniFloatingBall: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  // 清空Activity数据
   const handleClearActivity = () => {
     useActivityStore.getState().clearActivityPackets();
     setIsMenuOpen(false);
@@ -116,7 +117,6 @@ export const MiniFloatingBall: React.FC = () => {
 
   return (
     <>
-      {/* 悬浮球 */}
       <div
         {...bindDragEvents}
         onClick={handleClick}
@@ -124,18 +124,18 @@ export const MiniFloatingBall: React.FC = () => {
           position: 'fixed',
           left: position.x,
           top: position.y,
-          width: '60px',
-          height: '30px',
+          width: `${60 * scale}px`,
+          height: `${30 * scale}px`,
           backgroundColor: '#007acc',
           color: 'white',
-          borderRadius: '15px',
+          borderRadius: `${15 * scale}px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
           zIndex: 10000,
-          fontSize: '12px',
+          fontSize: `${12 * scale}px`,
           fontWeight: 500,
           userSelect: 'none',
           touchAction: 'none',
@@ -147,7 +147,6 @@ export const MiniFloatingBall: React.FC = () => {
         霜语
       </div>
 
-      {/* 菜单 */}
       <MiniMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
@@ -228,7 +227,7 @@ export const MiniFloatingBall: React.FC = () => {
             onClick={handleClearActivity}
           />
           <MenuDivider />
-          <div style={{ padding: '4px 12px', fontSize: '11px', color: '#888' }}>
+          <div style={{ padding: `${4 * scale}px ${12 * scale}px`, fontSize: `${11 * scale}px`, color: '#888' }}>
             调试日志开关
           </div>
           {debugModules.map(({ module, enabled }) => (
@@ -244,8 +243,8 @@ export const MiniFloatingBall: React.FC = () => {
         
         <MenuDivider />
         <div style={{
-          padding: '8px 12px',
-          fontSize: '11px',
+          padding: `${8 * scale}px ${12 * scale}px`,
+          fontSize: `${11 * scale}px`,
           color: '#999',
           textAlign: 'center'
         }}>

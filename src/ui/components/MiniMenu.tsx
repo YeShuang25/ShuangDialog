@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useScale } from '../context/ScaleContext';
 
 export interface MiniMenuProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export const MiniMenu: React.FC<MiniMenuProps> = ({
   position
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const scale = useScale();
 
   if (!isOpen) return null;
 
@@ -22,14 +24,14 @@ export const MiniMenu: React.FC<MiniMenuProps> = ({
       style={{
         position: 'fixed',
         left: position.x,
-        top: position.y + 35,
+        top: position.y + Math.round(35 * scale),
         backgroundColor: '#ffffff',
-        borderRadius: '8px',
+        borderRadius: `${8 * scale}px`,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        padding: '8px',
-        minWidth: '180px',
+        padding: `${8 * scale}px`,
+        minWidth: `${180 * scale}px`,
         zIndex: 10001,
-        border: '1px solid #e0e0e0',
+        border: `${1 * scale}px solid #e0e0e0`,
         animation: 'menuFadeIn 0.15s ease-out'
       }}
     >
@@ -57,21 +59,23 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   onClick,
   active = false
 }) => {
+  const scale = useScale();
+  
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: `${10 * scale}px`,
         width: '100%',
-        padding: '10px 12px',
+        padding: `${10 * scale}px ${12 * scale}px`,
         border: 'none',
         backgroundColor: active ? '#e3f2fd' : 'transparent',
         color: active ? '#007acc' : '#333',
-        borderRadius: '6px',
+        borderRadius: `${6 * scale}px`,
         cursor: 'pointer',
-        fontSize: '13px',
+        fontSize: `${13 * scale}px`,
         fontWeight: active ? 500 : 400,
         transition: 'background-color 0.15s ease',
         textAlign: 'left'
@@ -87,19 +91,21 @@ export const MenuItem: React.FC<MenuItemProps> = ({
         }
       }}
     >
-      {icon && <span style={{ fontSize: '14px' }}>{icon}</span>}
+      {icon && <span style={{ fontSize: `${14 * scale}px` }}>{icon}</span>}
       <span>{label}</span>
     </button>
   );
 };
 
 export const MenuDivider: React.FC = () => {
+  const scale = useScale();
+  
   return (
     <div
       style={{
-        height: '1px',
+        height: `${1 * scale}px`,
         backgroundColor: '#e0e0e0',
-        margin: '6px 0'
+        margin: `${6 * scale}px 0`
       }}
     />
   );
@@ -120,6 +126,8 @@ export const MenuCollapse: React.FC<MenuCollapseProps> = ({
   onToggle,
   children
 }) => {
+  const scale = useScale();
+  
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <button
@@ -128,15 +136,15 @@ export const MenuCollapse: React.FC<MenuCollapseProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '10px',
+          gap: `${10 * scale}px`,
           width: '100%',
-          padding: '10px 12px',
+          padding: `${10 * scale}px ${12 * scale}px`,
           border: 'none',
           backgroundColor: 'transparent',
           color: '#333',
-          borderRadius: '6px',
+          borderRadius: `${6 * scale}px`,
           cursor: 'pointer',
-          fontSize: '13px',
+          fontSize: `${13 * scale}px`,
           fontWeight: 400,
           transition: 'background-color 0.15s ease',
           textAlign: 'left'
@@ -148,12 +156,12 @@ export const MenuCollapse: React.FC<MenuCollapseProps> = ({
           e.currentTarget.style.backgroundColor = 'transparent';
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {icon && <span style={{ fontSize: '14px' }}>{icon}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: `${10 * scale}px` }}>
+          {icon && <span style={{ fontSize: `${14 * scale}px` }}>{icon}</span>}
           <span>{label}</span>
         </div>
         <span style={{
-          fontSize: '10px',
+          fontSize: `${10 * scale}px`,
           transition: 'transform 0.2s ease',
           transform: isOpen ? 'rotate(-90deg)' : 'rotate(0deg)'
         }}>
@@ -165,14 +173,14 @@ export const MenuCollapse: React.FC<MenuCollapseProps> = ({
           position: 'absolute',
           left: '100%',
           top: 0,
-          marginLeft: '4px',
+          marginLeft: `${4 * scale}px`,
           backgroundColor: '#ffffff',
-          borderRadius: '8px',
+          borderRadius: `${8 * scale}px`,
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          padding: '8px',
-          minWidth: '160px',
+          padding: `${8 * scale}px`,
+          minWidth: `${160 * scale}px`,
           zIndex: 10002,
-          border: '1px solid #e0e0e0'
+          border: `${1 * scale}px solid #e0e0e0`
         }}>
           {children}
         </div>
@@ -200,18 +208,20 @@ export const MenuSlider: React.FC<MenuSliderProps> = ({
   onChange,
   displayValue
 }) => {
+  const scale = useScale();
+  
   return (
     <div style={{
-      padding: '8px 0',
+      padding: `${8 * scale}px 0`,
       display: 'flex',
       flexDirection: 'column',
-      gap: '4px'
+      gap: `${4 * scale}px`
     }}>
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        fontSize: '12px',
+        fontSize: `${12 * scale}px`,
         color: '#666'
       }}>
         <span>{label}</span>
@@ -228,8 +238,8 @@ export const MenuSlider: React.FC<MenuSliderProps> = ({
         onChange={(e) => onChange(parseFloat(e.target.value))}
         style={{
           width: '100%',
-          height: '4px',
-          borderRadius: '2px',
+          height: `${4 * scale}px`,
+          borderRadius: `${2 * scale}px`,
           background: `linear-gradient(to right, #007acc 0%, #007acc ${((value - min) / (max - min)) * 100}%, #ddd ${((value - min) / (max - min)) * 100}%, #ddd 100%)`,
           outline: 'none',
           cursor: 'pointer',

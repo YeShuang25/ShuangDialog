@@ -116,12 +116,31 @@ export const useDrag = (options: UseDragOptions = {}) => {
   };
 };
 
-export const useSimpleDrag = (initialX: number = 0, initialY: number = 0) => {
+export const useSimpleDrag = (initialX: number = 0, initialY: number = 0, elementWidth: number = 60, elementHeight: number = 30) => {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const dragDistanceRef = useRef(0);
   const startPosRef = useRef({ x: 0, y: 0 });
+
+  const constrainPosition = useCallback((pos: { x: number; y: number }) => {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    const newX = Math.max(0, Math.min(screenWidth - elementWidth, pos.x));
+    const newY = Math.max(0, Math.min(screenHeight - elementHeight, pos.y));
+    
+    return { x: newX, y: newY };
+  }, [elementWidth, elementHeight]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => constrainPosition(prev));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [constrainPosition]);
 
   const getPositionFromEvent = (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): { clientX: number; clientY: number } => {
     if ('touches' in e) {
@@ -163,10 +182,8 @@ export const useSimpleDrag = (initialX: number = 0, initialY: number = 0) => {
       let newX = pos.clientX - dragStartRef.current.x;
       let newY = pos.clientY - dragStartRef.current.y;
 
-      newX = Math.max(0, Math.min(window.innerWidth - 60, newX));
-      newY = Math.max(0, Math.min(window.innerHeight - 30, newY));
-
-      setPosition({ x: newX, y: newY });
+      const constrained = constrainPosition({ x: newX, y: newY });
+      setPosition(constrained);
 
       dragDistanceRef.current = Math.sqrt(
         Math.pow(pos.clientX - startPosRef.current.x, 2) +
@@ -191,7 +208,7 @@ export const useSimpleDrag = (initialX: number = 0, initialY: number = 0) => {
       document.removeEventListener('touchmove', handleMove);
       document.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, constrainPosition]);
 
   const getDragDistance = () => dragDistanceRef.current;
 

@@ -6,6 +6,7 @@ import { ShuangChatBox } from './ui/components/ShuangChatBox';
 import './ui/style.css';
 import { initUserStore, watchLoginStatus, migrateOldConfig } from './store/useUserStore';
 import { useShuangConfigStore } from './store/useShuangConfigStore';
+import { ScaleProvider } from './ui/context/ScaleContext';
 
 function main() {
   initCore();
@@ -17,10 +18,10 @@ function main() {
   
   const root = createRoot(container);
   root.render(
-    <>
+    <ScaleProvider>
       <MiniFloatingBall />
       <ShuangChatBox />
-    </>
+    </ScaleProvider>
   );
   
   console.log('[ShuangDialog] 插件已启动');

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useScale } from '../../context/ScaleContext';
 
 export interface FloatingWindowProps {
   title: string;
@@ -29,6 +30,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   showHeader = true,
   showVersion = true
 }) => {
+  const scale = useScale();
+  
   const loadSavedPosition = () => {
     try {
       const saved = localStorage.getItem(`floating-window-${title}-position`);
@@ -64,6 +67,66 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   const windowRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
+  const scaledSize = {
+    width: Math.round(size.width * scale),
+    height: Math.round(size.height * scale)
+  };
+
+  const scaledPosition = {
+    x: Math.round(position.x * scale),
+    y: Math.round(position.y * scale)
+  };
+
+  const constrainToScreen = useCallback((pos: { x: number; y: number }, sz: { width: number; height: number }, minimized: boolean, currentScale: number) => {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    const scaledWidth = minimized ? Math.round(120 * currentScale) : Math.round(sz.width * currentScale);
+    const scaledHeight = minimized ? Math.round(40 * currentScale) : Math.round(sz.height * currentScale);
+    
+    let newX = Math.max(0, Math.min(screenWidth - scaledWidth, pos.x));
+    let newY = Math.max(0, Math.min(screenHeight - scaledHeight, pos.y));
+    
+    let newWidth = sz.width;
+    let newHeight = sz.height;
+    
+    if (!minimized) {
+      if (newX + scaledWidth > screenWidth) {
+        newWidth = Math.max(minSize.width, Math.round((screenWidth - newX) / currentScale));
+      }
+      if (newY + scaledHeight > screenHeight) {
+        newHeight = Math.max(minSize.height, Math.round((screenHeight - newY) / currentScale));
+      }
+    }
+    
+    return {
+      position: { x: Math.round(newX / currentScale), y: Math.round(newY / currentScale) },
+      size: { width: newWidth, height: newHeight }
+    };
+  }, [minSize.width, minSize.height]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const constrained = constrainToScreen(position, size, isMinimized, scale);
+      
+      if (constrained.position.x !== position.x || constrained.position.y !== position.y) {
+        setPosition(constrained.position);
+        try {
+          localStorage.setItem(`floating-window-${title}-position`, JSON.stringify(constrained.position));
+        } catch (error) {
+          console.warn('Failed to save position:', error);
+        }
+      }
+      
+      if (!isMinimized && (constrained.size.width !== size.width || constrained.size.height !== size.height)) {
+        setSize(constrained.size);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [position, size, isMinimized, title, constrainToScreen, scale]);
+
   const getPositionFromEvent = (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): { clientX: number; clientY: number } => {
     if ('touches' in e) {
       const touches = 'nativeEvent' in e ? e.nativeEvent.touches : e.touches;
@@ -87,24 +150,24 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     const pos = getPositionFromEvent(e);
     setIsDragging(true);
     setDragStart({
-      x: pos.clientX - position.x,
-      y: pos.clientY - position.y
+      x: pos.clientX - scaledPosition.x,
+      y: pos.clientY - scaledPosition.y
     });
     setMouseDownPos({ x: pos.clientX, y: pos.clientY });
     setDragDistance(0);
     e.preventDefault();
-  }, [position]);
+  }, [scaledPosition]);
 
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     
     const pos = getPositionFromEvent(e);
-    let newX = pos.clientX - dragStart.x;
-    let newY = pos.clientY - dragStart.y;
+    let newX = (pos.clientX - dragStart.x) / scale;
+    let newY = (pos.clientY - dragStart.y) / scale;
     
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
+    const screenWidth = window.innerWidth / scale;
+    const screenHeight = window.innerHeight / scale;
     
     const windowWidth = isMinimized ? 120 : size.width;
     const windowHeight = isMinimized ? 40 : size.height;
@@ -114,7 +177,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     newX = Math.min(screenWidth - windowWidth, newX);
     newY = Math.min(screenHeight - windowHeight, newY);
     
-    const newPosition = { x: newX, y: newY };
+    const newPosition = { x: Math.round(newX), y: Math.round(newY) };
     setPosition(newPosition);
     
     try {
@@ -128,7 +191,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       Math.pow(pos.clientY - mouseDownPos.y, 2)
     );
     setDragDistance(distance);
-  }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized, title]);
+  }, [isDragging, dragStart, mouseDownPos, size.width, size.height, isMinimized, title, scale]);
 
   const handleEnd = useCallback(() => {
     setIsDragging(false);
@@ -160,8 +223,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     e.preventDefault();
     
     const pos = getPositionFromEvent(e);
-    const deltaX = pos.clientX - dragStart.x;
-    const deltaY = pos.clientY - dragStart.y;
+    const deltaX = (pos.clientX - dragStart.x) / scale;
+    const deltaY = (pos.clientY - dragStart.y) / scale;
     
     let newWidth = size.width;
     let newHeight = size.height;
@@ -205,8 +268,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         break;
     }
 
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
+    const screenWidth = window.innerWidth / scale;
+    const screenHeight = window.innerHeight / scale;
     
     newX = Math.max(0, newX);
     newY = Math.max(0, newY);
@@ -228,16 +291,16 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
       newHeight = Math.max(minSize.height, screenHeight - newY);
     }
 
-    setSize({ width: newWidth, height: newHeight });
-    setPosition({ x: newX, y: newY });
+    setSize({ width: Math.round(newWidth), height: Math.round(newHeight) });
+    setPosition({ x: Math.round(newX), y: Math.round(newY) });
     setDragStart({ x: pos.clientX, y: pos.clientY });
-  }, [isResizing, resizeDirection, dragStart, size, position, minSize]);
+  }, [isResizing, resizeDirection, dragStart, size, position, minSize, scale]);
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDragging || isResizing) {
       const moveHandler = isDragging ? handleMove : handleResizeMove;
       const endHandler = isDragging ? handleEnd : handleResizeEnd;
@@ -269,33 +332,33 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   const minimizedStyle: React.CSSProperties = {
     position: 'fixed',
-    left: position.x,
-    top: position.y,
-    width: '120px',
-    height: '40px',
+    left: scaledPosition.x,
+    top: scaledPosition.y,
+    width: `${120 * scale}px`,
+    height: `${40 * scale}px`,
     backgroundColor: '#007acc',
     color: 'white',
-    borderRadius: '20px',
+    borderRadius: `${20 * scale}px`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
     zIndex: 10001,
-    fontSize: '14px',
+    fontSize: `${14 * scale}px`,
     fontWeight: 'bold',
     touchAction: 'none'
   };
 
   const normalStyle: React.CSSProperties = {
     position: 'fixed',
-    left: position.x,
-    top: position.y,
-    width: size.width,
-    height: size.height,
+    left: scaledPosition.x,
+    top: scaledPosition.y,
+    width: scaledSize.width,
+    height: scaledSize.height,
     backgroundColor: '#ffffff',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
+    border: `${1 * scale}px solid #ccc`,
+    borderRadius: `${8 * scale}px`,
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
     display: 'flex',
     flexDirection: 'column',
@@ -318,6 +381,11 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
     );
   }
 
+  const headerHeight = Math.round(24 * scale);
+  const headerPadding = Math.round(4 * scale);
+  const fontSize = Math.round(12 * scale);
+  const buttonSize = Math.round(12 * scale);
+
   return (
     <div
       ref={windowRef}
@@ -328,35 +396,35 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         <div
           ref={headerRef}
           style={{
-            padding: '4px 8px',
+            padding: `${headerPadding}px ${headerPadding * 2}px`,
             backgroundColor: '#f8f9fa',
-            borderBottom: '1px solid #e9ecef',
-            borderRadius: '8px 8px 0 0',
+            borderBottom: `${1 * scale}px solid #e9ecef`,
+            borderRadius: `${8 * scale}px ${8 * scale}px 0 0`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             cursor: 'move',
             userSelect: 'none',
-            height: '24px',
-            minHeight: '24px',
+            height: headerHeight,
+            minHeight: headerHeight,
             touchAction: 'none'
           }}
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: `${6 * scale}px` }}>
             <div 
               onClick={toggleMinimize}
               style={{
                 cursor: 'pointer',
-                width: '12px',
-                height: '12px',
+                width: buttonSize,
+                height: buttonSize,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '10px',
+                fontSize: `${10 * scale}px`,
                 color: '#6c757d',
-                borderRadius: '1px',
+                borderRadius: `${1 * scale}px`,
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
@@ -372,16 +440,16 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
             <div style={{ 
               fontWeight: '500', 
               color: '#495057', 
-              fontSize: '12px',
+              fontSize: `${fontSize}px`,
               lineHeight: '1',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: `${4 * scale}px`
             }}>
               {title}
               {showVersion && (
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: `${9 * scale}px`,
                   color: '#6c757d',
                   fontWeight: 'normal',
                   opacity: 0.7
@@ -392,21 +460,21 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
             </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: `${6 * scale}px` }}>
             {onSettings && (
               <button
                 onClick={onSettings}
                 style={{
-                  width: '12px',
-                  height: '12px',
+                  width: buttonSize,
+                  height: buttonSize,
                   border: 'none',
                   backgroundColor: 'transparent',
-                  borderRadius: '1px',
+                  borderRadius: `${1 * scale}px`,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '8px',
+                  fontSize: `${8 * scale}px`,
                   color: '#6c757d',
                   transition: 'background-color 0.2s',
                   lineHeight: '1'
@@ -426,16 +494,16 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
               <button
                 onClick={onClose}
                 style={{
-                  width: '12px',
-                  height: '12px',
+                  width: buttonSize,
+                  height: buttonSize,
                   border: 'none',
                   backgroundColor: 'transparent',
-                  borderRadius: '1px',
+                  borderRadius: `${1 * scale}px`,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '10px',
+                  fontSize: `${10 * scale}px`,
                   color: '#6c757d',
                   transition: 'background-color 0.2s',
                   lineHeight: '1'
@@ -467,7 +535,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           top: 0,
           left: 0,
           right: 0,
-          height: '4px',
+          height: `${4 * scale}px`,
           cursor: 'n-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'n')}
@@ -480,7 +548,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           bottom: 0,
           left: 0,
           right: 0,
-          height: '4px',
+          height: `${4 * scale}px`,
           cursor: 's-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 's')}
@@ -493,7 +561,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           top: 0,
           left: 0,
           bottom: 0,
-          width: '4px',
+          width: `${4 * scale}px`,
           cursor: 'w-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'w')}
@@ -506,7 +574,7 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           top: 0,
           right: 0,
           bottom: 0,
-          width: '4px',
+          width: `${4 * scale}px`,
           cursor: 'e-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'e')}
@@ -518,8 +586,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '8px',
-          height: '8px',
+          width: `${8 * scale}px`,
+          height: `${8 * scale}px`,
           cursor: 'nw-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'nw')}
@@ -531,8 +599,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           position: 'absolute',
           top: 0,
           right: 0,
-          width: '8px',
-          height: '8px',
+          width: `${8 * scale}px`,
+          height: `${8 * scale}px`,
           cursor: 'ne-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'ne')}
@@ -544,8 +612,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           position: 'absolute',
           bottom: 0,
           left: 0,
-          width: '8px',
-          height: '8px',
+          width: `${8 * scale}px`,
+          height: `${8 * scale}px`,
           cursor: 'sw-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'sw')}
@@ -557,8 +625,8 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           position: 'absolute',
           bottom: 0,
           right: 0,
-          width: '8px',
-          height: '8px',
+          width: `${8 * scale}px`,
+          height: `${8 * scale}px`,
           cursor: 'se-resize'
         }}
         onMouseDown={(e) => handleResizeStart(e, 'se')}
