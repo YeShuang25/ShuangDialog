@@ -18,7 +18,8 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     addFollowedPlayer, 
     removeFollowedPlayer,
     togglePlayerMessageType,
-    setPlayerMessageTypes
+    setPlayerMessageTypes,
+    togglePlayerContentMatch
   } = useShuangConfigStore();
   
   const [newPlayerId, setNewPlayerId] = useState('');
@@ -342,6 +343,43 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
                                 </button>
                               );
                             })}
+                          </div>
+                          
+                          <div style={{ 
+                            marginTop: '12px',
+                            paddingTop: '10px',
+                            borderTop: '1px dashed #ddd'
+                          }}>
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between'
+                            }}>
+                              <div>
+                                <span style={{ fontSize: '11px', color: '#666' }}>内容匹配</span>
+                                <span style={{ 
+                                  fontSize: '10px', 
+                                  color: '#999',
+                                  marginLeft: '6px'
+                                }}>
+                                  (匹配消息中提及的该玩家名字/昵称)
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => togglePlayerContentMatch(player.id)}
+                                style={{
+                                  padding: '3px 10px',
+                                  backgroundColor: player.contentMatch ? '#28a745' : '#e0e0e0',
+                                  color: player.contentMatch ? 'white' : '#666',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '10px'
+                                }}
+                              >
+                                {player.contentMatch ? '已开启' : '已关闭'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}

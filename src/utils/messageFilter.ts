@@ -3,7 +3,6 @@ import { useShuangConfigStore, MessageTypeFilter } from '../store/useShuangConfi
 
 export class MessageFilter {
   private observer: MutationObserver | null = null;
-  private messageIdSet: Set<string> = new Set();
 
   start() {
     console.log('[ShuangDialog:MessageFilter] start() 被调用');
@@ -45,7 +44,7 @@ export class MessageFilter {
       this.observer.disconnect();
       this.observer = null;
     }
-    console.log('[ShuangDialog:MessageFilter] 停止消息筛选器（保留消息ID记录）');
+    console.log('[ShuangDialog:MessageFilter] 停止消息筛选器');
   }
 
   private processExistingMessages(textAreaElement: HTMLElement) {
@@ -95,38 +94,30 @@ export class MessageFilter {
       return;
     }
     
-    let isTargetFollowed = false;
-    let targetPlayerId: string | null = null;
-    if (!isSenderFollowed && messageElement.classList.contains('ChatMessageActivity')) {
-      const result = this.checkTargetPlayerWithId(messageElement, followedPlayers);
-      isTargetFollowed = result.isFollowed;
-      targetPlayerId = result.playerId;
-      
-      if (isTargetFollowed && targetPlayerId) {
-        const targetPlayer = followedPlayers.find(p => p.id === targetPlayerId);
-        if (targetPlayer && !targetPlayer.messageTypes.includes(messageType)) {
-          console.log(`[ShuangDialog:MessageFilter] 目标玩家 ${targetPlayerId} 的消息类型 ${messageType} 未启用，跳过`);
+    let isContentMatched = false;
+    let matchedPlayerId: string | null = null;
+    
+    if (!isSenderFollowed) {
+      const contentMatchResult = this.checkContentMatch(messageElement, followedPlayers);
+      if (contentMatchResult.isMatched) {
+        isContentMatched = true;
+        matchedPlayerId = contentMatchResult.playerId;
+        
+        const matchedPlayer = followedPlayers.find(p => p.id === matchedPlayerId);
+        if (matchedPlayer && !matchedPlayer.messageTypes.includes(messageType)) {
+          console.log(`[ShuangDialog:MessageFilter] 内容匹配玩家 ${matchedPlayerId} 的消息类型 ${messageType} 未启用，跳过`);
           return;
         }
       }
     }
     
-    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 目标是否关注: ${isTargetFollowed}`);
+    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 内容匹配: ${isContentMatched}`);
     
-    if (!isSenderFollowed && !isTargetFollowed) {
+    if (!isSenderFollowed && !isContentMatched) {
       return;
     }
 
-    const messageId = this.getMessageId(messageElement);
-    
-    if (this.messageIdSet.has(messageId)) {
-      console.log('[ShuangDialog:MessageFilter] 消息已存在，跳过:', messageId);
-      return;
-    }
-    
-    this.messageIdSet.add(messageId);
-
-    const messageData = this.extractMessageData(messageElement, messageId, messageType);
+    const messageData = this.extractMessageData(messageElement, messageType);
     if (messageData) {
       useShuangMessagesStore.getState().addMessage(messageData);
       console.log('[ShuangDialog:MessageFilter] 添加关注玩家消息:', messageData.senderName || senderId);
@@ -134,48 +125,78 @@ export class MessageFilter {
     }
   }
 
-  private checkTargetPlayerWithId(messageElement: HTMLElement, followedPlayers: { id: string; messageTypes: MessageTypeFilter[] }[]): { isFollowed: boolean; playerId: string | null } {
-    const textContent = messageElement.textContent || '';
+  private getMessageTextContent(element: HTMLElement): string {
+    const contentElement = element.querySelector('.chat-room-message-content');
+    if (contentElement) {
+      return contentElement.textContent || '';
+    }
+    return element.textContent || '';
+  }
+
+  private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; messageTypes: MessageTypeFilter[]; contentMatch: boolean }[]): { isMatched: boolean; playerId: string | null } {
+    const playersWithContentMatch = followedPlayers.filter(p => p.contentMatch);
+    if (playersWithContentMatch.length === 0) {
+      return { isMatched: false, playerId: null };
+    }
+
+    const playerNamesMap = this.getPlayerNamesFromChatRoom(playersWithContentMatch);
+    if (playerNamesMap.size === 0) {
+      return { isMatched: false, playerId: null };
+    }
+
+    const messageText = this.getMessageTextContent(messageElement);
     
-    const nameButtons = document.querySelectorAll('.ChatMessageName');
-    const playerIdMap = new Map<string, string>();
-    
-    nameButtons.forEach((btn) => {
-      const name = btn.textContent?.trim();
-      const message = btn.closest('.ChatMessage');
-      const id = message?.getAttribute('data-sender');
-      if (name && id) {
-        playerIdMap.set(name, id);
-      }
-    });
-    
-    for (const [name, id] of playerIdMap) {
-      const player = followedPlayers.find(p => p.id === id);
-      if (player && textContent.includes(name)) {
-        console.log(`[ShuangDialog:MessageFilter] 检测到目标玩家 ${name} (${id}) 在消息中`);
-        return { isFollowed: true, playerId: id };
+    for (const [playerId, names] of playerNamesMap) {
+      for (const name of names) {
+        if (name && name.trim()) {
+          const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
+          if (regex.test(messageText)) {
+            console.log(`[ShuangDialog:MessageFilter] 内容匹配成功: 玩家 ${playerId} 的名字 "${name}" 在消息中`);
+            return { isMatched: true, playerId };
+          }
+        }
       }
     }
     
-    return { isFollowed: false, playerId: null };
+    return { isMatched: false, playerId: null };
   }
 
-  private getMessageId(element: HTMLElement): string {
-    const msgidElement = element.querySelector('[msgid]');
-    if (msgidElement) {
-      const msgid = msgidElement.getAttribute('msgid');
-      if (msgid) {
-        return msgid;
+  private getPlayerNamesFromChatRoom(players: { id: string }[]): Map<string, string[]> {
+    const playerNamesMap = new Map<string, string[]>();
+    
+    try {
+      const chatRoomCharacter = (window as any).ChatRoomCharacter;
+      if (!chatRoomCharacter || !Array.isArray(chatRoomCharacter)) {
+        console.log('[ShuangDialog:MessageFilter] 未找到 ChatRoomCharacter');
+        return playerNamesMap;
       }
+      
+      for (const player of players) {
+        const roomPlayer = chatRoomCharacter.find((p: any) => 
+          p && p.MemberNumber === player.id || p && p.MemberNumber === parseInt(player.id)
+        );
+        
+        if (roomPlayer) {
+          const names: string[] = [];
+          if (roomPlayer.Name) names.push(roomPlayer.Name);
+          if (roomPlayer.Nickname && roomPlayer.Nickname !== roomPlayer.Name) {
+            names.push(roomPlayer.Nickname);
+          }
+          if (names.length > 0) {
+            playerNamesMap.set(player.id, names);
+            console.log(`[ShuangDialog:MessageFilter] 玩家 ${player.id} 的名字:`, names);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[ShuangDialog:MessageFilter] 获取玩家名字失败:', e);
     }
-
-    const senderId = element.getAttribute('data-sender') || 'unknown';
-    const time = element.getAttribute('data-time') || Date.now().toString();
-    const content = element.textContent?.substring(0, 50) || '';
-    return `${senderId}-${time}-${content}`;
+    
+    return playerNamesMap;
   }
 
-  private extractMessageData(element: HTMLElement, messageId: string, _messageType: MessageTypeFilter): ShuangMessage | null {
+  private extractMessageData(element: HTMLElement, _messageType: MessageTypeFilter): ShuangMessage | null {
     const senderId = element.getAttribute('data-sender');
     const timeElement = element.querySelector('.chat-room-time');
     const nameButton = element.querySelector('.ChatMessageName');
@@ -185,12 +206,9 @@ export class MessageFilter {
       return null;
     }
 
-    if (!timeElement) {
-      console.log('[ShuangDialog:MessageFilter] extractMessageData: 没有timeElement');
-    }
-
     const timestamp = timeElement?.textContent || '';
     const senderName = nameButton?.textContent || senderId;
+    const messageId = `${senderId}-${timestamp}-${Date.now()}`;
 
     let type: ShuangMessage['type'] = 'chat';
     if (element.classList.contains('ChatMessageActivity')) {

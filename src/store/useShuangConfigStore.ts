@@ -7,6 +7,7 @@ export interface FollowedPlayer {
   id: string;
   name: string;
   messageTypes: MessageTypeFilter[];
+  contentMatch: boolean;
 }
 
 export const ALL_MESSAGE_TYPES: MessageTypeFilter[] = ['chat', 'emote', 'activity', 'other'];
@@ -28,6 +29,7 @@ interface ShuangConfigState {
   updatePlayerName: (id: string, name: string) => void;
   togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => void;
   setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => void;
+  togglePlayerContentMatch: (playerId: string) => void;
   isPlayerFollowed: (id: string) => boolean;
   getPlayerMessageTypes: (id: string) => MessageTypeFilter[];
   setFontScale: (scale: number) => void;
@@ -48,7 +50,8 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
             followedPlayers: [...state.followedPlayers, {
               id,
               name: name || id,
-              messageTypes: [...ALL_MESSAGE_TYPES]
+              messageTypes: [...ALL_MESSAGE_TYPES],
+              contentMatch: false
             }]
           };
         });
@@ -89,6 +92,14 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
         }));
       },
       
+      togglePlayerContentMatch: (playerId: string) => {
+        set((state) => ({
+          followedPlayers: state.followedPlayers.map(p => 
+            p.id === playerId ? { ...p, contentMatch: !p.contentMatch } : p
+          )
+        }));
+      },
+      
       isPlayerFollowed: (id: string) => {
         return get().followedPlayers.some(p => p.id === id);
       },
@@ -109,9 +120,16 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
           persisted.followedPlayers = persisted.followedPlayerIds.map((id: string) => ({
             id,
             name: id,
-            messageTypes: [...ALL_MESSAGE_TYPES]
+            messageTypes: [...ALL_MESSAGE_TYPES],
+            contentMatch: false
           }));
           delete persisted.followedPlayerIds;
+        }
+        if (persisted.followedPlayers && Array.isArray(persisted.followedPlayers)) {
+          persisted.followedPlayers = persisted.followedPlayers.map((p: any) => ({
+            ...p,
+            contentMatch: p.contentMatch ?? false
+          }));
         }
         return persisted;
       }
