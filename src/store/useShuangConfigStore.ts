@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useUserStore, getStorageKey } from './useUserStore';
 
 export type MessageTypeFilter = 'chat' | 'emote' | 'activity' | 'other';
 
@@ -35,117 +35,206 @@ interface ShuangConfigState {
   isPlayerFollowed: (id: string) => boolean;
   getPlayerMessageTypes: (id: string) => MessageTypeFilter[];
   setFontScale: (scale: number) => void;
+  loadUserConfig: () => void;
 }
 
-export const useShuangConfigStore = create<ShuangConfigState>()(
-  persist(
-    (set, get) => ({
-      followedPlayers: [],
-      fontScale: 1.0,
-      globalKeywords: [],
-      
-      addFollowedPlayer: (id: string, name: string = '') => {
-        set((state) => {
-          if (state.followedPlayers.some(p => p.id === id)) {
-            return state;
-          }
-          return {
-            followedPlayers: [...state.followedPlayers, {
-              id,
-              name: name || id,
-              messageTypes: [...ALL_MESSAGE_TYPES],
-              contentMatch: false
-            }]
-          };
-        });
-      },
-      
-      removeFollowedPlayer: (id: string) => {
-        set((state) => ({
-          followedPlayers: state.followedPlayers.filter(p => p.id !== id)
-        }));
-      },
-      
-      updatePlayerName: (id: string, name: string) => {
-        set((state) => ({
-          followedPlayers: state.followedPlayers.map(p => 
-            p.id === id ? { ...p, name } : p
-          )
-        }));
-      },
-      
-      togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => {
-        set((state) => ({
-          followedPlayers: state.followedPlayers.map(p => {
-            if (p.id !== playerId) return p;
-            const types = p.messageTypes;
-            const newTypes = types.includes(messageType)
-              ? types.filter(t => t !== messageType)
-              : [...types, messageType];
-            return { ...p, messageTypes: newTypes };
-          })
-        }));
-      },
-      
-      setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => {
-        set((state) => ({
-          followedPlayers: state.followedPlayers.map(p => 
-            p.id === playerId ? { ...p, messageTypes } : p
-          )
-        }));
-      },
-      
-      togglePlayerContentMatch: (playerId: string) => {
-        set((state) => ({
-          followedPlayers: state.followedPlayers.map(p => 
-            p.id === playerId ? { ...p, contentMatch: !p.contentMatch } : p
-          )
-        }));
-      },
-      
-      setGlobalKeywords: (keywords: string[]) => {
-        set({ globalKeywords: keywords });
-      },
-      
-      isPlayerFollowed: (id: string) => {
-        return get().followedPlayers.some(p => p.id === id);
-      },
-      
-      getPlayerMessageTypes: (id: string) => {
-        const player = get().followedPlayers.find(p => p.id === id);
-        return player ? player.messageTypes : [];
-      },
-      
-      setFontScale: (scale: number) => {
-        set({ fontScale: Math.max(0.5, Math.min(2.0, scale)) });
+const BASE_STORAGE_KEY = 'shuang-config-storage';
+
+function loadFromStorage(userId: string | null): { followedPlayers: FollowedPlayer[]; fontScale: number; globalKeywords: string[] } | null {
+  if (!userId) return null;
+  
+  const key = getStorageKey(BASE_STORAGE_KEY, userId);
+  const str = localStorage.getItem(key);
+  if (!str) return null;
+  
+  try {
+    const data = JSON.parse(str);
+    return {
+      followedPlayers: data.followedPlayers || [],
+      fontScale: data.fontScale || 1.0,
+      globalKeywords: data.globalKeywords || []
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveToStorage(userId: string | null, state: { followedPlayers: FollowedPlayer[]; fontScale: number; globalKeywords: string[] }) {
+  if (!userId) return;
+  
+  const key = getStorageKey(BASE_STORAGE_KEY, userId);
+  localStorage.setItem(key, JSON.stringify(state));
+  console.log(`[ShuangDialog] 保存配置到 ${key}`);
+}
+
+export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
+  followedPlayers: [],
+  fontScale: 1.0,
+  globalKeywords: [],
+  
+  addFollowedPlayer: (id: string, name: string = '') => {
+    set((state) => {
+      if (state.followedPlayers.some(p => p.id === id)) {
+        return state;
       }
-    }),
-    {
-      name: 'shuang-config-storage',
-      migrate: (persisted: any) => {
-        if (persisted.followedPlayerIds && Array.isArray(persisted.followedPlayerIds)) {
-          persisted.followedPlayers = persisted.followedPlayerIds.map((id: string) => ({
-            id,
-            name: id,
-            messageTypes: [...ALL_MESSAGE_TYPES],
-            contentMatch: false
-          }));
-          delete persisted.followedPlayerIds;
-        }
-        if (persisted.followedPlayers && Array.isArray(persisted.followedPlayers)) {
-          persisted.followedPlayers = persisted.followedPlayers.map((p: any) => {
-            const { keywords, ...rest } = p;
-            return {
-              ...rest,
-              contentMatch: p.contentMatch ?? false
-            };
-          });
-        }
-        if (!persisted.globalKeywords) {
-          persisted.globalKeywords = [];
-        }
-        return persisted;
-      }
+      const newState = {
+        ...state,
+        followedPlayers: [...state.followedPlayers, {
+          id,
+          name: name || id,
+          messageTypes: [...ALL_MESSAGE_TYPES],
+          contentMatch: false
+        }]
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  removeFollowedPlayer: (id: string) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.filter(p => p.id !== id)
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  updatePlayerName: (id: string, name: string) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => 
+          p.id === id ? { ...p, name } : p
+        )
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => {
+          if (p.id !== playerId) return p;
+          const types = p.messageTypes;
+          const newTypes = types.includes(messageType)
+            ? types.filter(t => t !== messageType)
+            : [...types, messageType];
+          return { ...p, messageTypes: newTypes };
+        })
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => 
+          p.id === playerId ? { ...p, messageTypes } : p
+        )
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  togglePlayerContentMatch: (playerId: string) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => 
+          p.id === playerId ? { ...p, contentMatch: !p.contentMatch } : p
+        )
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  setGlobalKeywords: (keywords: string[]) => {
+    set((state) => {
+      const newState = { ...state, globalKeywords: keywords };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  isPlayerFollowed: (id: string) => {
+    return get().followedPlayers.some(p => p.id === id);
+  },
+  
+  getPlayerMessageTypes: (id: string) => {
+    const player = get().followedPlayers.find(p => p.id === id);
+    return player ? player.messageTypes : [];
+  },
+  
+  setFontScale: (scale: number) => {
+    set((state) => {
+      const newState = { ...state, fontScale: Math.max(0.5, Math.min(2.0, scale)) };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  loadUserConfig: () => {
+    const userId = useUserStore.getState().currentUserId;
+    console.log(`[ShuangDialog] 加载用户 ${userId} 的配置...`);
+    
+    const data = loadFromStorage(userId);
+    if (data) {
+      set({
+        followedPlayers: data.followedPlayers,
+        fontScale: data.fontScale,
+        globalKeywords: data.globalKeywords
+      });
+      console.log(`[ShuangDialog] 配置加载完成:`, data);
+    } else {
+      set({
+        followedPlayers: [],
+        fontScale: 1.0,
+        globalKeywords: []
+      });
+      console.log(`[ShuangDialog] 用户 ${userId} 无保存配置，使用默认值`);
     }
-  )
-);
+  }
+}));
