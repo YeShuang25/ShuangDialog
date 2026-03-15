@@ -18,12 +18,14 @@
 console.log('[ShuangDialog Dev] 开始加载...');
 
 // 注意：端口可能变化，请根据 npm run preview 的输出调整
-const DEV_URL = 'http://localhost:3001/main.js';
+const DEV_URL = 'http://localhost:3001/ShuangDialog.js';
 
 async function loadPlugin() {
     try {
-        console.log('[ShuangDialog Dev] 正在从本地服务器加载:', DEV_URL);
-        const module = await import(DEV_URL);
+        const timestamp = Date.now();
+        const url = `${DEV_URL}?t=${timestamp}`;
+        console.log('[ShuangDialog Dev] 正在从本地服务器加载:', url);
+        const module = await import(url);
         console.log('[ShuangDialog Dev] 模块加载成功:', module);
     } catch (error) {
         console.error('[ShuangDialog Dev] 加载失败:', error);

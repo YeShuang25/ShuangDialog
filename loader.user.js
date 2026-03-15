@@ -15,7 +15,6 @@
 // @run-at       document-end
 // ==/UserScript==
 
-// 检查是否在正确的游戏页面
 const supportedDomains = [
     'bondageprojects.elementfx.com',
     'bondage-europe.com',
@@ -29,7 +28,8 @@ const isSupportedDomain = supportedDomains.some(domain =>
 
 if (isSupportedDomain) {
     console.log('[ShuangDialog] 正在加载插件...');
-    import('https://yeshuang25.github.io/ShuangDialog/main.js');
+    const timestamp = Date.now();
+    import(`https://yeshuang25.github.io/ShuangDialog/ShuangDialog.js?t=${timestamp}`);
 } else {
     console.warn('[ShuangDialog] 当前页面不在支持的游戏域名内，跳过加载');
 }

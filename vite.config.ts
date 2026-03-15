@@ -12,7 +12,7 @@ export default defineConfig({
         main: resolve(__dirname, 'src/main.tsx')
       },
       output: {
-        entryFileNames: 'main.js',
+        entryFileNames: 'ShuangDialog.js',
         chunkFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
         format: 'iife',
