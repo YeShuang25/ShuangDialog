@@ -18,13 +18,17 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     removeFollowedPlayer,
     togglePlayerMessageType,
     setPlayerMessageTypes,
-    togglePlayerContentMatch
+    togglePlayerContentMatch,
+    globalKeywords,
+    setGlobalKeywords
   } = useShuangConfigStore();
   
   const [newPlayerId, setNewPlayerId] = useState('');
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isEditingKeywords, setIsEditingKeywords] = useState(false);
+  const [keywordsInput, setKeywordsInput] = useState('');
   const modalRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -93,6 +97,26 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     }
   };
 
+  const handleStartEditKeywords = () => {
+    setKeywordsInput(globalKeywords.join(', '));
+    setIsEditingKeywords(true);
+  };
+
+  const handleSaveKeywords = () => {
+    const keywords = keywordsInput
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
+    setGlobalKeywords(keywords);
+    setIsEditingKeywords(false);
+    setKeywordsInput('');
+  };
+
+  const handleCancelEditKeywords = () => {
+    setIsEditingKeywords(false);
+    setKeywordsInput('');
+  };
+
   const renderToggleButton = (
     isEnabled: boolean, 
     onClick: () => void, 
@@ -137,7 +161,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           backgroundColor: '#ffffff',
           borderRadius: '12px',
           padding: 0,
-          width: '560px',
+          width: '580px',
           maxWidth: '95vw',
           maxHeight: '75vh',
           overflow: 'hidden',
@@ -182,7 +206,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
         </div>
         
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #eee' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
             <input
               type="text"
               value={newPlayerId}
@@ -212,6 +236,100 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             >
               添加
             </button>
+          </div>
+          
+          <div style={{ 
+            padding: '8px 10px', 
+            backgroundColor: '#f5f5f5', 
+            borderRadius: '4px',
+            fontSize: '11px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ color: '#666', fontWeight: 500 }}>全局关键字：</span>
+                {isEditingKeywords ? (
+                  <input
+                    type="text"
+                    value={keywordsInput}
+                    onChange={(e) => setKeywordsInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveKeywords();
+                      if (e.key === 'Escape') handleCancelEditKeywords();
+                    }}
+                    placeholder="用逗号分隔多个关键字"
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      outline: 'none',
+                      width: '200px'
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    style={{ color: '#007acc', cursor: 'pointer' }}
+                    onClick={handleStartEditKeywords}
+                    title="点击编辑"
+                  >
+                    {globalKeywords.length > 0 
+                      ? globalKeywords.join(', ') 
+                      : <span style={{ color: '#999' }}>点击添加关键字</span>}
+                  </span>
+                )}
+              </div>
+              {isEditingKeywords ? (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    onClick={handleSaveKeywords}
+                    style={{
+                      padding: '3px 10px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px'
+                    }}
+                  >
+                    保存
+                  </button>
+                  <button
+                    onClick={handleCancelEditKeywords}
+                    style={{
+                      padding: '3px 10px',
+                      backgroundColor: '#e0e0e0',
+                      color: '#666',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px'
+                    }}
+                  >
+                    取消
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleStartEditKeywords}
+                  style={{
+                    padding: '3px 10px',
+                    backgroundColor: '#007acc',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '11px'
+                  }}
+                >
+                  编辑
+                </button>
+              )}
+            </div>
+            <div style={{ color: '#999', marginTop: '4px' }}>
+              匹配消息中包含这些关键字的内容（与玩家内容匹配独立）
+            </div>
           </div>
         </div>
 
@@ -243,24 +361,19 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
                   zIndex: 1
                 }}>
                   <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 500, color: '#666', width: '70px', borderBottom: '1px solid #e0e0e0' }}>玩家ID</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 500, color: '#666', width: '80px', borderBottom: '1px solid #e0e0e0' }}>名称</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }} title="对话消息">对话</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }} title="Emote">Emote</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }} title="动作">动作</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }} title="其他">其他</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '50px', borderBottom: '1px solid #e0e0e0' }} title="内容匹配">匹配</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }} title="全选">全选</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 500, color: '#666', width: '70px', borderBottom: '1px solid #e0e0e0' }}>名称</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="对话消息">对话</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="Emote">Emote</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="动作">动作</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="其他">其他</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="内容匹配">匹配</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'center', fontWeight: 500, color: '#666', width: '36px', borderBottom: '1px solid #e0e0e0' }} title="全选">全选</th>
                   <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 500, color: '#666', width: '40px', borderBottom: '1px solid #e0e0e0' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {followedPlayers.map((player: FollowedPlayer) => (
-                  <tr 
-                    key={player.id}
-                    style={{ 
-                      backgroundColor: '#fff'
-                    }}
-                  >
+                  <tr key={player.id} style={{ backgroundColor: '#fff' }}>
                     <td style={{ padding: '6px 10px', fontWeight: 500, color: '#333', borderBottom: '1px solid #f0f0f0' }}>
                       {player.id}
                     </td>
@@ -330,7 +443,9 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           <span style={{ margin: '0 8px' }}>|</span>
           <span>✗ = 关闭</span>
           <span style={{ margin: '0 8px' }}>|</span>
-          <span>匹配 = 内容匹配（匹配消息中提及的该玩家名字/昵称）</span>
+          <span>匹配 = 内容匹配（匹配玩家名字/昵称）</span>
+          <span style={{ margin: '0 8px' }}>|</span>
+          <span>全局关键字独立匹配</span>
         </div>
       </div>
     </div>

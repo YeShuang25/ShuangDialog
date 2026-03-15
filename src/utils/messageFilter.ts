@@ -100,6 +100,7 @@ export class MessageFilter {
     
     let isContentMatched = false;
     let matchedPlayerId: string | null = null;
+    let isGlobalKeywordMatched = false;
     
     if (!isSenderFollowed) {
       const contentMatchResult = this.checkContentMatch(messageElement, followedPlayers);
@@ -113,11 +114,13 @@ export class MessageFilter {
           return;
         }
       }
+      
+      isGlobalKeywordMatched = this.checkGlobalKeywords(messageElement);
     }
     
-    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 内容匹配: ${isContentMatched}`);
+    console.log(`[ShuangDialog:MessageFilter] 消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 内容匹配: ${isContentMatched}, 全局关键字匹配: ${isGlobalKeywordMatched}`);
     
-    if (!isSenderFollowed && !isContentMatched) {
+    if (!isSenderFollowed && !isContentMatched && !isGlobalKeywordMatched) {
       return;
     }
 
@@ -178,26 +181,46 @@ export class MessageFilter {
     }
 
     const playerNamesMap = this.getPlayerNamesFromChatRoom(playersWithContentMatch);
-    if (playerNamesMap.size === 0) {
-      return { isMatched: false, playerId: null };
-    }
-
     const messageText = this.getMessageTextContent(messageElement);
     
-    for (const [playerId, names] of playerNamesMap) {
+    for (const player of playersWithContentMatch) {
+      const names = playerNamesMap.get(player.id) || [];
+      
       for (const name of names) {
         if (name && name.trim()) {
           const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
           if (regex.test(messageText)) {
-            console.log(`[ShuangDialog:MessageFilter] 内容匹配成功: 玩家 ${playerId} 的名字 "${name}" 在消息中`);
-            return { isMatched: true, playerId };
+            console.log(`[ShuangDialog:MessageFilter] 内容匹配成功: 玩家 ${player.id} 的名字 "${name}" 在消息中`);
+            return { isMatched: true, playerId: player.id };
           }
         }
       }
     }
     
     return { isMatched: false, playerId: null };
+  }
+
+  private checkGlobalKeywords(messageElement: HTMLElement): boolean {
+    const globalKeywords = useShuangConfigStore.getState().globalKeywords;
+    if (globalKeywords.length === 0) {
+      return false;
+    }
+
+    const messageText = this.getMessageTextContent(messageElement);
+    
+    for (const keyword of globalKeywords) {
+      if (keyword && keyword.trim()) {
+        const escapedKeyword = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedKeyword}(?![a-zA-Z0-9])`);
+        if (regex.test(messageText)) {
+          console.log(`[ShuangDialog:MessageFilter] 全局关键字匹配成功: "${keyword}" 在消息中`);
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 
   private getPlayerNamesFromChatRoom(players: { id: string }[]): Map<string, string[]> {

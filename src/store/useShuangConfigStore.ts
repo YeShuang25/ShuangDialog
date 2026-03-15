@@ -24,12 +24,14 @@ export const getMessageTypeLabel = (type: MessageTypeFilter): string => MESSAGE_
 interface ShuangConfigState {
   followedPlayers: FollowedPlayer[];
   fontScale: number;
+  globalKeywords: string[];
   addFollowedPlayer: (id: string, name?: string) => void;
   removeFollowedPlayer: (id: string) => void;
   updatePlayerName: (id: string, name: string) => void;
   togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => void;
   setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => void;
   togglePlayerContentMatch: (playerId: string) => void;
+  setGlobalKeywords: (keywords: string[]) => void;
   isPlayerFollowed: (id: string) => boolean;
   getPlayerMessageTypes: (id: string) => MessageTypeFilter[];
   setFontScale: (scale: number) => void;
@@ -40,6 +42,7 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
     (set, get) => ({
       followedPlayers: [],
       fontScale: 1.0,
+      globalKeywords: [],
       
       addFollowedPlayer: (id: string, name: string = '') => {
         set((state) => {
@@ -100,6 +103,10 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
         }));
       },
       
+      setGlobalKeywords: (keywords: string[]) => {
+        set({ globalKeywords: keywords });
+      },
+      
       isPlayerFollowed: (id: string) => {
         return get().followedPlayers.some(p => p.id === id);
       },
@@ -126,10 +133,16 @@ export const useShuangConfigStore = create<ShuangConfigState>()(
           delete persisted.followedPlayerIds;
         }
         if (persisted.followedPlayers && Array.isArray(persisted.followedPlayers)) {
-          persisted.followedPlayers = persisted.followedPlayers.map((p: any) => ({
-            ...p,
-            contentMatch: p.contentMatch ?? false
-          }));
+          persisted.followedPlayers = persisted.followedPlayers.map((p: any) => {
+            const { keywords, ...rest } = p;
+            return {
+              ...rest,
+              contentMatch: p.contentMatch ?? false
+            };
+          });
+        }
+        if (!persisted.globalKeywords) {
+          persisted.globalKeywords = [];
         }
         return persisted;
       }
