@@ -86,6 +86,10 @@ export class MessageFilter {
     const followedPlayers = useShuangConfigStore.getState().followedPlayers;
     const senderPlayer = followedPlayers.find(p => p.id === senderId);
     
+    if (senderPlayer) {
+      this.updatePlayerNameFromChatRoom(senderId);
+    }
+    
     const isSenderFollowed = !!senderPlayer;
     const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
     
@@ -131,6 +135,28 @@ export class MessageFilter {
       return contentElement.textContent || '';
     }
     return element.textContent || '';
+  }
+
+  private updatePlayerNameFromChatRoom(playerId: string) {
+    try {
+      const chatRoomCharacter = (window as any).ChatRoomCharacter;
+      if (!chatRoomCharacter || !Array.isArray(chatRoomCharacter)) {
+        return;
+      }
+      
+      const roomPlayer = chatRoomCharacter.find((p: any) => 
+        p && (p.MemberNumber === playerId || p.MemberNumber === parseInt(playerId))
+      );
+      
+      if (roomPlayer) {
+        const displayName = roomPlayer.Nickname || roomPlayer.Name || '';
+        if (displayName) {
+          useShuangConfigStore.getState().updatePlayerName(playerId, displayName);
+        }
+      }
+    } catch (e) {
+      console.error('[ShuangDialog:MessageFilter] 更新玩家名字失败:', e);
+    }
   }
 
   private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; messageTypes: MessageTypeFilter[]; contentMatch: boolean }[]): { isMatched: boolean; playerId: string | null } {
@@ -179,13 +205,20 @@ export class MessageFilter {
         
         if (roomPlayer) {
           const names: string[] = [];
+          const displayName = roomPlayer.Nickname || roomPlayer.Name || '';
+          
           if (roomPlayer.Name) names.push(roomPlayer.Name);
           if (roomPlayer.Nickname && roomPlayer.Nickname !== roomPlayer.Name) {
             names.push(roomPlayer.Nickname);
           }
+          
           if (names.length > 0) {
             playerNamesMap.set(player.id, names);
             console.log(`[ShuangDialog:MessageFilter] 玩家 ${player.id} 的名字:`, names);
+          }
+          
+          if (displayName) {
+            useShuangConfigStore.getState().updatePlayerName(player.id, displayName);
           }
         }
       }
