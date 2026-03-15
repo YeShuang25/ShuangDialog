@@ -130,10 +130,22 @@ export class MessageFilter {
   }
 
   private getMessageTextContent(element: HTMLElement): string {
+    const parts: string[] = [];
+    
     const contentElement = element.querySelector('.chat-room-message-content');
     if (contentElement) {
-      return contentElement.textContent || '';
+      parts.push(contentElement.textContent || '');
     }
+    
+    const originalElement = element.querySelector('.chat-room-message-original');
+    if (originalElement) {
+      parts.push(originalElement.textContent || '');
+    }
+    
+    if (parts.length > 0) {
+      return parts.join(' ');
+    }
+    
     return element.textContent || '';
   }
 
