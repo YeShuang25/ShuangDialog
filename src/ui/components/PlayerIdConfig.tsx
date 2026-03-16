@@ -43,11 +43,33 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     }
   }, [position]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('.modal-header')) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragOffset({
+        x: touch.clientX - position.x,
+        y: touch.clientY - position.y
+      });
+    }
+  }, [position]);
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       setPosition({
         x: e.clientX - dragOffset.x,
         y: e.clientY - dragOffset.y
+      });
+    }
+  }, [isDragging, dragOffset]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      setPosition({
+        x: touch.clientX - dragOffset.x,
+        y: touch.clientY - dragOffset.y
       });
     }
   }, [isDragging, dragOffset]);
@@ -60,12 +82,16 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleMouseUp);
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
   if (!isOpen) return null;
 
@@ -154,9 +180,11 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
         left: position.x,
         top: position.y,
         zIndex: 10002,
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default',
+        touchAction: 'none'
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       <div
         style={{
@@ -185,7 +213,8 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             cursor: 'grab',
             backgroundColor: '#f8f9fa',
             borderRadius: `${12 * scale}px ${12 * scale}px 0 0`,
-            userSelect: 'none'
+            userSelect: 'none',
+            touchAction: 'none'
           }}
         >
           <h2 style={{ margin: 0, fontSize: `${15 * scale}px`, color: '#333', fontWeight: 600 }}>
