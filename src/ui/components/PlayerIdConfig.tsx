@@ -30,6 +30,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isEditingKeywords, setIsEditingKeywords] = useState(false);
   const [keywordsInput, setKeywordsInput] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const scale = useScale();
 
@@ -217,9 +218,32 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             touchAction: 'none'
           }}
         >
-          <h2 style={{ margin: 0, fontSize: `${15 * scale}px`, color: '#333', fontWeight: 600 }}>
-            特别关注配置
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: `${8 * scale}px` }}>
+            <h2 style={{ margin: 0, fontSize: `${15 * scale}px`, color: '#333', fontWeight: 600 }}>
+              特别关注配置
+            </h2>
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              style={{
+                width: `${18 * scale}px`,
+                height: `${18 * scale}px`,
+                padding: 0,
+                backgroundColor: showHelp ? '#007acc' : '#e0e0e0',
+                color: showHelp ? 'white' : '#666',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: `${11 * scale}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold'
+              }}
+              title="点击查看匹配规则说明"
+            >
+              ?
+            </button>
+          </div>
           <button
             onClick={onClose}
             style={{
@@ -235,6 +259,58 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             关闭
           </button>
         </div>
+        
+        {showHelp && (
+          <div style={{
+            padding: `${12 * scale}px ${16 * scale}px`,
+            backgroundColor: '#f0f7ff',
+            borderBottom: `${1 * scale}px solid #cce4ff`,
+            fontSize: `${11 * scale}px`,
+            lineHeight: 1.6
+          }}>
+            <div style={{ fontWeight: 600, color: '#007acc', marginBottom: `${8 * scale}px` }}>
+              📋 匹配规则说明
+            </div>
+            <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
+              <strong>1. 消息类型选项（对话/Emote/动作/其他）</strong>
+              <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
+                • 仅对该玩家<strong>自己发出</strong>的消息生效<br/>
+                • 用于过滤该玩家发出的不同类型消息<br/>
+                • 例如：只勾选"对话"，则只会捕获该玩家发出的对话消息
+              </div>
+            </div>
+            <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
+              <strong>2. 匹配选项</strong>
+              <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
+                • 将该玩家的<strong>名称和昵称</strong>作为关键字进行匹配<br/>
+                • 匹配的是消息<strong>内容</strong>（不含发送者名字、时间等）<br/>
+                • <strong>不受消息类型限制</strong>，匹配成功即捕获<br/>
+                • 例如：玩家A的消息中提到了玩家B的名字，若B开启了匹配，则该消息会被捕获
+              </div>
+            </div>
+            <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
+              <strong>3. 全局关键字</strong>
+              <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
+                • 独立于玩家关注列表，匹配所有消息内容<br/>
+                • <strong>不受消息类型限制</strong>，匹配成功即捕获<br/>
+                • 例如：添加关键字"YeS"，所有包含"YeS"的消息都会被捕获
+              </div>
+            </div>
+            <div style={{ 
+              color: '#856404', 
+              backgroundColor: '#fff3cd', 
+              padding: `${6 * scale}px ${10 * scale}px`, 
+              borderRadius: `${4 * scale}px`,
+              marginTop: `${8 * scale}px`
+            }}>
+              💡 <strong>匹配优先级：</strong><br/>
+              1. 先检查发送者是否在关注列表 + 消息类型是否启用 → 匹配成功<br/>
+              2. 再检查消息内容是否包含全局关键字 → 匹配成功<br/>
+              3. 再检查消息内容是否包含开启了"匹配"选项的玩家名称/昵称 → 匹配成功<br/>
+              4. 以上都不匹配 → 筛选未通过
+            </div>
+          </div>
+        )}
         
         <div style={{ padding: `${12 * scale}px ${16 * scale}px`, borderBottom: `${1 * scale}px solid #eee` }}>
           <div style={{ display: 'flex', gap: `${8 * scale}px`, marginBottom: `${10 * scale}px` }}>

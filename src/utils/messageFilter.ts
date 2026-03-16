@@ -94,22 +94,22 @@ export class MessageFilter {
     const isSenderFollowed = !!senderPlayer;
     const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
     
-    if (isSenderFollowed && !isMessageTypeEnabled) {
-      log('MESSAGE_FILTER', `玩家 ${senderId} 的消息类型 ${messageType} 未启用，跳过`);
+    if (isSenderFollowed && isMessageTypeEnabled) {
+      log('MESSAGE_FILTER', `玩家 ${senderId} 的消息类型 ${messageType} 已启用，直接通过`);
+      const messageData = this.extractMessageData(messageElement, messageType);
+      if (messageData) {
+        useShuangMessagesStore.getState().addMessage(messageData);
+        log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
+      }
       return;
     }
     
-    let isContentMatched = false;
-    let isGlobalKeywordMatched = false;
+    const isContentMatched = this.checkContentMatch(messageElement, followedPlayers);
+    const isGlobalKeywordMatched = this.checkGlobalKeywords(messageElement);
     
-    if (!isSenderFollowed) {
-      isContentMatched = this.checkContentMatch(messageElement, followedPlayers);
-      isGlobalKeywordMatched = this.checkGlobalKeywords(messageElement);
-    }
+    log('MESSAGE_FILTER', `消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 类型启用: ${isMessageTypeEnabled}, 内容匹配: ${isContentMatched}, 全局关键字匹配: ${isGlobalKeywordMatched}`);
     
-    log('MESSAGE_FILTER', `消息发送者ID: ${senderId}, 发送者是否关注: ${isSenderFollowed}, 内容匹配: ${isContentMatched}, 全局关键字匹配: ${isGlobalKeywordMatched}`);
-    
-    if (!isSenderFollowed && !isContentMatched && !isGlobalKeywordMatched) {
+    if (!isContentMatched && !isGlobalKeywordMatched) {
       return;
     }
 
