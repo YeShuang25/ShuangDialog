@@ -166,6 +166,38 @@ export const ShuangChatBox: React.FC = () => {
             margin-top: ${sizes.padding}px;
             font-size: ${sizes.fontSize}px;
           }
+          
+          .shuang-message-wrapper {
+            position: relative;
+          }
+          
+          .shuang-message-wrapper:hover .shuang-locate-btn {
+            opacity: 1;
+          }
+          
+          .shuang-locate-btn {
+            position: absolute;
+            right: 2px;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(0, 122, 204, 0.9);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+          }
+          
+          .shuang-locate-btn:hover {
+            background-color: #005a9e;
+          }
         `;
       } else {
         styleElementRef.current.textContent = `
@@ -340,6 +372,19 @@ export const ShuangChatBox: React.FC = () => {
     }
   }, [heightRatio, chatBoxEnabled, fontScale, chatBoxHeight, updateStyles]);
 
+  const scrollToOriginalMessage = useCallback((originalElement: HTMLElement) => {
+    const textAreaElement = document.getElementById('TextAreaChatLog');
+    if (!textAreaElement || !originalElement) return;
+    
+    originalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    originalElement.style.transition = 'background-color 0.3s';
+    originalElement.style.backgroundColor = 'rgba(0, 122, 204, 0.3)';
+    setTimeout(() => {
+      originalElement.style.backgroundColor = '';
+    }, 1500);
+  }, []);
+
   const renderMessages = useCallback(() => {
     if (!contentRef.current) return;
 
@@ -407,10 +452,21 @@ export const ShuangChatBox: React.FC = () => {
           wrapper.appendChild(clonedElement);
         }
         
+        const locateBtn = document.createElement('button');
+        locateBtn.className = 'shuang-locate-btn';
+        locateBtn.innerHTML = '⬆';
+        locateBtn.title = '定位到游戏聊天框';
+        locateBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          scrollToOriginalMessage(msg.originalElement);
+        });
+        wrapper.appendChild(locateBtn);
+        
         contentRef.current!.appendChild(wrapper);
       });
     }
-  }, [messages]);
+  }, [messages, scrollToOriginalMessage]);
 
   useEffect(() => {
     if (chatBoxEnabled) {
