@@ -65,7 +65,7 @@ export class MessageFilter {
     if (element.classList.contains('ChatMessageEmote')) {
       return 'emote';
     }
-    if (element.classList.contains('ChatMessageActivity')) {
+    if (element.classList.contains('ChatMessageActivity') || element.classList.contains('ChatMessageAction')) {
       return 'activity';
     }
     return 'other';
@@ -134,23 +134,20 @@ export class MessageFilter {
   }
 
   private getMessageTextContent(element: HTMLElement): string {
-    const parts: string[] = [];
+    const clone = element.cloneNode(true) as HTMLElement;
     
-    const contentElement = element.querySelector('.chat-room-message-content');
-    if (contentElement) {
-      parts.push(contentElement.textContent || '');
+    const excludeSelectors = [
+      '.chat-room-time',
+      '.chat-room-sender', 
+      '.ChatMessageName',
+      '.chat-room-metadata'
+    ];
+    
+    for (const selector of excludeSelectors) {
+      clone.querySelectorAll(selector).forEach(el => el.remove());
     }
     
-    const originalElement = element.querySelector('.chat-room-message-original');
-    if (originalElement) {
-      parts.push(originalElement.textContent || '');
-    }
-    
-    if (parts.length > 0) {
-      return parts.join(' ');
-    }
-    
-    return element.textContent || '';
+    return clone.textContent || '';
   }
 
   private updatePlayerNameFromChatRoom(playerId: string) {
@@ -280,7 +277,7 @@ export class MessageFilter {
     const messageId = `${senderId}-${timestamp}-${Date.now()}`;
 
     let type: ShuangMessage['type'] = 'chat';
-    if (element.classList.contains('ChatMessageActivity')) {
+    if (element.classList.contains('ChatMessageActivity') || element.classList.contains('ChatMessageAction')) {
       type = 'activity';
     } else if (element.classList.contains('ChatMessageEmote')) {
       type = 'emote';
