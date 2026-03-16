@@ -169,6 +169,7 @@ export const ShuangChatBox: React.FC = () => {
           
           .shuang-message-wrapper {
             position: relative;
+            line-height: 1.5;
           }
           
           .shuang-message-wrapper:hover .shuang-locate-btn {
@@ -177,16 +178,16 @@ export const ShuangChatBox: React.FC = () => {
           
           .shuang-locate-btn {
             position: absolute;
-            right: 2px;
-            top: 2px;
-            width: 20px;
-            height: 20px;
+            right: 0;
+            top: 0;
+            width: 1.5em;
+            height: 1.5em;
             background-color: rgba(0, 122, 204, 0.9);
             color: white;
             border: none;
-            border-radius: 3px;
+            border-radius: 0.2em;
             cursor: pointer;
-            font-size: 10px;
+            font-size: 1em;
             display: flex;
             align-items: center;
             justify-content: center;
