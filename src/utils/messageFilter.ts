@@ -100,22 +100,10 @@ export class MessageFilter {
     }
     
     let isContentMatched = false;
-    let matchedPlayerId: string | null = null;
     let isGlobalKeywordMatched = false;
     
     if (!isSenderFollowed) {
-      const contentMatchResult = this.checkContentMatch(messageElement, followedPlayers);
-      if (contentMatchResult.isMatched) {
-        isContentMatched = true;
-        matchedPlayerId = contentMatchResult.playerId;
-        
-        const matchedPlayer = followedPlayers.find(p => p.id === matchedPlayerId);
-        if (matchedPlayer && !matchedPlayer.messageTypes.includes(messageType)) {
-          log('MESSAGE_FILTER', `内容匹配玩家 ${matchedPlayerId} 的消息类型 ${messageType} 未启用，跳过`);
-          return;
-        }
-      }
-      
+      isContentMatched = this.checkContentMatch(messageElement, followedPlayers);
       isGlobalKeywordMatched = this.checkGlobalKeywords(messageElement);
     }
     
@@ -172,10 +160,10 @@ export class MessageFilter {
     }
   }
 
-  private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; messageTypes: MessageTypeFilter[]; contentMatch: boolean }[]): { isMatched: boolean; playerId: string | null } {
+  private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; contentMatch: boolean }[]): boolean {
     const playersWithContentMatch = followedPlayers.filter(p => p.contentMatch);
     if (playersWithContentMatch.length === 0) {
-      return { isMatched: false, playerId: null };
+      return false;
     }
 
     const playerNamesMap = this.getPlayerNamesFromChatRoom(playersWithContentMatch);
@@ -190,13 +178,13 @@ export class MessageFilter {
           const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
           if (regex.test(messageText)) {
             log('MESSAGE_FILTER', `内容匹配成功: 玩家 ${player.id} 的名字 "${name}" 在消息中`);
-            return { isMatched: true, playerId: player.id };
+            return true;
           }
         }
       }
     }
     
-    return { isMatched: false, playerId: null };
+    return false;
   }
 
   private checkGlobalKeywords(messageElement: HTMLElement): boolean {
