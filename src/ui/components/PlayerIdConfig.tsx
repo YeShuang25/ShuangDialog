@@ -3,7 +3,8 @@ import {
   useShuangConfigStore, 
   MessageTypeFilter, 
   ALL_MESSAGE_TYPES, 
-  FollowedPlayer
+  FollowedPlayer,
+  MessageFilterStatus
 } from '../../store/useShuangConfigStore';
 import { useScale } from '../context/ScaleContext';
 
@@ -17,8 +18,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     followedPlayers, 
     addFollowedPlayer, 
     removeFollowedPlayer,
-    togglePlayerMessageType,
-    setPlayerMessageTypes,
+    setPlayerMessageTypeStatus,
     togglePlayerContentMatch,
     globalKeywords,
     setGlobalKeywords
@@ -110,19 +110,21 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     }
   };
 
-  const handleToggleAllTypes = (playerId: string, currentTypes: MessageTypeFilter[], currentContentMatch: boolean) => {
-    const isAllSelected = currentTypes.length === ALL_MESSAGE_TYPES.length && currentContentMatch;
+  const handleToggleAllTypes = (playerId: string, player: FollowedPlayer) => {
+    const isAllSelected = player.messageTypes.length === ALL_MESSAGE_TYPES.length && 
+                          (player.excludedMessageTypes || []).length === 0 &&
+                          player.contentMatch;
+    
     if (isAllSelected) {
-      setPlayerMessageTypes(playerId, []);
-      const player = followedPlayers.find(p => p.id === playerId);
-      if (player?.contentMatch) {
-        togglePlayerContentMatch(playerId);
-      }
+      ALL_MESSAGE_TYPES.forEach(type => {
+        setPlayerMessageTypeStatus(playerId, type, 'disabled');
+      });
+      if (player.contentMatch) togglePlayerContentMatch(playerId);
     } else {
-      setPlayerMessageTypes(playerId, [...ALL_MESSAGE_TYPES]);
-      if (!currentContentMatch) {
-        togglePlayerContentMatch(playerId);
-      }
+      ALL_MESSAGE_TYPES.forEach(type => {
+        setPlayerMessageTypeStatus(playerId, type, 'enabled');
+      });
+      if (!player.contentMatch) togglePlayerContentMatch(playerId);
     }
   };
 
@@ -146,7 +148,52 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
     setKeywordsInput('');
   };
 
-  const renderToggleButton = (
+  const getMessageTypeStatus = (player: FollowedPlayer, type: MessageTypeFilter): MessageFilterStatus => {
+    if ((player.excludedMessageTypes || []).includes(type)) {
+      return 'excluded';
+    }
+    if (player.messageTypes.includes(type)) {
+      return 'enabled';
+    }
+    return 'disabled';
+  };
+
+  const renderThreeStateButton = (
+    status: MessageFilterStatus,
+    onClick: () => void,
+    size: 'small' | 'normal' = 'small'
+  ) => {
+    const colors = {
+      enabled: { bg: '#28a745', text: '✓' },
+      excluded: { bg: '#fd7e14', text: '⊘' },
+      disabled: { bg: '#dc3545', text: '✗' }
+    };
+    
+    return (
+      <button
+        onClick={onClick}
+        style={{
+          width: size === 'small' ? `${28 * scale}px` : `${36 * scale}px`,
+          height: size === 'small' ? `${22 * scale}px` : `${26 * scale}px`,
+          padding: 0,
+          backgroundColor: colors[status].bg,
+          color: 'white',
+          border: 'none',
+          borderRadius: `${4 * scale}px`,
+          cursor: 'pointer',
+          fontSize: `${10 * scale}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.15s ease'
+        }}
+      >
+        {colors[status].text}
+      </button>
+    );
+  };
+
+  const renderTwoStateButton = (
     isEnabled: boolean, 
     onClick: () => void, 
     size: 'small' | 'normal' = 'small'
@@ -274,9 +321,9 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
               <strong>1. 消息类型选项（对话/Emote/动作/其他）</strong>
               <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
-                • 仅对该玩家<strong>自己发出</strong>的消息生效<br/>
-                • 用于过滤该玩家发出的不同类型消息<br/>
-                • 例如：只勾选"对话"，则只会捕获该玩家发出的对话消息
+                • <span style={{ color: '#28a745' }}>✓ 启用</span>：捕获该玩家发出的此类型消息<br/>
+                • <span style={{ color: '#fd7e14' }}>⊘ 排除</span>：排除该玩家发出的此类型消息（优先级最高）<br/>
+                • <span style={{ color: '#dc3545' }}>✗ 关闭</span>：不处理该玩家发出的此类型消息
               </div>
             </div>
             <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
@@ -284,16 +331,22 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
               <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
                 • 将该玩家的<strong>名称和昵称</strong>作为关键字进行匹配<br/>
                 • 匹配的是消息<strong>内容</strong>（不含发送者名字、时间等）<br/>
-                • <strong>不受消息类型限制</strong>，匹配成功即捕获<br/>
-                • 例如：玩家A的消息中提到了玩家B的名字，若B开启了匹配，则该消息会被捕获
+                • <strong>不受消息类型限制</strong>，匹配成功即捕获
               </div>
             </div>
             <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
-              <strong>3. 全局关键字</strong>
+              <strong>3. 排除选项</strong>
+              <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
+                • 将该玩家的<strong>名称和昵称</strong>作为排除关键字<br/>
+                • <strong>优先级最高</strong>：在内容匹配之前检查<br/>
+                • 如果消息内容包含该玩家的名称/昵称，则跳过该消息
+              </div>
+            </div>
+            <div style={{ color: '#333', marginBottom: `${8 * scale}px` }}>
+              <strong>4. 全局关键字</strong>
               <div style={{ color: '#666', marginLeft: `${12 * scale}px`, marginTop: `${2 * scale}px` }}>
                 • 独立于玩家关注列表，匹配所有消息内容<br/>
-                • <strong>不受消息类型限制</strong>，匹配成功即捕获<br/>
-                • 例如：添加关键字"YeS"，所有包含"YeS"的消息都会被捕获
+                • <strong>不受消息类型限制</strong>，匹配成功即捕获
               </div>
             </div>
             <div style={{ 
@@ -304,10 +357,12 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
               marginTop: `${8 * scale}px`
             }}>
               💡 <strong>匹配优先级：</strong><br/>
-              1. 先检查发送者是否在关注列表 + 消息类型是否启用 → 匹配成功<br/>
-              2. 再检查消息内容是否包含全局关键字 → 匹配成功<br/>
-              3. 再检查消息内容是否包含开启了"匹配"选项的玩家名称/昵称 → 匹配成功<br/>
-              4. 以上都不匹配 → 筛选未通过
+              1. 发送者在关注列表 + 消息类型设为"排除" → 跳过消息<br/>
+              2. 发送者在关注列表 + 消息类型设为"启用" → 捕获消息<br/>
+              3. 检查消息内容是否包含开启了"排除"选项的玩家名称 → 跳过消息<br/>
+              4. 检查消息内容是否包含全局关键字 → 捕获消息<br/>
+              5. 检查消息内容是否包含开启了"匹配"选项的玩家名称 → 捕获消息<br/>
+              6. 以上都不匹配 → 筛选未通过
             </div>
           </div>
         )}
@@ -479,61 +534,75 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
                 </tr>
               </thead>
               <tbody>
-                {followedPlayers.map((player: FollowedPlayer) => (
-                  <tr key={player.id} style={{ backgroundColor: '#fff' }}>
-                    <td style={{ padding: `${6 * scale}px ${10 * scale}px`, fontWeight: 500, color: '#333', borderBottom: `${1 * scale}px solid #f0f0f0` }}>
-                      {player.id}
-                    </td>
-                    <td style={{ padding: `${6 * scale}px ${10 * scale}px`, color: '#666', borderBottom: `${1 * scale}px solid #f0f0f0` }}>
-                      {player.name || '-'}
-                    </td>
-                    {ALL_MESSAGE_TYPES.map((type) => (
-                      <td key={type} style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                {followedPlayers.map((player: FollowedPlayer) => {
+                  const isAllSelected = player.messageTypes.length === ALL_MESSAGE_TYPES.length && 
+                                        (player.excludedMessageTypes || []).length === 0 &&
+                                        player.contentMatch;
+                  
+                  return (
+                    <tr key={player.id} style={{ backgroundColor: '#fff' }}>
+                      <td style={{ padding: `${6 * scale}px ${10 * scale}px`, fontWeight: 500, color: '#333', borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                        {player.id}
+                      </td>
+                      <td style={{ padding: `${6 * scale}px ${10 * scale}px`, color: '#666', borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                        {player.name || '-'}
+                      </td>
+                      {ALL_MESSAGE_TYPES.map((type) => {
+                        const status = getMessageTypeStatus(player, type);
+                        return (
+                          <td key={type} style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                              {renderThreeStateButton(
+                                status,
+                                () => {
+                                  const nextStatus: MessageFilterStatus = 
+                                    status === 'disabled' ? 'enabled' :
+                                    status === 'enabled' ? 'excluded' : 'disabled';
+                                  setPlayerMessageTypeStatus(player.id, type, nextStatus);
+                                }
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                      <td style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                          {renderToggleButton(
-                            player.messageTypes.includes(type),
-                            () => togglePlayerMessageType(player.id, type)
+                          {renderTwoStateButton(
+                            player.contentMatch,
+                            () => togglePlayerContentMatch(player.id)
                           )}
                         </div>
                       </td>
-                    ))}
-                    <td style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        {renderToggleButton(
-                          player.contentMatch,
-                          () => togglePlayerContentMatch(player.id)
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        {renderToggleButton(
-                          player.messageTypes.length === ALL_MESSAGE_TYPES.length && player.contentMatch,
-                          () => handleToggleAllTypes(player.id, player.messageTypes, player.contentMatch),
-                          'normal'
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: `${6 * scale}px ${10 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <button
-                          onClick={() => removeFollowedPlayer(player.id)}
-                          style={{
-                            padding: `${4 * scale}px ${8 * scale}px`,
-                            backgroundColor: '#ff4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: `${4 * scale}px`,
-                            cursor: 'pointer',
-                            fontSize: `${11 * scale}px`
-                          }}
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      <td style={{ padding: `${6 * scale}px ${4 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                          {renderTwoStateButton(
+                            isAllSelected,
+                            () => handleToggleAllTypes(player.id, player),
+                            'normal'
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ padding: `${6 * scale}px ${10 * scale}px`, borderBottom: `${1 * scale}px solid #f0f0f0` }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                          <button
+                            onClick={() => removeFollowedPlayer(player.id)}
+                            style={{
+                              padding: `${4 * scale}px ${8 * scale}px`,
+                              backgroundColor: '#ff4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: `${4 * scale}px`,
+                              cursor: 'pointer',
+                              fontSize: `${11 * scale}px`
+                            }}
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -546,13 +615,13 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           fontSize: `${11 * scale}px`,
           color: '#999'
         }}>
-          <span>✓ = 开启</span>
+          <span style={{ color: '#28a745' }}>✓ = 启用</span>
           <span style={{ margin: `0 ${8 * scale}px` }}>|</span>
-          <span>✗ = 关闭</span>
+          <span style={{ color: '#fd7e14' }}>⊘ = 排除</span>
           <span style={{ margin: `0 ${8 * scale}px` }}>|</span>
-          <span>匹配 = 内容匹配（匹配玩家名字/昵称）</span>
+          <span style={{ color: '#dc3545' }}>✗ = 关闭</span>
           <span style={{ margin: `0 ${8 * scale}px` }}>|</span>
-          <span>全局关键字独立匹配</span>
+          <span>全选 = 一键开启所有类型+匹配</span>
         </div>
       </div>
     </div>

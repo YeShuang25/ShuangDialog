@@ -3,11 +3,15 @@ import { useUserStore, getStorageKey } from './useUserStore';
 
 export type MessageTypeFilter = 'chat' | 'emote' | 'activity' | 'other';
 
+export type MessageFilterStatus = 'enabled' | 'excluded' | 'disabled';
+
 export interface FollowedPlayer {
   id: string;
   name: string;
   messageTypes: MessageTypeFilter[];
+  excludedMessageTypes: MessageTypeFilter[];
   contentMatch: boolean;
+  excludeMatch: boolean;
 }
 
 export const ALL_MESSAGE_TYPES: MessageTypeFilter[] = ['chat', 'emote', 'activity', 'other'];
@@ -30,7 +34,10 @@ interface ShuangConfigState {
   updatePlayerName: (id: string, name: string) => void;
   togglePlayerMessageType: (playerId: string, messageType: MessageTypeFilter) => void;
   setPlayerMessageTypes: (playerId: string, messageTypes: MessageTypeFilter[]) => void;
+  togglePlayerMessageTypeExclude: (playerId: string, messageType: MessageTypeFilter) => void;
+  setPlayerMessageTypeStatus: (playerId: string, messageType: MessageTypeFilter, status: MessageFilterStatus) => void;
   togglePlayerContentMatch: (playerId: string) => void;
+  togglePlayerExcludeMatch: (playerId: string) => void;
   setGlobalKeywords: (keywords: string[]) => void;
   isPlayerFollowed: (id: string) => boolean;
   getPlayerMessageTypes: (id: string) => MessageTypeFilter[];
@@ -49,8 +56,13 @@ function loadFromStorage(userId: string | null): { followedPlayers: FollowedPlay
   
   try {
     const data = JSON.parse(str);
+    const migratedPlayers = (data.followedPlayers || []).map((p: any) => ({
+      ...p,
+      excludedMessageTypes: p.excludedMessageTypes || [],
+      excludeMatch: p.excludeMatch || false
+    }));
     return {
-      followedPlayers: data.followedPlayers || [],
+      followedPlayers: migratedPlayers,
       fontScale: data.fontScale || 1.0,
       globalKeywords: data.globalKeywords || []
     };
@@ -83,7 +95,9 @@ export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
           id,
           name: name || id,
           messageTypes: [...ALL_MESSAGE_TYPES],
-          contentMatch: false
+          excludedMessageTypes: [],
+          contentMatch: true,
+          excludeMatch: false
         }]
       };
       saveToStorage(useUserStore.getState().currentUserId, {
@@ -166,12 +180,78 @@ export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
     });
   },
   
+  togglePlayerMessageTypeExclude: (playerId: string, messageType: MessageTypeFilter) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => {
+          if (p.id !== playerId) return p;
+          const excludedTypes = p.excludedMessageTypes || [];
+          const newExcludedTypes = excludedTypes.includes(messageType)
+            ? excludedTypes.filter(t => t !== messageType)
+            : [...excludedTypes, messageType];
+          return { ...p, excludedMessageTypes: newExcludedTypes };
+        })
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  setPlayerMessageTypeStatus: (playerId: string, messageType: MessageTypeFilter, status: MessageFilterStatus) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => {
+          if (p.id !== playerId) return p;
+          let newTypes = p.messageTypes.filter(t => t !== messageType);
+          let newExcludedTypes = (p.excludedMessageTypes || []).filter(t => t !== messageType);
+          
+          if (status === 'enabled') {
+            newTypes = [...newTypes, messageType];
+          } else if (status === 'excluded') {
+            newExcludedTypes = [...newExcludedTypes, messageType];
+          }
+          
+          return { ...p, messageTypes: newTypes, excludedMessageTypes: newExcludedTypes };
+        })
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
   togglePlayerContentMatch: (playerId: string) => {
     set((state) => {
       const newState = {
         ...state,
         followedPlayers: state.followedPlayers.map(p => 
           p.id === playerId ? { ...p, contentMatch: !p.contentMatch } : p
+        )
+      };
+      saveToStorage(useUserStore.getState().currentUserId, {
+        followedPlayers: newState.followedPlayers,
+        fontScale: newState.fontScale,
+        globalKeywords: newState.globalKeywords
+      });
+      return newState;
+    });
+  },
+  
+  togglePlayerExcludeMatch: (playerId: string) => {
+    set((state) => {
+      const newState = {
+        ...state,
+        followedPlayers: state.followedPlayers.map(p => 
+          p.id === playerId ? { ...p, excludeMatch: !p.excludeMatch } : p
         )
       };
       saveToStorage(useUserStore.getState().currentUserId, {

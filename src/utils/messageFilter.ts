@@ -92,7 +92,13 @@ export class MessageFilter {
     }
     
     const isSenderFollowed = !!senderPlayer;
+    const isMessageTypeExcluded = senderPlayer ? (senderPlayer.excludedMessageTypes || []).includes(messageType) : false;
     const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
+    
+    if (isSenderFollowed && isMessageTypeExcluded) {
+      log('MESSAGE_FILTER', `玩家 ${senderId} 的消息类型 ${messageType} 已排除，跳过`);
+      return;
+    }
     
     if (isSenderFollowed && isMessageTypeEnabled) {
       log('MESSAGE_FILTER', `玩家 ${senderId} 的消息类型 ${messageType} 已启用，直接通过`);
@@ -101,6 +107,11 @@ export class MessageFilter {
         useShuangMessagesStore.getState().addMessage(messageData);
         log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
       }
+      return;
+    }
+    
+    if (this.checkExcludeContentMatch(messageElement, followedPlayers)) {
+      log('MESSAGE_FILTER', '排除内容匹配成功，跳过消息');
       return;
     }
     
@@ -158,6 +169,33 @@ export class MessageFilter {
     } catch (e) {
       error('MESSAGE_FILTER', '更新玩家名字失败:', e);
     }
+  }
+
+  private checkExcludeContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; excludeMatch?: boolean }[]): boolean {
+    const playersWithExcludeMatch = followedPlayers.filter(p => p.excludeMatch);
+    if (playersWithExcludeMatch.length === 0) {
+      return false;
+    }
+
+    const playerNamesMap = this.getPlayerNamesFromChatRoom(playersWithExcludeMatch);
+    const messageText = this.getMessageTextContent(messageElement);
+    
+    for (const player of playersWithExcludeMatch) {
+      const names = playerNamesMap.get(player.id) || [];
+      
+      for (const name of names) {
+        if (name && name.trim()) {
+          const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
+          if (regex.test(messageText)) {
+            log('MESSAGE_FILTER', `排除内容匹配成功: 玩家 ${player.id} 的名字 "${name}" 在消息中`);
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
   }
 
   private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; contentMatch: boolean }[]): boolean {
