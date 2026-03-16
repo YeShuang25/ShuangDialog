@@ -169,7 +169,6 @@ export const ShuangChatBox: React.FC = () => {
           
           .shuang-message-wrapper {
             position: relative;
-            line-height: 1.5;
           }
           
           .shuang-message-wrapper:hover .shuang-locate-btn {
@@ -188,6 +187,7 @@ export const ShuangChatBox: React.FC = () => {
             border-radius: 0.2em;
             cursor: pointer;
             font-size: 1em;
+            line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
