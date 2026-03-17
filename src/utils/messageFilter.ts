@@ -186,7 +186,7 @@ export class MessageFilter {
       for (const name of names) {
         if (name && name.trim()) {
           const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
+          const regex = new RegExp(escapedName);
           if (regex.test(messageText)) {
             log('MESSAGE_FILTER', `排除内容匹配成功: 玩家 ${player.id} 的名字 "${name}" 在消息中`);
             return true;
@@ -213,7 +213,7 @@ export class MessageFilter {
       for (const name of names) {
         if (name && name.trim()) {
           const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedName}(?![a-zA-Z0-9])`);
+          const regex = new RegExp(escapedName);
           if (regex.test(messageText)) {
             log('MESSAGE_FILTER', `内容匹配成功: 玩家 ${player.id} 的名字 "${name}" 在消息中`);
             return true;
@@ -236,7 +236,7 @@ export class MessageFilter {
     for (const keyword of globalKeywords) {
       if (keyword && keyword.trim()) {
         const escapedKeyword = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(?<![a-zA-Z0-9])${escapedKeyword}(?![a-zA-Z0-9])`);
+        const regex = new RegExp(escapedKeyword);
         if (regex.test(messageText)) {
           log('MESSAGE_FILTER', `全局关键字匹配成功: "${keyword}" 在消息中`);
           return true;
