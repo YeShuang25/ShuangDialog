@@ -364,6 +364,25 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
               5. 检查消息内容是否包含开启了"匹配"选项的玩家名称 → 捕获消息<br/>
               6. 以上都不匹配 → 筛选未通过
             </div>
+            <div style={{ 
+              color: '#155724', 
+              backgroundColor: '#d4edda', 
+              padding: `${6 * scale}px ${10 * scale}px`, 
+              borderRadius: `${4 * scale}px`,
+              marginTop: `${8 * scale}px`
+            }}>
+              💡 <strong>推荐设置：</strong><br/>
+              为了筛选出所有与自己有关的消息，建议：<br/><br/>
+              <strong>1. 关注自己：</strong><br/>
+              • 添加自己的玩家ID到关注列表<br/>
+              • 排除自己的对话、Emote、动作和其他<br/>
+              • 打开自己的"匹配"选项<br/><br/>
+              <strong>2. 设置全局关键字：</strong><br/>
+              • 填上他人经常叫你的外号或别名<br/><br/>
+              <strong>3. 关注其他玩家：</strong><br/>
+              • 勾选上所有分类即可<br/>
+              • 开启"匹配"可捕获其他玩家与TA的互动
+            </div>
           </div>
         )}
         
