@@ -56,6 +56,8 @@ class TelegramForwarder {
   private lastUpdateId: number = 0;
   private pollInterval: ReturnType<typeof setInterval> | null = null;
   private commandHandlers: Map<string, CommandHandler> = new Map();
+  private processedMessageIds: Set<number> = new Set();
+  private readonly MAX_PROCESSED_IDS = 100;
 
   setConfig(config: Partial<TelegramConfig>) {
     const wasCommandEnabled = this.config.commandEnabled;
@@ -138,6 +140,18 @@ class TelegramForwarder {
 
   private handleUpdate(update: TelegramUpdate) {
     if (!update.message?.text) return;
+
+    const messageId = update.message.message_id;
+    if (this.processedMessageIds.has(messageId)) {
+      log('TELEGRAM_FORWARDER', `跳过已处理的消息ID: ${messageId}`);
+      return;
+    }
+
+    this.processedMessageIds.add(messageId);
+    if (this.processedMessageIds.size > this.MAX_PROCESSED_IDS) {
+      const idsArray = Array.from(this.processedMessageIds);
+      this.processedMessageIds = new Set(idsArray.slice(-this.MAX_PROCESSED_IDS));
+    }
 
     const chatId = update.message.chat.id;
     const allowedChatId = parseInt(this.config.chatId);
