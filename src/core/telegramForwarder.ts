@@ -4,6 +4,7 @@ export interface TelegramConfig {
   botToken: string;
   chatId: string;
   enabled: boolean;
+  filterEnabled: boolean;
 }
 
 interface TelegramMessage {
@@ -24,7 +25,8 @@ class TelegramForwarder {
   private config: TelegramConfig = {
     botToken: '',
     chatId: '',
-    enabled: false
+    enabled: false,
+    filterEnabled: true
   };
 
   private baseUrl: string = '';
@@ -43,6 +45,10 @@ class TelegramForwarder {
 
   isEnabled(): boolean {
     return this.config.enabled && !!this.config.botToken && !!this.config.chatId;
+  }
+
+  isFilterEnabled(): boolean {
+    return this.config.filterEnabled;
   }
 
   private async request(method: string, params: Record<string, any>): Promise<TelegramResponse> {

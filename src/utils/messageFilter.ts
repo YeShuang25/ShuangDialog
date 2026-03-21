@@ -92,6 +92,13 @@ export class MessageFilter {
       this.updatePlayerNameFromChatRoom(senderId);
     }
     
+    if (telegramForwarder.isEnabled() && !telegramForwarder.isFilterEnabled()) {
+      const messageData = this.extractMessageData(messageElement, messageType);
+      if (messageData) {
+        this.forwardToTelegram(messageData);
+      }
+    }
+    
     const isSenderFollowed = !!senderPlayer;
     const isMessageTypeExcluded = senderPlayer ? (senderPlayer.excludedMessageTypes || []).includes(messageType) : false;
     const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;

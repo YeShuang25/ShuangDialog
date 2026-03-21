@@ -12,9 +12,11 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
     botToken, 
     chatId, 
     enabled, 
+    filterEnabled,
     setBotToken, 
     setChatId, 
     setEnabled,
+    setFilterEnabled,
     testConnection 
   } = useTelegramStore();
   
@@ -202,6 +204,40 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                 }}
               >
                 {enabled ? '禁用' : '启用'}
+              </button>
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: `${16 * scale}px`,
+              padding: `${12 * scale}px`,
+              backgroundColor: '#f5f5f5',
+              borderRadius: `${8 * scale}px`
+            }}>
+              <div>
+                <span style={{ fontSize: `${14 * scale}px`, fontWeight: 500 }}>
+                  {filterEnabled ? '🔍 仅转发筛选消息' : '📢 转发所有消息'}
+                </span>
+                <div style={{ fontSize: `${11 * scale}px`, color: '#666', marginTop: `${4 * scale}px` }}>
+                  {filterEnabled ? '只转发符合特别关注规则的消息' : '转发所有聊天消息到Telegram'}
+                </div>
+              </div>
+              <button
+                onClick={() => setFilterEnabled(!filterEnabled)}
+                style={{
+                  padding: `${8 * scale}px ${16 * scale}px`,
+                  backgroundColor: filterEnabled ? '#2196f3' : '#9e9e9e',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: `${6 * scale}px`,
+                  cursor: 'pointer',
+                  fontSize: `${12 * scale}px`,
+                  fontWeight: 500
+                }}
+              >
+                {filterEnabled ? '关闭筛选' : '开启筛选'}
               </button>
             </div>
 
