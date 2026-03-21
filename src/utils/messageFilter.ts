@@ -92,14 +92,45 @@ export class MessageFilter {
       this.updatePlayerNameFromChatRoom(senderId);
     }
     
-    if (telegramForwarder.isEnabled() && !telegramForwarder.isFilterEnabled()) {
+    this.processTelegramForward(messageElement, messageType, senderPlayer, followedPlayers);
+    
+    this.processSpecialFollow(messageElement, messageType, senderPlayer, followedPlayers);
+  }
+
+  private processTelegramForward(
+    messageElement: HTMLElement, 
+    messageType: MessageTypeFilter,
+    senderPlayer: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean } | undefined,
+    followedPlayers: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean }[]
+  ) {
+    if (!telegramForwarder.isEnabled()) {
+      return;
+    }
+
+    if (!telegramForwarder.isFilterEnabled()) {
       const messageData = this.extractMessageData(messageElement, messageType);
       if (messageData) {
         this.forwardToTelegram(messageData);
       }
       return;
     }
-    
+
+    const shouldForward = this.checkMessageMatch(messageElement, senderPlayer, followedPlayers);
+    if (shouldForward) {
+      const messageData = this.extractMessageData(messageElement, messageType);
+      if (messageData) {
+        this.forwardToTelegram(messageData);
+      }
+    }
+  }
+
+  private processSpecialFollow(
+    messageElement: HTMLElement,
+    messageType: MessageTypeFilter,
+    senderPlayer: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean } | undefined,
+    followedPlayers: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean }[]
+  ) {
+    const senderId = messageElement.getAttribute('data-sender') || '';
     const isSenderFollowed = !!senderPlayer;
     const isMessageTypeExcluded = senderPlayer ? (senderPlayer.excludedMessageTypes || []).includes(messageType) : false;
     const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
@@ -115,7 +146,6 @@ export class MessageFilter {
       if (messageData) {
         useShuangMessagesStore.getState().addMessage(messageData);
         log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
-        this.forwardToTelegram(messageData);
       }
       return;
     }
@@ -139,8 +169,36 @@ export class MessageFilter {
       useShuangMessagesStore.getState().addMessage(messageData);
       log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
       log('MESSAGE_FILTER', '当前消息列表:', useShuangMessagesStore.getState().messages);
-      this.forwardToTelegram(messageData);
     }
+  }
+
+  private checkMessageMatch(
+    messageElement: HTMLElement,
+    senderPlayer: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean } | undefined,
+    followedPlayers: { id: string; messageTypes: string[]; excludedMessageTypes?: string[]; contentMatch?: boolean; excludeMatch?: boolean }[]
+  ): boolean {
+    const messageType = this.getMessageType(messageElement);
+    
+    const isSenderFollowed = !!senderPlayer;
+    const isMessageTypeExcluded = senderPlayer ? (senderPlayer.excludedMessageTypes || []).includes(messageType) : false;
+    const isMessageTypeEnabled = senderPlayer ? senderPlayer.messageTypes.includes(messageType) : false;
+    
+    if (isSenderFollowed && isMessageTypeExcluded) {
+      return false;
+    }
+    
+    if (isSenderFollowed && isMessageTypeEnabled) {
+      return true;
+    }
+    
+    if (this.checkExcludeContentMatch(messageElement, followedPlayers)) {
+      return false;
+    }
+    
+    const isContentMatched = this.checkContentMatch(messageElement, followedPlayers);
+    const isGlobalKeywordMatched = this.checkGlobalKeywords(messageElement);
+    
+    return isContentMatched || isGlobalKeywordMatched;
   }
 
   private forwardToTelegram(messageData: ShuangMessage) {
@@ -243,7 +301,7 @@ export class MessageFilter {
     return false;
   }
 
-  private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; contentMatch: boolean }[]): boolean {
+  private checkContentMatch(messageElement: HTMLElement, followedPlayers: { id: string; contentMatch?: boolean }[]): boolean {
     const playersWithContentMatch = followedPlayers.filter(p => p.contentMatch);
     if (playersWithContentMatch.length === 0) {
       return false;
