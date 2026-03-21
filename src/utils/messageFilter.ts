@@ -97,6 +97,7 @@ export class MessageFilter {
       if (messageData) {
         this.forwardToTelegram(messageData);
       }
+      return;
     }
     
     const isSenderFollowed = !!senderPlayer;
@@ -160,14 +161,18 @@ export class MessageFilter {
       '.chat-room-time',
       '.chat-room-sender', 
       '.ChatMessageName',
-      '.chat-room-metadata'
+      '.chat-room-metadata',
+      '.chat-room-message-popup',
+      '.menubar',
+      'button[name="reply"]',
+      '.button-tooltip'
     ];
     
     for (const selector of excludeSelectors) {
       clone.querySelectorAll(selector).forEach(el => el.remove());
     }
     
-    return clone.textContent || '';
+    return clone.textContent?.trim() || '';
   }
 
   private updatePlayerNameFromChatRoom(playerId: string) {
