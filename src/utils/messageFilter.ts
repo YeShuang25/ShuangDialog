@@ -1,5 +1,6 @@
 import { useShuangMessagesStore, ShuangMessage } from '../store/useShuangMessagesStore';
 import { useShuangConfigStore, MessageTypeFilter } from '../store/useShuangConfigStore';
+import { telegramForwarder } from '../core/telegramForwarder';
 import { log, error } from '../config/debug';
 
 export class MessageFilter {
@@ -106,6 +107,7 @@ export class MessageFilter {
       if (messageData) {
         useShuangMessagesStore.getState().addMessage(messageData);
         log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
+        this.forwardToTelegram(messageData);
       }
       return;
     }
@@ -129,6 +131,18 @@ export class MessageFilter {
       useShuangMessagesStore.getState().addMessage(messageData);
       log('MESSAGE_FILTER', '添加关注玩家消息:', messageData.senderName || senderId);
       log('MESSAGE_FILTER', '当前消息列表:', useShuangMessagesStore.getState().messages);
+      this.forwardToTelegram(messageData);
+    }
+  }
+
+  private forwardToTelegram(messageData: ShuangMessage) {
+    if (telegramForwarder.isEnabled()) {
+      telegramForwarder.sendFormattedMessage(
+        messageData.senderName || messageData.senderId,
+        messageData.senderId,
+        messageData.content,
+        messageData.type
+      );
     }
   }
 

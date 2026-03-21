@@ -4,9 +4,11 @@ import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
 import { useShuangConfigStore } from '../../store/useShuangConfigStore';
+import { useTelegramStore } from '../../store/useTelegramStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
 import { PlayerIdConfig } from './PlayerIdConfig';
+import { TelegramConfig } from './TelegramConfig';
 import { getAllDebugModules, toggleDebugModule, DebugModule } from '../../config/debug';
 import { useSimpleDrag } from '../hooks/useDrag';
 import { useScale } from '../context/ScaleContext';
@@ -14,6 +16,7 @@ import { useScale } from '../context/ScaleContext';
 export const MiniFloatingBall: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlayerIdConfigOpen, setIsPlayerIdConfigOpen] = useState(false);
+  const [isTelegramConfigOpen, setIsTelegramConfigOpen] = useState(false);
   const [openCollapseKey, setOpenCollapseKey] = useState<string | null>(null);
   const [debugModules, setDebugModules] = useState(() => getAllDebugModules());
   const scale = useScale();
@@ -21,6 +24,7 @@ export const MiniFloatingBall: React.FC = () => {
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
   const { fontScale, setFontScale } = useShuangConfigStore();
+  const { enabled: telegramEnabled } = useTelegramStore();
 
   const handleToggleDebugModule = (module: DebugModule) => {
     toggleDebugModule(module);
@@ -32,7 +36,8 @@ export const MiniFloatingBall: React.FC = () => {
       SHUANG_CHAT_BOX: '聊天框',
       CHAT_EXPORTER: '导出',
       FLOATING_BALL: '悬浮球',
-      MESSAGE_FILTER: '消息筛选'
+      MESSAGE_FILTER: '消息筛选',
+      TELEGRAM_FORWARDER: 'TG转发'
     };
     return labels[module];
   };
@@ -185,6 +190,18 @@ export const MiniFloatingBall: React.FC = () => {
         
         <MenuDivider />
         
+        <MenuItem
+          icon={telegramEnabled ? "📤" : "📤"}
+          label={`Telegram转发 ${telegramEnabled ? '(已启用)' : ''}`}
+          onClick={() => {
+            setIsTelegramConfigOpen(true);
+            setIsMenuOpen(false);
+          }}
+          active={telegramEnabled}
+        />
+        
+        <MenuDivider />
+        
         <MenuCollapse 
           icon="🔧" 
           label="调试工具"
@@ -246,6 +263,11 @@ export const MiniFloatingBall: React.FC = () => {
       <PlayerIdConfig
         isOpen={isPlayerIdConfigOpen}
         onClose={() => setIsPlayerIdConfigOpen(false)}
+      />
+
+      <TelegramConfig
+        isOpen={isTelegramConfigOpen}
+        onClose={() => setIsTelegramConfigOpen(false)}
       />
     </>
   );

@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.10.1';
+export const APP_VERSION = 'v2.11.0';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.11.0',
+    date: '2026-03-21',
+    description: '新功能：添加Telegram消息转发功能。配置Telegram Bot后，可将霜语筛选的消息实时转发到Telegram个人或群组'
+  },
   {
     version: 'v2.10.1',
     date: '2026-03-21',

@@ -6,6 +6,7 @@ import { ShuangChatBox } from './ui/components/ShuangChatBox';
 import './ui/style.css';
 import { initUserStore, watchLoginStatus, migrateOldConfig } from './store/useUserStore';
 import { useShuangConfigStore } from './store/useShuangConfigStore';
+import { useTelegramStore } from './store/useTelegramStore';
 import { ScaleProvider } from './ui/context/ScaleContext';
 
 function main() {
@@ -34,6 +35,8 @@ async function initApp() {
     migrateOldConfig(userId);
     useShuangConfigStore.getState().loadUserConfig();
   }
+  
+  useTelegramStore.getState().loadConfig();
   
   main();
   
