@@ -30,6 +30,7 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
   const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const scale = useScale();
 
@@ -199,19 +200,62 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
               flex: 1
             }}
           >
-            <div style={{ 
-              marginBottom: `${16 * scale}px`,
-              padding: `${12 * scale}px`,
-              backgroundColor: '#f0f7ff',
-              borderRadius: `${8 * scale}px`,
-              fontSize: `${12 * scale}px`,
-              color: '#666',
-              lineHeight: 1.6
-            }}>
-              <strong style={{ color: '#007acc' }}>使用说明：</strong><br/>
-              1. 在 Telegram 中找 @BotFather 创建机器人获取 Token<br/>
-              2. 获取目标 Chat ID（个人或群组）<br/>
-              3. 启用转发后，霜语中的消息会同步发送到 Telegram
+            <div 
+              onClick={() => setShowHelp(!showHelp)}
+              style={{ 
+                marginBottom: `${16 * scale}px`,
+                padding: `${12 * scale}px`,
+                backgroundColor: '#f0f7ff',
+                borderRadius: `${8 * scale}px`,
+                fontSize: `${12 * scale}px`,
+                color: '#666',
+                lineHeight: 1.6,
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <strong style={{ color: '#007acc' }}>📖 配置教程</strong>
+                <span style={{ fontSize: `${14 * scale}px` }}>{showHelp ? '▼' : '▶'}</span>
+              </div>
+              {showHelp && (
+                <div style={{ marginTop: `${12 * scale}px` }}>
+                  <div style={{ marginBottom: `${12 * scale}px` }}>
+                    <strong style={{ color: '#333' }}>1️⃣ 创建Bot获取Token</strong>
+                    <div style={{ marginTop: `${4 * scale}px`, paddingLeft: `${8 * scale}px` }}>
+                      • 在Telegram搜索 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>@BotFather</code><br/>
+                      • 发送 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>/newbot</code><br/>
+                      • 按提示设置Bot名称<br/>
+                      • 获得Token（格式：数字:字母数字组合）
+                    </div>
+                  </div>
+                  
+                  <div style={{ marginBottom: `${12 * scale}px` }}>
+                    <strong style={{ color: '#333' }}>2️⃣ 获取Chat ID</strong>
+                    <div style={{ marginTop: `${4 * scale}px`, paddingLeft: `${8 * scale}px` }}>
+                      <strong style={{ color: '#666' }}>个人聊天：</strong><br/>
+                      • 访问 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px', fontSize: `${10 * scale}px` }}>https://api.telegram.org/bot你的Token/getUpdates</code><br/>
+                      • 给Bot发一条消息后刷新页面<br/>
+                      • 找到 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>&quot;chat&quot;:&#123;&quot;id&quot;:123456789&#125;</code><br/><br/>
+                      <strong style={{ color: '#666' }}>群组聊天：</strong><br/>
+                      • 将Bot加入群组<br/>
+                      • 群组ID格式为 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>-100</code> 开头<br/>
+                      • 同样通过getUpdates获取
+                    </div>
+                  </div>
+                  
+                  <div style={{ marginBottom: `${12 * scale}px` }}>
+                    <strong style={{ color: '#e65100' }}>⚠️ 重要：禁用隐私模式</strong>
+                    <div style={{ marginTop: `${4 * scale}px`, paddingLeft: `${8 * scale}px` }}>
+                      Bot默认只能看到命令消息，需禁用隐私模式：<br/>
+                      • 找 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>@BotFather</code> 发送 <code style={{ backgroundColor: '#e8e8e8', padding: '2px 6px', borderRadius: '4px' }}>/mybots</code><br/>
+                      • 选择你的Bot<br/>
+                      • Bot Settings → Group Privacy<br/>
+                      • 选择 <strong>Disable</strong> 禁用<br/><br/>
+                      <span style={{ color: '#e65100' }}>或者在群组中将Bot设为管理员</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ 
@@ -291,7 +335,7 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                   {commandEnabled ? '🎮 远程命令已启用' : '🎮 远程命令已禁用'}
                 </span>
                 <div style={{ fontSize: `${11 * scale}px`, color: '#666', marginTop: `${4 * scale}px` }}>
-                  通过Telegram发送命令控制游戏聊天
+                  通过Telegram发送消息到游戏聊天
                 </div>
               </div>
               <button
@@ -324,7 +368,7 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                 /say &lt;消息&gt; - 发送普通聊天<br/>
                 /emote &lt;动作&gt; - 发送动作消息<br/>
                 /help - 显示帮助<br/><br/>
-                <strong>提示：</strong>非命令消息会直接转发到游戏聊天
+                <strong>提示：</strong>直接发送消息也会转发到游戏聊天
               </div>
             )}
 
