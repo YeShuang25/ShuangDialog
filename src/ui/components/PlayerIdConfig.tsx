@@ -26,8 +26,11 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
   
   const [newPlayerId, setNewPlayerId] = useState('');
   const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [size, setSize] = useState({ width: 580, height: 500 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   const [isEditingKeywords, setIsEditingKeywords] = useState(false);
   const [keywordsInput, setKeywordsInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
@@ -44,6 +47,17 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
       });
     }
   }, [position]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setDragOffset({
+      x: e.clientX,
+      y: e.clientY
+    });
+    setResizeStartSize(size);
+  }, [size]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if ((e.target as HTMLElement).closest('.modal-header')) {
@@ -63,7 +77,17 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
         y: e.clientY - dragOffset.y
       });
     }
-  }, [isDragging, dragOffset]);
+    if (isResizing) {
+      const deltaX = e.clientX - dragOffset.x;
+      const deltaY = e.clientY - dragOffset.y;
+      const newWidth = Math.max(400, resizeStartSize.width + deltaX / scale);
+      const newHeight = Math.max(300, resizeStartSize.height + deltaY / scale);
+      setSize({
+        width: newWidth,
+        height: newHeight
+      });
+    }
+  }, [isDragging, isResizing, dragOffset, scale, resizeStartSize]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (isDragging) {
@@ -78,10 +102,11 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsResizing(false);
   }, []);
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isResizing) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -93,7 +118,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
+  }, [isDragging, isResizing, handleMouseMove, handleMouseUp, handleTouchMove]);
 
   if (!isOpen) return null;
 
@@ -229,7 +254,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
         left: position.x,
         top: position.y,
         zIndex: 10002,
-        cursor: isDragging ? 'grabbing' : 'default',
+        cursor: isDragging ? 'grabbing' : isResizing ? 'nwse-resize' : 'default',
         touchAction: 'none'
       }}
       onMouseDown={handleMouseDown}
@@ -240,14 +265,16 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           backgroundColor: '#ffffff',
           borderRadius: `${12 * scale}px`,
           padding: 0,
-          width: `${580 * scale}px`,
+          width: `${size.width * scale}px`,
+          height: `${size.height * scale}px`,
           maxWidth: '95vw',
-          maxHeight: '75vh',
+          maxHeight: '90vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-          border: `${1 * scale}px solid #ddd`
+          border: `${1 * scale}px solid #ddd`,
+          position: 'relative'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -656,6 +683,32 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           <span style={{ color: '#dc3545' }}>✗ = 关闭</span>
           <span style={{ margin: `0 ${8 * scale}px` }}>|</span>
           <span>全选 = 一键开启所有类型+匹配</span>
+        </div>
+        
+        <div
+          onMouseDown={handleResizeStart}
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            width: `${16 * scale}px`,
+            height: `${16 * scale}px`,
+            cursor: 'nwse-resize',
+            zIndex: 10
+          }}
+          title="拖动调整大小"
+        >
+          <svg
+            width={16 * scale}
+            height={16 * scale}
+            viewBox="0 0 16 16"
+            style={{ opacity: 0.5 }}
+          >
+            <path
+              d="M14 14H12V12H14V14ZM14 10H12V8H14V10ZM10 14H8V12H10V14ZM14 6H12V4H14V6ZM10 10H8V8H10V10ZM6 14H4V12H6V14Z"
+              fill="#666"
+            />
+          </svg>
         </div>
       </div>
     </div>

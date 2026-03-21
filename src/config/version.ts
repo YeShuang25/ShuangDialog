@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.10.0';
+export const APP_VERSION = 'v2.10.1';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.10.1',
+    date: '2026-03-21',
+    description: '优化与修复：1.修复定位按钮大小自适应问题（使用em单位跟随消息字体缩放）；2.修复全局关键字在句末无法匹配的bug（移除正则负向断言）；3.帮助界面改为独立切换模式，推荐设置可折叠展开；4.隐藏有bug的关闭霜语文本框按钮；5.修复设置特别关注界面的调整大小功能；6.优化窗口调整大小的拖动手感'
+  },
   {
     version: 'v2.10.0',
     date: '2026-03-15',
