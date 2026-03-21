@@ -58,8 +58,10 @@ class TelegramForwarder {
   private commandHandlers: Map<string, CommandHandler> = new Map();
   private processedMessageIds: Set<number> = new Set();
   private readonly MAX_PROCESSED_IDS = 100;
+  private isPolling: boolean = false;
 
   setConfig(config: Partial<TelegramConfig>) {
+    const wasEnabled = this.config.enabled;
     const wasCommandEnabled = this.config.commandEnabled;
     this.config = { ...this.config, ...config };
     if (this.config.botToken) {
@@ -67,7 +69,14 @@ class TelegramForwarder {
     }
     log('TELEGRAM_FORWARDER', '配置已更新', this.config.enabled ? '已启用' : '已禁用');
     
-    if (config.commandEnabled !== undefined && config.commandEnabled !== wasCommandEnabled) {
+    if (config.enabled !== undefined && config.enabled !== wasEnabled) {
+      if (!config.enabled) {
+        this.stopPolling();
+        log('TELEGRAM_FORWARDER', '转发已禁用，停止所有Telegram功能');
+      } else if (this.config.commandEnabled && this.config.botToken) {
+        this.startPolling();
+      }
+    } else if (config.commandEnabled !== undefined && config.commandEnabled !== wasCommandEnabled && this.config.enabled) {
       if (config.commandEnabled && this.config.botToken) {
         this.startPolling();
       } else {
@@ -114,7 +123,14 @@ class TelegramForwarder {
 
   private async pollUpdates() {
     if (!this.config.botToken || !this.config.commandEnabled) return;
+    
+    if (this.isPolling) {
+      log('TELEGRAM_FORWARDER', '上一次轮询尚未完成，跳过本次轮询');
+      return;
+    }
 
+    this.isPolling = true;
+    
     try {
       const params: Record<string, any> = {
         timeout: 30,
@@ -135,6 +151,8 @@ class TelegramForwarder {
       }
     } catch (e) {
       error('TELEGRAM_FORWARDER', '轮询更新失败', e);
+    } finally {
+      this.isPolling = false;
     }
   }
 
@@ -209,7 +227,11 @@ class TelegramForwarder {
       const data: TelegramResponse = await response.json();
       
       if (!data.ok) {
-        error('TELEGRAM_FORWARDER', `API错误: ${data.description}`, data.error_code);
+        if (data.error_code === 409) {
+          log('TELEGRAM_FORWARDER', '检测到其他Bot实例正在运行，跳过本次轮询');
+        } else {
+          error('TELEGRAM_FORWARDER', `API错误: ${data.description}`, data.error_code);
+        }
       }
 
       return data;

@@ -66,8 +66,9 @@ function handleHelpCommand() {
   const helpText = `<b>霜语 Telegram 命令帮助</b>
 
 <b>可用命令：</b>
-/say <消息> - 发送普通聊天消息
-/emote <动作> - 发送动作消息
+/say &lt;消息&gt; - 发送普通聊天消息
+/emote &lt;动作&gt; - 发送动作消息
+/players - 查询房间玩家列表
 /help - 显示此帮助信息
 
 <b>快捷方式：</b>
@@ -81,6 +82,29 @@ function handleHelpCommand() {
   telegramForwarder.sendMessage(helpText, { parseMode: 'HTML' });
 }
 
+function handlePlayersCommand() {
+  const characters = window.ChatRoomCharacter;
+  
+  if (!characters || !Array.isArray(characters) || characters.length === 0) {
+    telegramForwarder.sendMessage('❌ 未获取到房间玩家信息，请确保你在聊天室中');
+    return;
+  }
+  
+  const playerCount = characters.length;
+  const playerList = characters.map((p: any) => {
+    const id = p.MemberNumber || '未知';
+    const name = p.Name || '未知';
+    const nickname = p.Nickname || '';
+    const displayName = nickname ? `${nickname} (${name})` : name;
+    return `<code>[${id}]</code> ${displayName}`;
+  }).join('\n');
+  
+  const message = `<b>🏠 房间玩家 (${playerCount}人)</b>\n\n${playerList}`;
+  
+  telegramForwarder.sendMessage(message, { parseMode: 'HTML' });
+  log('TELEGRAM_COMMAND', `查询房间玩家: ${playerCount}人`);
+}
+
 function handleDefaultMessage(text: string) {
   const success = sendChatMessage(text, 'Chat');
   if (!success) {
@@ -92,6 +116,8 @@ export function initTelegramCommands() {
   telegramForwarder.registerCommand('say', handleSayCommand);
   telegramForwarder.registerCommand('emote', handleEmoteCommand);
   telegramForwarder.registerCommand('e', handleEmoteCommand);
+  telegramForwarder.registerCommand('players', handlePlayersCommand);
+  telegramForwarder.registerCommand('p', handlePlayersCommand);
   telegramForwarder.registerCommand('help', handleHelpCommand);
   telegramForwarder.registerCommand('h', handleHelpCommand);
   telegramForwarder.registerCommand('__default__', handleDefaultMessage);
