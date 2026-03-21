@@ -1,4 +1,4 @@
-export type DebugModule = 'SHUANG_CHAT_BOX' | 'CHAT_EXPORTER' | 'FLOATING_BALL' | 'MESSAGE_FILTER' | 'TELEGRAM_FORWARDER' | 'TELEGRAM_COMMAND';
+export type DebugModule = 'SHUANG_CHAT_BOX' | 'CHAT_EXPORTER' | 'FLOATING_BALL' | 'MESSAGE_FILTER' | 'TELEGRAM_FORWARDER' | 'TELEGRAM_COMMAND' | 'STORAGE';
 
 const debugState: Record<DebugModule, boolean> = {
   SHUANG_CHAT_BOX: false,
@@ -7,6 +7,7 @@ const debugState: Record<DebugModule, boolean> = {
   MESSAGE_FILTER: false,
   TELEGRAM_FORWARDER: false,
   TELEGRAM_COMMAND: false,
+  STORAGE: false,
 };
 
 export const DEBUG_CONFIG = debugState;

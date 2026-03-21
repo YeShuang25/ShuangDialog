@@ -38,7 +38,8 @@ export const MiniFloatingBall: React.FC = () => {
       FLOATING_BALL: '悬浮球',
       MESSAGE_FILTER: '消息筛选',
       TELEGRAM_FORWARDER: 'TG转发',
-      TELEGRAM_COMMAND: 'TG命令'
+      TELEGRAM_COMMAND: 'TG命令',
+      STORAGE: '存储'
     };
     return labels[module];
   };

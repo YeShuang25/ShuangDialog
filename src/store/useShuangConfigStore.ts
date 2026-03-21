@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useUserStore, getStorageKey } from './useUserStore';
+import { log } from '../config/debug';
 
 export type MessageTypeFilter = 'chat' | 'emote' | 'activity' | 'other';
 
@@ -76,7 +77,7 @@ function saveToStorage(userId: string | null, state: { followedPlayers: Followed
   
   const key = getStorageKey(BASE_STORAGE_KEY, userId);
   localStorage.setItem(key, JSON.stringify(state));
-  console.log(`[ShuangDialog] 保存配置到 ${key}`);
+  log('STORAGE', `保存配置到 ${key}`);
 }
 
 export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
@@ -126,6 +127,10 @@ export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
   
   updatePlayerName: (id: string, name: string) => {
     set((state) => {
+      const player = state.followedPlayers.find(p => p.id === id);
+      if (player && player.name === name) {
+        return state;
+      }
       const newState = {
         ...state,
         followedPlayers: state.followedPlayers.map(p => 
@@ -298,7 +303,7 @@ export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
   
   loadUserConfig: () => {
     const userId = useUserStore.getState().currentUserId;
-    console.log(`[ShuangDialog] 加载用户 ${userId} 的配置...`);
+    log('STORAGE', `加载用户 ${userId} 的配置...`);
     
     const data = loadFromStorage(userId);
     if (data) {
@@ -307,14 +312,14 @@ export const useShuangConfigStore = create<ShuangConfigState>()((set, get) => ({
         fontScale: data.fontScale,
         globalKeywords: data.globalKeywords
       });
-      console.log(`[ShuangDialog] 配置加载完成:`, data);
+      log('STORAGE', '配置加载完成:', data);
     } else {
       set({
         followedPlayers: [],
         fontScale: 1.0,
         globalKeywords: []
       });
-      console.log(`[ShuangDialog] 用户 ${userId} 无保存配置，使用默认值`);
+      log('STORAGE', `用户 ${userId} 无保存配置，使用默认值`);
     }
   }
 }));

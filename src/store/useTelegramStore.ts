@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { telegramForwarder, TelegramConfig } from '../core/telegramForwarder';
+import { useUserStore, getStorageKey } from './useUserStore';
 
 interface TelegramStore extends TelegramConfig {
   setBotToken: (token: string) => void;
@@ -12,7 +13,7 @@ interface TelegramStore extends TelegramConfig {
   testConnection: () => Promise<{ success: boolean; message: string }>;
 }
 
-const STORAGE_KEY = 'shuang-dialog-telegram-config';
+const BASE_STORAGE_KEY = 'shuang-dialog-telegram-config';
 
 export const useTelegramStore = create<TelegramStore>((set, get) => ({
   botToken: '',
@@ -52,8 +53,12 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
   },
 
   loadConfig: () => {
+    const userId = useUserStore.getState().currentUserId;
+    if (!userId) return;
+    
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const key = getStorageKey(BASE_STORAGE_KEY, userId);
+      const saved = localStorage.getItem(key);
       if (saved) {
         const config = JSON.parse(saved);
         set(config);
@@ -65,9 +70,13 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
   },
 
   saveConfig: () => {
+    const userId = useUserStore.getState().currentUserId;
+    if (!userId) return;
+    
     try {
+      const key = getStorageKey(BASE_STORAGE_KEY, userId);
       const { botToken, chatId, enabled, filterEnabled, commandEnabled } = get();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ botToken, chatId, enabled, filterEnabled, commandEnabled }));
+      localStorage.setItem(key, JSON.stringify({ botToken, chatId, enabled, filterEnabled, commandEnabled }));
     } catch (e) {
       console.error('[TelegramStore] 保存配置失败:', e);
     }
