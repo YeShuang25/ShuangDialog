@@ -31,6 +31,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
   const [isEditingKeywords, setIsEditingKeywords] = useState(false);
   const [keywordsInput, setKeywordsInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [showRecommend, setShowRecommend] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const scale = useScale();
 
@@ -267,7 +268,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: `${8 * scale}px` }}>
             <h2 style={{ margin: 0, fontSize: `${15 * scale}px`, color: '#333', fontWeight: 600 }}>
-              特别关注配置
+              {showHelp ? '帮助说明' : '特别关注配置'}
             </h2>
             <button
               onClick={() => setShowHelp(!showHelp)}
@@ -286,7 +287,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
                 justifyContent: 'center',
                 fontWeight: 'bold'
               }}
-              title="点击查看匹配规则说明"
+              title={showHelp ? '返回配置' : '查看帮助'}
             >
               ?
             </button>
@@ -307,14 +308,45 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
           </button>
         </div>
         
-        {showHelp && (
+        {showHelp ? (
           <div style={{
             padding: `${12 * scale}px ${16 * scale}px`,
             backgroundColor: '#f0f7ff',
-            borderBottom: `${1 * scale}px solid #cce4ff`,
             fontSize: `${11 * scale}px`,
-            lineHeight: 1.6
+            lineHeight: 1.6,
+            maxHeight: `${350 * scale}px`,
+            overflowY: 'auto'
           }}>
+            <div 
+              onClick={() => setShowRecommend(!showRecommend)}
+              style={{ 
+                color: '#155724', 
+                backgroundColor: showRecommend ? '#d4edda' : '#e8f5e9', 
+                padding: `${8 * scale}px ${12 * scale}px`, 
+                borderRadius: `${4 * scale}px`,
+                marginBottom: `${10 * scale}px`,
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+            >
+              💡 <strong>推荐设置</strong> {showRecommend ? '▼' : '▶'}
+              {showRecommend && (
+                <>
+                  <br/><br/>
+                  为了筛选出所有与自己有关的消息，建议：<br/><br/>
+                  <strong>1. 关注自己：</strong><br/>
+                  • 添加自己的玩家ID到关注列表<br/>
+                  • 排除自己的对话、Emote、动作和其他<br/>
+                  • 打开自己的"匹配"选项<br/><br/>
+                  <strong>2. 设置全局关键字：</strong><br/>
+                  • 填上他人经常叫你的外号或别名<br/><br/>
+                  <strong>3. 关注其他玩家：</strong><br/>
+                  • 勾选上所有分类即可<br/>
+                  • 开启"匹配"可捕获其他玩家与TA的互动
+                </>
+              )}
+            </div>
+            
             <div style={{ fontWeight: 600, color: '#007acc', marginBottom: `${8 * scale}px` }}>
               📋 匹配规则说明
             </div>
@@ -364,28 +396,9 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
               5. 检查消息内容是否包含开启了"匹配"选项的玩家名称 → 捕获消息<br/>
               6. 以上都不匹配 → 筛选未通过
             </div>
-            <div style={{ 
-              color: '#155724', 
-              backgroundColor: '#d4edda', 
-              padding: `${6 * scale}px ${10 * scale}px`, 
-              borderRadius: `${4 * scale}px`,
-              marginTop: `${8 * scale}px`
-            }}>
-              💡 <strong>推荐设置：</strong><br/>
-              为了筛选出所有与自己有关的消息，建议：<br/><br/>
-              <strong>1. 关注自己：</strong><br/>
-              • 添加自己的玩家ID到关注列表<br/>
-              • 排除自己的对话、Emote、动作和其他<br/>
-              • 打开自己的"匹配"选项<br/><br/>
-              <strong>2. 设置全局关键字：</strong><br/>
-              • 填上他人经常叫你的外号或别名<br/><br/>
-              <strong>3. 关注其他玩家：</strong><br/>
-              • 勾选上所有分类即可<br/>
-              • 开启"匹配"可捕获其他玩家与TA的互动
-            </div>
           </div>
-        )}
-        
+        ) : (
+          <>
         <div style={{ padding: `${12 * scale}px ${16 * scale}px`, borderBottom: `${1 * scale}px solid #eee` }}>
           <div style={{ display: 'flex', gap: `${8 * scale}px`, marginBottom: `${10 * scale}px` }}>
             <input
@@ -626,6 +639,8 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             </table>
           )}
         </div>
+          </>
+        )}
         
         <div style={{ 
           padding: `${8 * scale}px ${16 * scale}px`, 

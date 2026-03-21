@@ -3,7 +3,6 @@ import { MiniMenu, MenuItem, MenuDivider, MenuCollapse, MenuSlider } from './Min
 import { useDebugStore } from '../../store/useDebugStore';
 import { useChatMonitorStore } from '../../store/useChatMonitorStore';
 import { useActivityStore } from '../../store/useActivityStore';
-import { useChatBoxStore } from '../../store/useChatBoxStore';
 import { useShuangConfigStore } from '../../store/useShuangConfigStore';
 import { isChatLogAvailable, showExportOptionsDialog } from '../../utils/chatExporter';
 import { APP_VERSION } from '../../config/version';
@@ -21,7 +20,6 @@ export const MiniFloatingBall: React.FC = () => {
 
   const { debugMode, toggleDebugMode } = useDebugStore();
   const { chatMonitorEnabled, toggleChatMonitor } = useChatMonitorStore();
-  const { chatBoxEnabled, toggleChatBox } = useChatBoxStore();
   const { fontScale, setFontScale } = useShuangConfigStore();
 
   const handleToggleDebugModule = (module: DebugModule) => {
@@ -158,13 +156,6 @@ export const MiniFloatingBall: React.FC = () => {
           isOpen={openCollapseKey === 'chatbox'}
           onToggle={() => handleCollapseToggle('chatbox')}
         >
-          <MenuItem
-            icon={chatBoxEnabled ? '✅' : '⬜'}
-            label={chatBoxEnabled ? '关闭文本框' : '打开文本框'}
-            onClick={() => {
-              toggleChatBox();
-            }}
-          />
           <MenuSlider
             label="字体大小"
             value={fontScale}
