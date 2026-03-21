@@ -70,11 +70,13 @@ function handleHelpCommand() {
 /emote <动作> - 发送动作消息
 /help - 显示此帮助信息
 
-<b>示例：</b>
-/say 大家好
-/emote 微微一笑
+<b>快捷方式：</b>
+直接发送消息 - 普通聊天
+*动作内容 - 发送动作消息
 
-<b>提示：</b>直接发送消息会转发到游戏聊天`;
+<b>示例：</b>
+你好 → 发送"你好"
+*微微一笑 → 发送动作"微微一笑"`;
   
   telegramForwarder.sendMessage(helpText, { parseMode: 'HTML' });
 }

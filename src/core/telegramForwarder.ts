@@ -175,6 +175,13 @@ class TelegramForwarder {
       } else {
         this.sendMessage(`未知命令: /${command}\n可用命令: /say, /emote, /help`, { parseMode: 'HTML' });
       }
+    } else if (text.startsWith('*')) {
+      const emoteHandler = this.commandHandlers.get('emote');
+      if (emoteHandler) {
+        const emoteContent = text.slice(1);
+        log('TELEGRAM_FORWARDER', '转发emote消息到游戏聊天:', emoteContent);
+        emoteHandler(emoteContent, chatId);
+      }
     } else {
       const defaultHandler = this.commandHandlers.get('__default__');
       if (defaultHandler) {

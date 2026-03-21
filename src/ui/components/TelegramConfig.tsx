@@ -368,7 +368,12 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                 /say &lt;消息&gt; - 发送普通聊天<br/>
                 /emote &lt;动作&gt; - 发送动作消息<br/>
                 /help - 显示帮助<br/><br/>
-                <strong>提示：</strong>直接发送消息也会转发到游戏聊天
+                <strong>快捷方式：</strong><br/>
+                直接发送消息 - 普通聊天<br/>
+                *动作内容 - 发送动作消息<br/><br/>
+                <strong>示例：</strong><br/>
+                你好 → 发送"你好"<br/>
+                *微微一笑 → 发送动作"微微一笑"
               </div>
             )}
 
