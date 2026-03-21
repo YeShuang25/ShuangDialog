@@ -315,6 +315,7 @@ export class MessageFilter {
     const timestamp = timeElement?.textContent || '';
     const senderName = nameButton?.textContent || senderId;
     const messageId = `${senderId}-${timestamp}-${Date.now()}`;
+    const content = this.getMessageTextContent(element);
 
     let type: ShuangMessage['type'] = 'chat';
     if (element.classList.contains('ChatMessageActivity') || element.classList.contains('ChatMessageAction')) {
@@ -327,13 +328,13 @@ export class MessageFilter {
       type = 'private';
     }
 
-    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type });
+    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type, content });
 
     return {
       id: messageId,
       senderId,
       senderName,
-      content: '',
+      content,
       timestamp,
       originalElement: element,
       type
