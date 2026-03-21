@@ -6,6 +6,7 @@ interface TelegramStore extends TelegramConfig {
   setChatId: (chatId: string) => void;
   setEnabled: (enabled: boolean) => void;
   setFilterEnabled: (filterEnabled: boolean) => void;
+  setCommandEnabled: (commandEnabled: boolean) => void;
   loadConfig: () => void;
   saveConfig: () => void;
   testConnection: () => Promise<{ success: boolean; message: string }>;
@@ -18,6 +19,7 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
   chatId: '',
   enabled: false,
   filterEnabled: true,
+  commandEnabled: false,
 
   setBotToken: (token) => {
     set({ botToken: token });
@@ -43,6 +45,12 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
     telegramForwarder.setConfig({ filterEnabled });
   },
 
+  setCommandEnabled: (commandEnabled) => {
+    set({ commandEnabled });
+    get().saveConfig();
+    telegramForwarder.setConfig({ commandEnabled });
+  },
+
   loadConfig: () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -58,8 +66,8 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
 
   saveConfig: () => {
     try {
-      const { botToken, chatId, enabled, filterEnabled } = get();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ botToken, chatId, enabled, filterEnabled }));
+      const { botToken, chatId, enabled, filterEnabled, commandEnabled } = get();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ botToken, chatId, enabled, filterEnabled, commandEnabled }));
     } catch (e) {
       console.error('[TelegramStore] 保存配置失败:', e);
     }

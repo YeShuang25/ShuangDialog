@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 
+export interface ReplyInfo {
+  senderName: string;
+  content: string;
+}
+
 export interface ShuangMessage {
   id: string;
   senderId: string;
@@ -8,6 +13,7 @@ export interface ShuangMessage {
   timestamp: string;
   originalElement: HTMLElement;
   type: 'chat' | 'emote' | 'activity' | 'whisper' | 'private';
+  replyInfo?: ReplyInfo;
 }
 
 interface ShuangMessagesState {

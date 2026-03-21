@@ -149,7 +149,8 @@ export class MessageFilter {
         messageData.senderName || messageData.senderId,
         messageData.senderId,
         messageData.content,
-        messageData.type
+        messageData.type,
+        messageData.replyInfo
       );
     }
   }
@@ -165,7 +166,8 @@ export class MessageFilter {
       '.chat-room-message-popup',
       '.menubar',
       'button[name="reply"]',
-      '.button-tooltip'
+      '.button-tooltip',
+      '.chat-room-message-reply'
     ];
     
     for (const selector of excludeSelectors) {
@@ -173,6 +175,23 @@ export class MessageFilter {
     }
     
     return clone.textContent?.trim() || '';
+  }
+
+  private extractReplyInfo(element: HTMLElement): { senderName: string; content: string } | null {
+    const replyButton = element.querySelector('.chat-room-message-reply');
+    if (!replyButton) return null;
+    
+    const replyText = replyButton.textContent || '';
+    const colonIndex = replyText.indexOf(': ');
+    
+    if (colonIndex > 0) {
+      return {
+        senderName: replyText.substring(0, colonIndex),
+        content: replyText.substring(colonIndex + 2)
+      };
+    }
+    
+    return null;
   }
 
   private updatePlayerNameFromChatRoom(playerId: string) {
@@ -328,6 +347,7 @@ export class MessageFilter {
     const senderName = nameButton?.textContent || senderId;
     const messageId = `${senderId}-${timestamp}-${Date.now()}`;
     const content = this.getMessageTextContent(element);
+    const replyInfo = this.extractReplyInfo(element);
 
     let type: ShuangMessage['type'] = 'chat';
     if (element.classList.contains('ChatMessageActivity') || element.classList.contains('ChatMessageAction')) {
@@ -340,7 +360,7 @@ export class MessageFilter {
       type = 'private';
     }
 
-    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type, content });
+    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type, content, replyInfo });
 
     return {
       id: messageId,
@@ -349,7 +369,8 @@ export class MessageFilter {
       content,
       timestamp,
       originalElement: element,
-      type
+      type,
+      ...(replyInfo && { replyInfo })
     };
   }
 }

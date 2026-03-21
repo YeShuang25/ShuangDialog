@@ -1,5 +1,6 @@
 import { initCore } from './core/socket';
 import { initChatMonitor } from './core/chatMonitor';
+import { initTelegramCommands } from './core/telegramCommands';
 import { createRoot } from 'react-dom/client';
 import { MiniFloatingBall } from './ui/components/MiniFloatingBall';
 import { ShuangChatBox } from './ui/components/ShuangChatBox';
@@ -12,6 +13,7 @@ import { ScaleProvider } from './ui/context/ScaleContext';
 function main() {
   initCore();
   initChatMonitor();
+  initTelegramCommands();
   
   const container = document.createElement('div');
   container.id = 'shuang-dialog-root';

@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.11.1';
+export const APP_VERSION = 'v2.12.0';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.12.0',
+    date: '2026-03-21',
+    description: 'Telegram远程命令功能：可通过Telegram发送命令控制游戏聊天。支持/say发送消息、/emote发送动作、/help查看帮助'
+  },
   {
     version: 'v2.11.1',
     date: '2026-03-21',

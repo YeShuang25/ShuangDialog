@@ -5,6 +5,7 @@ export interface TelegramConfig {
   chatId: string;
   enabled: boolean;
   filterEnabled: boolean;
+  commandEnabled: boolean;
 }
 
 interface TelegramMessage {
@@ -21,22 +22,56 @@ interface TelegramResponse {
   error_code?: number;
 }
 
+interface TelegramUpdate {
+  update_id: number;
+  message?: {
+    message_id: number;
+    from: {
+      id: number;
+      is_bot: boolean;
+      first_name: string;
+      username?: string;
+    };
+    chat: {
+      id: number;
+      type: string;
+    };
+    date: number;
+    text?: string;
+  };
+}
+
+type CommandHandler = (args: string, chatId: number) => void;
+
 class TelegramForwarder {
   private config: TelegramConfig = {
     botToken: '',
     chatId: '',
     enabled: false,
-    filterEnabled: true
+    filterEnabled: true,
+    commandEnabled: false
   };
 
   private baseUrl: string = '';
+  private lastUpdateId: number = 0;
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
+  private commandHandlers: Map<string, CommandHandler> = new Map();
 
   setConfig(config: Partial<TelegramConfig>) {
+    const wasCommandEnabled = this.config.commandEnabled;
     this.config = { ...this.config, ...config };
     if (this.config.botToken) {
       this.baseUrl = `https://api.telegram.org/bot${this.config.botToken}`;
     }
     log('TELEGRAM_FORWARDER', '配置已更新', this.config.enabled ? '已启用' : '已禁用');
+    
+    if (config.commandEnabled !== undefined && config.commandEnabled !== wasCommandEnabled) {
+      if (config.commandEnabled && this.config.botToken) {
+        this.startPolling();
+      } else {
+        this.stopPolling();
+      }
+    }
   }
 
   getConfig(): TelegramConfig {
@@ -49,6 +84,90 @@ class TelegramForwarder {
 
   isFilterEnabled(): boolean {
     return this.config.filterEnabled;
+  }
+
+  isCommandEnabled(): boolean {
+    return this.config.commandEnabled;
+  }
+
+  registerCommand(command: string, handler: CommandHandler) {
+    this.commandHandlers.set(command.toLowerCase(), handler);
+    log('TELEGRAM_FORWARDER', `注册命令: ${command}`);
+  }
+
+  startPolling() {
+    if (this.pollInterval) return;
+    
+    log('TELEGRAM_FORWARDER', '开始轮询Telegram更新');
+    this.pollInterval = setInterval(() => this.pollUpdates(), 2000);
+  }
+
+  stopPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+      log('TELEGRAM_FORWARDER', '停止轮询Telegram更新');
+    }
+  }
+
+  private async pollUpdates() {
+    if (!this.config.botToken || !this.config.commandEnabled) return;
+
+    try {
+      const params: Record<string, any> = {
+        timeout: 30,
+        allowed_updates: ['message']
+      };
+      
+      if (this.lastUpdateId > 0) {
+        params.offset = this.lastUpdateId + 1;
+      }
+
+      const result = await this.request('getUpdates', params);
+      
+      if (result.ok && result.result && Array.isArray(result.result)) {
+        for (const update of result.result as TelegramUpdate[]) {
+          this.lastUpdateId = update.update_id;
+          this.handleUpdate(update);
+        }
+      }
+    } catch (e) {
+      error('TELEGRAM_FORWARDER', '轮询更新失败', e);
+    }
+  }
+
+  private handleUpdate(update: TelegramUpdate) {
+    if (!update.message?.text) return;
+
+    const chatId = update.message.chat.id;
+    const allowedChatId = parseInt(this.config.chatId);
+    
+    if (chatId !== allowedChatId) {
+      log('TELEGRAM_FORWARDER', `忽略来自未授权chat的消息: ${chatId}`);
+      return;
+    }
+
+    const text = update.message.text;
+    
+    if (text.startsWith('/')) {
+      const parts = text.slice(1).split(' ');
+      const command = parts[0].toLowerCase();
+      const args = parts.slice(1).join(' ');
+      
+      const handler = this.commandHandlers.get(command);
+      if (handler) {
+        log('TELEGRAM_FORWARDER', `执行命令: /${command}`, args);
+        handler(args, chatId);
+      } else {
+        this.sendMessage(`未知命令: /${command}\n可用命令: /say, /emote, /help`, { parseMode: 'HTML' });
+      }
+    } else {
+      const defaultHandler = this.commandHandlers.get('__default__');
+      if (defaultHandler) {
+        log('TELEGRAM_FORWARDER', '转发消息到游戏聊天:', text);
+        defaultHandler(text, chatId);
+      }
+    }
   }
 
   private async request(method: string, params: Record<string, any>): Promise<TelegramResponse> {
@@ -109,7 +228,8 @@ class TelegramForwarder {
     senderName: string,
     senderId: string,
     messageContent: string,
-    messageType: string
+    messageType: string,
+    replyInfo?: { senderName: string; content: string }
   ): Promise<boolean> {
     const typeEmoji: Record<string, string> = {
       'ChatMessageChat': '💬',
@@ -121,7 +241,13 @@ class TelegramForwarder {
 
     const emoji = typeEmoji[messageType] || typeEmoji['default'];
     
-    const text = `<b>${emoji} ${this.escapeHtml(senderName)}</b> <code>[${senderId}]</code>\n${this.escapeHtml(messageContent)}`;
+    let text = `<b>${emoji} ${this.escapeHtml(senderName)}</b> <code>[${senderId}]</code>\n`;
+    
+    if (replyInfo) {
+      text += `<i>↩️ 回复 ${this.escapeHtml(replyInfo.senderName)}: ${this.escapeHtml(replyInfo.content)}</i>\n`;
+    }
+    
+    text += this.escapeHtml(messageContent);
     
     return this.sendMessage(text, { parseMode: 'HTML' });
   }

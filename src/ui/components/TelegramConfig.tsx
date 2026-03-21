@@ -13,16 +13,21 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
     chatId, 
     enabled, 
     filterEnabled,
+    commandEnabled,
     setBotToken, 
     setChatId, 
     setEnabled,
     setFilterEnabled,
+    setCommandEnabled,
     testConnection 
   } = useTelegramStore();
   
   const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [size, setSize] = useState({ width: 420, height: 580 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -38,6 +43,17 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
     }
   }, [position]);
 
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setDragOffset({
+      x: e.clientX,
+      y: e.clientY
+    });
+    setResizeStartSize(size);
+  }, [size]);
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       setPosition({
@@ -45,14 +61,25 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
         y: e.clientY - dragOffset.y
       });
     }
-  }, [isDragging, dragOffset]);
+    if (isResizing) {
+      const deltaX = e.clientX - dragOffset.x;
+      const deltaY = e.clientY - dragOffset.y;
+      const newWidth = Math.max(350, resizeStartSize.width + deltaX / scale);
+      const newHeight = Math.max(400, resizeStartSize.height + deltaY / scale);
+      setSize({
+        width: newWidth,
+        height: newHeight
+      });
+    }
+  }, [isDragging, isResizing, dragOffset, scale, resizeStartSize]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsResizing(false);
   }, []);
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isResizing) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
@@ -60,7 +87,7 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -119,8 +146,10 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
             backgroundColor: '#ffffff',
             borderRadius: `${12 * scale}px`,
             padding: 0,
-            width: `${400 * scale}px`,
+            width: `${size.width * scale}px`,
+            height: `${size.height * scale}px`,
             maxWidth: '95vw',
+            maxHeight: '90vh',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -140,7 +169,8 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
               cursor: 'grab',
               backgroundColor: '#f8f9fa',
               borderRadius: `${12 * scale}px ${12 * scale}px 0 0`,
-              userSelect: 'none'
+              userSelect: 'none',
+              flexShrink: 0
             }}
           >
             <h2 style={{ margin: 0, fontSize: `${15 * scale}px`, color: '#333', fontWeight: 600 }}>
@@ -162,7 +192,13 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
             </button>
           </div>
           
-          <div style={{ padding: `${16 * scale}px` }}>
+          <div 
+            style={{ 
+              padding: `${16 * scale}px`,
+              overflowY: 'auto',
+              flex: 1
+            }}
+          >
             <div style={{ 
               marginBottom: `${16 * scale}px`,
               padding: `${12 * scale}px`,
@@ -240,6 +276,57 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                 {filterEnabled ? '关闭筛选' : '开启筛选'}
               </button>
             </div>
+
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: `${16 * scale}px`,
+              padding: `${12 * scale}px`,
+              backgroundColor: '#f5f5f5',
+              borderRadius: `${8 * scale}px`
+            }}>
+              <div>
+                <span style={{ fontSize: `${14 * scale}px`, fontWeight: 500 }}>
+                  {commandEnabled ? '🎮 远程命令已启用' : '🎮 远程命令已禁用'}
+                </span>
+                <div style={{ fontSize: `${11 * scale}px`, color: '#666', marginTop: `${4 * scale}px` }}>
+                  通过Telegram发送命令控制游戏聊天
+                </div>
+              </div>
+              <button
+                onClick={() => setCommandEnabled(!commandEnabled)}
+                style={{
+                  padding: `${8 * scale}px ${16 * scale}px`,
+                  backgroundColor: commandEnabled ? '#4caf50' : '#9e9e9e',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: `${6 * scale}px`,
+                  cursor: 'pointer',
+                  fontSize: `${12 * scale}px`,
+                  fontWeight: 500
+                }}
+              >
+                {commandEnabled ? '禁用' : '启用'}
+              </button>
+            </div>
+
+            {commandEnabled && (
+              <div style={{ 
+                marginBottom: `${16 * scale}px`,
+                padding: `${12 * scale}px`,
+                backgroundColor: '#e3f2fd',
+                borderRadius: `${8 * scale}px`,
+                fontSize: `${12 * scale}px`,
+                color: '#1565c0'
+              }}>
+                <strong>可用命令：</strong><br/>
+                /say &lt;消息&gt; - 发送普通聊天<br/>
+                /emote &lt;动作&gt; - 发送动作消息<br/>
+                /help - 显示帮助<br/><br/>
+                <strong>提示：</strong>非命令消息会直接转发到游戏聊天
+              </div>
+            )}
 
             <div style={{ marginBottom: `${16 * scale}px` }}>
               <label style={{ 
@@ -327,6 +414,36 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                 {testResult.success ? '✅ ' : '❌ '}{testResult.message}
               </div>
             )}
+          </div>
+
+          <div
+            onMouseDown={handleResizeStart}
+            style={{
+              position: 'absolute',
+              right: 0,
+              bottom: 0,
+              width: `${16 * scale}px`,
+              height: `${16 * scale}px`,
+              cursor: 'nwse-resize',
+              backgroundColor: 'transparent',
+              zIndex: 10
+            }}
+          >
+            <svg
+              width={16 * scale}
+              height={16 * scale}
+              viewBox="0 0 16 16"
+              style={{ position: 'absolute', right: 0, bottom: 0 }}
+            >
+              <path
+                d="M14 14L8 14L14 8L14 14Z"
+                fill="#ccc"
+              />
+              <path
+                d="M10 14L6 14L14 6L14 10L10 14Z"
+                fill="#ddd"
+              />
+            </svg>
           </div>
         </div>
       </div>
