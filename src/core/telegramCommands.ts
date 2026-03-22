@@ -34,7 +34,11 @@ function sendChatMessage(content: string, type: 'Chat' | 'Emote' | 'Whisper' = '
   }
 }
 
-function handleSayCommand(args: string) {
+function handleSayCommand(args: string, chatId: number, messageId?: number) {
+  if (messageId) {
+    telegramForwarder.deleteMessage(chatId, messageId);
+  }
+  
   if (!args.trim()) {
     telegramForwarder.sendMessage('用法: /say <消息内容>\n发送一条普通聊天消息');
     return;
@@ -48,7 +52,11 @@ function handleSayCommand(args: string) {
   }
 }
 
-function handleEmoteCommand(args: string) {
+function handleEmoteCommand(args: string, chatId: number, messageId?: number) {
+  if (messageId) {
+    telegramForwarder.deleteMessage(chatId, messageId);
+  }
+  
   if (!args.trim()) {
     telegramForwarder.sendMessage('用法: /emote <动作内容>\n发送一条动作消息');
     return;
@@ -62,7 +70,11 @@ function handleEmoteCommand(args: string) {
   }
 }
 
-function handleHelpCommand() {
+function handleHelpCommand(_args: string, chatId: number, messageId?: number) {
+  if (messageId) {
+    telegramForwarder.deleteMessage(chatId, messageId);
+  }
+  
   const helpText = `<b>霜语 Telegram 命令帮助</b>
 
 <b>可用命令：</b>
@@ -82,7 +94,11 @@ function handleHelpCommand() {
   telegramForwarder.sendMessage(helpText, { parseMode: 'HTML' });
 }
 
-function handlePlayersCommand() {
+function handlePlayersCommand(_args: string, chatId: number, messageId?: number) {
+  if (messageId) {
+    telegramForwarder.deleteMessage(chatId, messageId);
+  }
+  
   const characters = window.ChatRoomCharacter;
   
   if (!characters || !Array.isArray(characters) || characters.length === 0) {
@@ -105,7 +121,11 @@ function handlePlayersCommand() {
   log('TELEGRAM_COMMAND', `查询房间玩家: ${playerCount}人`);
 }
 
-function handleDefaultMessage(text: string) {
+function handleDefaultMessage(text: string, chatId: number, messageId?: number) {
+  if (messageId) {
+    telegramForwarder.deleteMessage(chatId, messageId);
+  }
+  
   const success = sendChatMessage(text, 'Chat');
   if (!success) {
     telegramForwarder.sendMessage('❌ 发送失败，请确保你在聊天室中');

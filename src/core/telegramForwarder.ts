@@ -41,7 +41,7 @@ interface TelegramUpdate {
   };
 }
 
-type CommandHandler = (args: string, chatId: number) => void;
+type CommandHandler = (args: string, chatId: number, messageId?: number) => void;
 
 class TelegramForwarder {
   private config: TelegramConfig = {
@@ -189,22 +189,23 @@ class TelegramForwarder {
       const handler = this.commandHandlers.get(command);
       if (handler) {
         log('TELEGRAM_FORWARDER', `执行命令: /${command}`, args);
-        handler(args, chatId);
+        handler(args, chatId, messageId);
       } else {
-        this.sendMessage(`未知命令: /${command}\n可用命令: /say, /emote, /help`, { parseMode: 'HTML' });
+        this.deleteMessage(chatId, messageId);
+        this.sendMessage(`未知命令: /${command}\n可用命令: /say, /emote, /players, /help`, { parseMode: 'HTML' });
       }
     } else if (text.startsWith('*')) {
       const emoteHandler = this.commandHandlers.get('emote');
       if (emoteHandler) {
         const emoteContent = text.slice(1);
         log('TELEGRAM_FORWARDER', '转发emote消息到游戏聊天:', emoteContent);
-        emoteHandler(emoteContent, chatId);
+        emoteHandler(emoteContent, chatId, messageId);
       }
     } else {
       const defaultHandler = this.commandHandlers.get('__default__');
       if (defaultHandler) {
         log('TELEGRAM_FORWARDER', '转发消息到游戏聊天:', text);
-        defaultHandler(text, chatId);
+        defaultHandler(text, chatId, messageId);
       }
     }
   }
@@ -265,6 +266,21 @@ class TelegramForwarder {
     }
     
     return false;
+  }
+
+  async deleteMessage(chatId: number, messageId: number): Promise<boolean> {
+    const result = await this.request('deleteMessage', {
+      chat_id: chatId,
+      message_id: messageId
+    });
+    
+    if (result.ok) {
+      log('TELEGRAM_FORWARDER', `已删除消息 ${messageId}`);
+      return true;
+    } else {
+      log('TELEGRAM_FORWARDER', `删除消息失败: ${result.description}`);
+      return false;
+    }
   }
 
   async sendFormattedMessage(
