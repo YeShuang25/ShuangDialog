@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.13.5';
+export const APP_VERSION = 'v2.13.6';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.13.6',
+    date: '2026-03-23',
+    description: '优化特别关注功能：从房间查询添加的玩家会直接显示名称（优先显示昵称）'
+  },
   {
     version: 'v2.13.5',
     date: '2026-03-23',

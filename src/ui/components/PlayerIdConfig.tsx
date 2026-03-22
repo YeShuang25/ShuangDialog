@@ -192,7 +192,7 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
 
   const handleSelectRoomPlayer = (player: RoomPlayer) => {
     if (!followedPlayers.some(p => p.id === player.id)) {
-      addFollowedPlayer(player.id);
+      addFollowedPlayer(player.id, getPlayerDisplayName(player));
     }
     setShowRoomPlayers(false);
     setRoomPlayers([]);
