@@ -1,12 +1,17 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.12.0';
+export const APP_VERSION = 'v2.13.0';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
   {
+    version: 'v2.13.0',
+    date: '2026-03-22',
+    description: 'Telegram功能增强：1.进入房间时发送带时间标签的通知（#日期_时间_房间名）；2.Bot自动删除用户发送的命令消息，保持聊天整洁；3.推荐使用群组并将Bot设为管理员'
+  },
+  {
     version: 'v2.12.0',
     date: '2026-03-21',
-    description: 'Telegram远程命令功能：可通过Telegram发送命令控制游戏聊天。支持/say发送消息、/emote发送动作、/help查看帮助'
+    description: 'Telegram远程命令功能：可通过Telegram发送命令控制游戏聊天。支持/say发送消息、/emote发送动作、/players查询房间玩家、/help查看帮助'
   },
   {
     version: 'v2.11.1',

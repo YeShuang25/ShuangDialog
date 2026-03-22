@@ -254,6 +254,16 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
                       <span style={{ color: '#e65100' }}>或者在群组中将Bot设为管理员</span>
                     </div>
                   </div>
+                  
+                  <div style={{ marginBottom: `${12 * scale}px` }}>
+                    <strong style={{ color: '#1565c0' }}>💡 推荐使用群组</strong>
+                    <div style={{ marginTop: `${4 * scale}px`, paddingLeft: `${8 * scale}px` }}>
+                      • 创建Telegram群组用于接收消息<br/>
+                      • 将Bot添加到群组并<strong>设为管理员</strong><br/>
+                      • 管理员权限可让Bot删除命令消息，保持聊天整洁<br/>
+                      • Bot会自动删除你发送的命令，只保留执行结果
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
