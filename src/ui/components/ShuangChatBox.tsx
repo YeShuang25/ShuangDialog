@@ -619,6 +619,11 @@ export const ShuangChatBox: React.FC = () => {
     };
   }, [stopMessageFilter]);
 
+  const handleRefresh = useCallback(() => {
+    log('SHUANG_CHAT_BOX', '手动刷新消息');
+    messageFilter.refresh();
+  }, []);
+
   if (!portalContainer) {
     return null;
   }
@@ -629,6 +634,22 @@ export const ShuangChatBox: React.FC = () => {
         <div className="shuang-header-title">
           霜语 {messages.length > 0 && `(${messages.length})`}
         </div>
+        <button
+          onClick={handleRefresh}
+          title="刷新消息（重新匹配规则）"
+          style={{
+            padding: '2px 8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontSize: '0.9em',
+            marginLeft: 'auto'
+          }}
+        >
+          🔄
+        </button>
       </div>
       <div className="shuang-content" ref={contentRef}></div>
       <div 

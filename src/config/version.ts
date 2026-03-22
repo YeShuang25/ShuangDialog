@@ -1,8 +1,23 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.13.6';
+export const APP_VERSION = 'v2.13.9';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.13.9',
+    date: '2026-03-23',
+    description: '修复消息顺序问题：刷新时严格按照DOM顺序处理消息，进入房间消息等待渲染后继续处理下一条'
+  },
+  {
+    version: 'v2.13.8',
+    date: '2026-03-23',
+    description: '修复进入房间消息排序问题：刷新时先处理普通消息，再处理进入房间消息，保持正确顺序'
+  },
+  {
+    version: 'v2.13.7',
+    date: '2026-03-23',
+    description: '新增刷新功能：霜语标题栏添加刷新按钮，点击可清除并重新匹配所有消息，方便修改配置后立即生效'
+  },
   {
     version: 'v2.13.6',
     date: '2026-03-23',
