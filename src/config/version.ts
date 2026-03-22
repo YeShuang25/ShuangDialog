@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.13.3';
+export const APP_VERSION = 'v2.13.4';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.13.4',
+    date: '2026-03-23',
+    description: '新增自动获取Chat ID功能：填写Bot Token后点击"获取"按钮，自动列出所有聊天记录，点击即可选择'
+  },
   {
     version: 'v2.13.3',
     date: '2026-03-23',

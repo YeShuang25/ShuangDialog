@@ -2,6 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTelegramStore } from '../../store/useTelegramStore';
 import { useScale } from '../context/ScaleContext';
 
+interface ChatInfo {
+  id: number;
+  type: string;
+  title?: string;
+  username?: string;
+  firstName?: string;
+}
+
 interface TelegramConfigProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,7 +27,8 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
     setEnabled,
     setFilterEnabled,
     setCommandEnabled,
-    testConnection 
+    testConnection,
+    fetchChatIds
   } = useTelegramStore();
   
   const [position, setPosition] = useState({ x: 100, y: 100 });
@@ -31,6 +40,9 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isFetchingChats, setIsFetchingChats] = useState(false);
+  const [chatList, setChatList] = useState<ChatInfo[]>([]);
+  const [fetchResult, setFetchResult] = useState<{ success: boolean; message: string } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const scale = useScale();
 
@@ -112,6 +124,45 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
     const result = await testConnection();
     setTestResult(result);
     setIsTesting(false);
+  };
+
+  const handleFetchChatIds = async () => {
+    setIsFetchingChats(true);
+    setFetchResult(null);
+    setChatList([]);
+    const result = await fetchChatIds();
+    if (result.success && result.chats) {
+      setChatList(result.chats);
+      setFetchResult({ success: true, message: result.message || '' });
+    } else {
+      setFetchResult({ success: false, message: result.error || result.message || '获取失败' });
+    }
+    setIsFetchingChats(false);
+  };
+
+  const handleSelectChat = (chatId: number) => {
+    setChatId(String(chatId));
+    setChatList([]);
+    setFetchResult(null);
+  };
+
+  const getChatDisplayName = (chat: ChatInfo): string => {
+    if (chat.type === 'private') {
+      return chat.firstName || chat.username || `用户 ${chat.id}`;
+    } else if (chat.type === 'group' || chat.type === 'supergroup') {
+      return chat.title || `群组 ${chat.id}`;
+    }
+    return `聊天 ${chat.id}`;
+  };
+
+  const getChatTypeLabel = (type: string): string => {
+    switch (type) {
+      case 'private': return '👤 私聊';
+      case 'group': return '👥 群组';
+      case 'supergroup': return '👥 超级群组';
+      case 'channel': return '📢 频道';
+      default: return '💬 聊天';
+    }
   };
 
   if (!isOpen) return null;
@@ -425,35 +476,115 @@ export const TelegramConfig: React.FC<TelegramConfigProps> = ({ isOpen, onClose 
               }}>
                 Chat ID
               </label>
-              <input
-                type="text"
-                value={chatId}
-                onChange={(e) => setChatId(e.target.value)}
-                placeholder="例如：-1001234567890 或 123456789"
-                style={{
-                  width: '100%',
-                  padding: `${10 * scale}px ${12 * scale}px`,
+              <div style={{ display: 'flex', gap: `${8 * scale}px` }}>
+                <input
+                  type="text"
+                  value={chatId}
+                  onChange={(e) => setChatId(e.target.value)}
+                  placeholder="例如：-1001234567890 或 123456789"
+                  style={{
+                    flex: 1,
+                    padding: `${10 * scale}px ${12 * scale}px`,
+                    border: `${1 * scale}px solid #ddd`,
+                    borderRadius: `${6 * scale}px`,
+                    fontSize: `${13 * scale}px`,
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  onClick={handleFetchChatIds}
+                  disabled={isFetchingChats || !botToken}
+                  title="自动获取Chat ID"
+                  style={{
+                    padding: `${10 * scale}px ${12 * scale}px`,
+                    backgroundColor: isFetchingChats || !botToken ? '#ccc' : '#ff9800',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: `${6 * scale}px`,
+                    cursor: isFetchingChats || !botToken ? 'not-allowed' : 'pointer',
+                    fontSize: `${13 * scale}px`,
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {isFetchingChats ? '获取中...' : '获取'}
+                </button>
+              </div>
+              {fetchResult && (
+                <div style={{
+                  marginTop: `${8 * scale}px`,
+                  padding: `${8 * scale}px ${10 * scale}px`,
+                  backgroundColor: fetchResult.success ? '#e8f5e9' : '#fff3e0',
+                  borderRadius: `${4 * scale}px`,
+                  fontSize: `${11 * scale}px`,
+                  color: fetchResult.success ? '#2e7d32' : '#e65100'
+                }}>
+                  {fetchResult.success ? '✅ ' : '⚠️ '}{fetchResult.message}
+                </div>
+              )}
+              {chatList.length > 0 && (
+                <div style={{
+                  marginTop: `${8 * scale}px`,
                   border: `${1 * scale}px solid #ddd`,
                   borderRadius: `${6 * scale}px`,
-                  fontSize: `${13 * scale}px`,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+                  maxHeight: `${150 * scale}px`,
+                  overflowY: 'auto'
+                }}>
+                  {chatList.map((chat) => (
+                    <div
+                      key={chat.id}
+                      onClick={() => handleSelectChat(chat.id)}
+                      style={{
+                        padding: `${8 * scale}px ${12 * scale}px`,
+                        borderBottom: `${1 * scale}px solid #eee`,
+                        cursor: 'pointer',
+                        backgroundColor: String(chat.id) === chatId ? '#e3f2fd' : 'transparent',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (String(chat.id) !== chatId) {
+                          e.currentTarget.style.backgroundColor = '#f5f5f5';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (String(chat.id) !== chatId) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: `${12 * scale}px`, 
+                        fontWeight: 500,
+                        color: '#333'
+                      }}>
+                        {getChatTypeLabel(chat.type)} {getChatDisplayName(chat)}
+                      </div>
+                      <div style={{ 
+                        fontSize: `${10 * scale}px`, 
+                        color: '#666',
+                        fontFamily: 'monospace'
+                      }}>
+                        ID: {chat.id}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: `${8 * scale}px` }}>
               <button
                 onClick={handleTestConnection}
-                disabled={isTesting || !botToken}
+                disabled={isTesting || !botToken || !chatId}
                 style={{
                   flex: 1,
                   padding: `${10 * scale}px`,
-                  backgroundColor: isTesting || !botToken ? '#ccc' : '#2196f3',
+                  backgroundColor: isTesting || !botToken || !chatId ? '#ccc' : '#2196f3',
                   color: 'white',
                   border: 'none',
                   borderRadius: `${6 * scale}px`,
-                  cursor: isTesting || !botToken ? 'not-allowed' : 'pointer',
+                  cursor: isTesting || !botToken || !chatId ? 'not-allowed' : 'pointer',
                   fontSize: `${13 * scale}px`,
                   fontWeight: 500
                 }}

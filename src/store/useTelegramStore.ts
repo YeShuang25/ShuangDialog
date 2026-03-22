@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { telegramForwarder, TelegramConfig } from '../core/telegramForwarder';
 import { useUserStore, getStorageKey } from './useUserStore';
 
+interface ChatInfo {
+  id: number;
+  type: string;
+  title?: string;
+  username?: string;
+  firstName?: string;
+}
+
 interface TelegramStore extends TelegramConfig {
   setBotToken: (token: string) => void;
   setChatId: (chatId: string) => void;
@@ -11,6 +19,12 @@ interface TelegramStore extends TelegramConfig {
   loadConfig: () => void;
   saveConfig: () => void;
   testConnection: () => Promise<{ success: boolean; message: string }>;
+  fetchChatIds: () => Promise<{ 
+    success: boolean; 
+    chats?: ChatInfo[];
+    message?: string;
+    error?: string;
+  }>;
 }
 
 const BASE_STORAGE_KEY = 'shuang-dialog-telegram-config';
@@ -86,5 +100,11 @@ export const useTelegramStore = create<TelegramStore>((set, get) => ({
     const { botToken, chatId } = get();
     telegramForwarder.setConfig({ botToken, chatId });
     return telegramForwarder.testConnection();
+  },
+
+  fetchChatIds: async () => {
+    const { botToken } = get();
+    telegramForwarder.setConfig({ botToken });
+    return telegramForwarder.fetchChatIds();
   }
 }));

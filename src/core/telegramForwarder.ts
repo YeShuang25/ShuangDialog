@@ -372,6 +372,69 @@ class TelegramForwarder {
     
     return { error: result.description || '获取Bot信息失败' };
   }
+
+  async fetchChatIds(): Promise<{ 
+    success: boolean; 
+    chats?: Array<{ id: number; type: string; title?: string; username?: string; firstName?: string }>;
+    message?: string;
+    error?: string;
+  }> {
+    if (!this.config.botToken) {
+      return { success: false, error: '请先配置 Bot Token' };
+    }
+
+    const result = await this.request('getUpdates', { 
+      timeout: 0,
+      allowed_updates: ['message']
+    });
+    
+    if (!result.ok) {
+      return { 
+        success: false, 
+        error: result.description || '获取更新失败' 
+      };
+    }
+
+    const updates = result.result as TelegramUpdate[];
+    if (!updates || updates.length === 0) {
+      return { 
+        success: false, 
+        message: '暂无消息记录。请先向Bot发送任意消息，然后重试。' 
+      };
+    }
+
+    const chatMap = new Map<number, { id: number; type: string; title?: string; username?: string; firstName?: string }>();
+    
+    for (const update of updates) {
+      if (update.message?.chat) {
+        const chat = update.message.chat;
+        if (!chatMap.has(chat.id)) {
+          chatMap.set(chat.id, {
+            id: chat.id,
+            type: chat.type,
+            title: (chat as any).title,
+            username: (chat as any).username,
+            firstName: (chat as any).first_name
+          });
+        }
+      }
+    }
+
+    const chats = Array.from(chatMap.values());
+    
+    if (chats.length === 0) {
+      return { 
+        success: false, 
+        message: '暂无消息记录。请先向Bot发送任意消息，然后重试。' 
+      };
+    }
+
+    return { 
+      success: true, 
+      chats,
+      message: `找到 ${chats.length} 个聊天` 
+    };
+  }
 }
 
 export const telegramForwarder = new TelegramForwarder();
