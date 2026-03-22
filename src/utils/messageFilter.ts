@@ -133,17 +133,25 @@ export class MessageFilter {
             log('MESSAGE_FILTER', `发送者是否关注: ${!!senderPlayer}`);
             
             if (senderPlayer) {
-              const messageData: ShuangMessage = {
-                id: `${senderId}-${roomData.time}-${Date.now()}`,
-                senderId,
-                senderName: senderId,
-                content: `进入房间 ${roomData.roomName}`,
-                timestamp: roomData.time,
-                originalElement: messageElement,
-                type: 'activity'
-              };
-              useShuangMessagesStore.getState().addMessage(messageData);
-              log('MESSAGE_FILTER', '添加进入房间消息到霜语:', messageData);
+              const excludedTypes = senderPlayer.excludedMessageTypes || [];
+              const isExcluded = excludedTypes.includes('other');
+              log('MESSAGE_FILTER', `房间消息类型是否被排除: ${isExcluded}, 排除列表: ${JSON.stringify(excludedTypes)}`);
+              
+              if (!isExcluded) {
+                const messageData: ShuangMessage = {
+                  id: `${senderId}-${roomData.time}-${Date.now()}`,
+                  senderId,
+                  senderName: senderId,
+                  content: `进入房间 ${roomData.roomName}`,
+                  timestamp: roomData.time,
+                  originalElement: messageElement,
+                  type: 'other'
+                };
+                useShuangMessagesStore.getState().addMessage(messageData);
+                log('MESSAGE_FILTER', '添加进入房间消息到霜语:', messageData);
+              } else {
+                log('MESSAGE_FILTER', '房间消息已被排除，不添加到霜语');
+              }
             }
           }
         } else {
