@@ -72,9 +72,84 @@ export class MessageFilter {
     return 'other';
   }
 
+  private isRoomEnterMessage(element: HTMLElement): boolean {
+    const result = element.classList.contains('chat-room-sep');
+    log('MESSAGE_FILTER', `isRoomEnterMessage检查: ${result}`, element.className);
+    return result;
+  }
+
+  private extractRoomEnterData(element: HTMLElement): { time: string; roomName: string } | null {
+    log('MESSAGE_FILTER', '完整元素HTML:', element.outerHTML);
+    
+    const timeElement = element.querySelector('.chat-room-time');
+    const time = timeElement?.textContent || '';
+    
+    const roomButton = element.querySelector('.chat-room-sep-header');
+    if (!roomButton) {
+      log('MESSAGE_FILTER', 'extractRoomEnterData: 未找到 roomButton');
+      return null;
+    }
+    
+    const dataRoom = roomButton.getAttribute('data-room');
+    const textContent = roomButton.textContent?.trim() || '';
+    log('MESSAGE_FILTER', `extractRoomEnterData: data-room属性=${dataRoom}, textContent=${textContent}`);
+    
+    const roomName = dataRoom || textContent;
+    
+    if (!roomName) return null;
+    
+    return { time, roomName };
+  }
+
   private processMessage(messageElement: HTMLElement) {
+    log('MESSAGE_FILTER', 'processMessage 被调用', messageElement.className);
+    
     if (messageElement.classList.contains('bce-pending')) {
       log('MESSAGE_FILTER', '跳过正在发送中的消息:', messageElement);
+      return;
+    }
+
+    if (this.isRoomEnterMessage(messageElement)) {
+      log('MESSAGE_FILTER', '检测到进入房间消息，延迟处理等待渲染完成');
+      setTimeout(() => {
+        const roomData = this.extractRoomEnterData(messageElement);
+        if (roomData) {
+          log('MESSAGE_FILTER', `房间数据: ${JSON.stringify(roomData)}, TG启用: ${telegramForwarder.isEnabled()}`);
+          if (telegramForwarder.isEnabled()) {
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            const timeTag = roomData.time.replace(/:/g, '');
+            const roomTag = roomData.roomName.replace(/\s+/g, '_');
+            const tagMessage = `#${dateStr}_${timeTag}_${roomTag}`;
+            telegramForwarder.sendMessage(`🚪 进入房间\n${tagMessage}`);
+            log('MESSAGE_FILTER', '已发送TG消息:', tagMessage);
+          }
+          
+          const senderId = messageElement.getAttribute('data-sender');
+          log('MESSAGE_FILTER', `发送者ID: ${senderId}`);
+          if (senderId) {
+            const followedPlayers = useShuangConfigStore.getState().followedPlayers;
+            const senderPlayer = followedPlayers.find(p => p.id === senderId);
+            log('MESSAGE_FILTER', `发送者是否关注: ${!!senderPlayer}`);
+            
+            if (senderPlayer) {
+              const messageData: ShuangMessage = {
+                id: `${senderId}-${roomData.time}-${Date.now()}`,
+                senderId,
+                senderName: senderId,
+                content: `进入房间 ${roomData.roomName}`,
+                timestamp: roomData.time,
+                originalElement: messageElement,
+                type: 'activity'
+              };
+              useShuangMessagesStore.getState().addMessage(messageData);
+              log('MESSAGE_FILTER', '添加进入房间消息到霜语:', messageData);
+            }
+          }
+        } else {
+          log('MESSAGE_FILTER', 'extractRoomEnterData 返回 null');
+        }
+      }, 100);
       return;
     }
 
