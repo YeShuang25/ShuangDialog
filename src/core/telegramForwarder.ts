@@ -288,25 +288,38 @@ class TelegramForwarder {
     senderId: string,
     messageContent: string,
     messageType: string,
+    originalContent?: string,
     replyInfo?: { senderName: string; content: string }
   ): Promise<boolean> {
     const typeEmoji: Record<string, string> = {
-      'ChatMessageChat': '💬',
-      'ChatMessageEmote': '🎭',
-      'ChatMessageAction': '🎬',
-      'ChatMessageActivity': '⚡',
+      'chat': '💬',
+      'emote': '🎭',
+      'activity': '⚡',
+      'whisper': '🤫',
+      'private': '🔒',
       'default': '📝'
     };
 
     const emoji = typeEmoji[messageType] || typeEmoji['default'];
     
-    let text = `<b>${emoji} ${this.escapeHtml(senderName)}</b> <code>[${senderId}]</code>\n`;
+    let processedContent = messageContent;
     
-    if (replyInfo) {
-      text += `<i>↩️ 回复 ${this.escapeHtml(replyInfo.senderName)}: ${this.escapeHtml(replyInfo.content)}</i>\n`;
+    if (messageType === 'chat') {
+      processedContent = messageContent.replace(/^:\s*/, '');
     }
     
-    text += this.escapeHtml(messageContent);
+    let text = `${emoji} <b>${this.escapeHtml(senderName)}</b> <code>[${senderId}]</code>\n${this.escapeHtml(processedContent)}`;
+    
+    if (originalContent) {
+      text += `\n<i>${this.escapeHtml(originalContent)}</i>`;
+    }
+    
+    if (replyInfo) {
+      text = `${emoji} <b>${this.escapeHtml(senderName)}</b> <code>[${senderId}]</code>\n↩️ <i>回复 ${this.escapeHtml(replyInfo.senderName)}: ${this.escapeHtml(replyInfo.content)}</i>\n${this.escapeHtml(processedContent)}`;
+      if (originalContent) {
+        text += `\n<i>${this.escapeHtml(originalContent)}</i>`;
+      }
+    }
     
     return this.sendMessage(text, { parseMode: 'HTML' });
   }

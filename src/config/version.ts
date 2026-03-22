@@ -1,8 +1,23 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.13.0';
+export const APP_VERSION = 'v2.13.3';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.13.3',
+    date: '2026-03-23',
+    description: '优化Telegram消息排版：1.进入房间消息添加分割线；2.保留原始消息的中括号'
+  },
+  {
+    version: 'v2.13.2',
+    date: '2026-03-23',
+    description: '优化Telegram消息排版：1.保留动作消息的括号；2.原始消息另起一行显示（斜体）；3.移除聊天消息开头的冒号'
+  },
+  {
+    version: 'v2.13.1',
+    date: '2026-03-23',
+    description: '优化Telegram消息排版：1.移除聊天消息开头的冒号；2.移除动作消息的括号；3.统一消息类型emoji映射；4.添加私聊和悄悄话emoji'
+  },
   {
     version: 'v2.13.0',
     date: '2026-03-22',

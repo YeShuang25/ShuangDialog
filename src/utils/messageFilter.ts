@@ -121,7 +121,7 @@ export class MessageFilter {
             const timeTag = roomData.time.replace(/:/g, '');
             const roomTag = roomData.roomName.replace(/\s+/g, '_');
             const tagMessage = `#${dateStr}_${timeTag}_${roomTag}`;
-            telegramForwarder.sendMessage(`🚪 进入房间\n${tagMessage}`);
+            telegramForwarder.sendMessage(`🚪 进入房间\n${tagMessage}\n─────────────────`);
             log('MESSAGE_FILTER', '已发送TG消息:', tagMessage);
           }
           
@@ -291,6 +291,7 @@ export class MessageFilter {
         messageData.senderId,
         messageData.content,
         messageData.type,
+        messageData.originalContent,
         messageData.replyInfo
       );
     }
@@ -308,7 +309,8 @@ export class MessageFilter {
       '.menubar',
       'button[name="reply"]',
       '.button-tooltip',
-      '.chat-room-message-reply'
+      '.chat-room-message-reply',
+      '.chat-room-message-original'
     ];
     
     for (const selector of excludeSelectors) {
@@ -488,6 +490,7 @@ export class MessageFilter {
     const senderName = nameButton?.textContent || senderId;
     const messageId = `${senderId}-${timestamp}-${Date.now()}`;
     const content = this.getMessageTextContent(element);
+    const originalContent = this.getOriginalContent(element);
     const replyInfo = this.extractReplyInfo(element);
 
     let type: ShuangMessage['type'] = 'chat';
@@ -501,7 +504,7 @@ export class MessageFilter {
       type = 'private';
     }
 
-    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type, content, replyInfo });
+    log('MESSAGE_FILTER', 'extractMessageData: 提取成功', { senderId, senderName, timestamp, type, content, originalContent, replyInfo });
 
     return {
       id: messageId,
@@ -511,8 +514,17 @@ export class MessageFilter {
       timestamp,
       originalElement: element,
       type,
+      ...(originalContent && { originalContent }),
       ...(replyInfo && { replyInfo })
     };
+  }
+
+  private getOriginalContent(element: HTMLElement): string | undefined {
+    const originalElement = element.querySelector('.chat-room-message-original');
+    if (originalElement) {
+      return originalElement.textContent?.trim() || undefined;
+    }
+    return undefined;
   }
 }
 

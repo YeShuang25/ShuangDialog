@@ -10,6 +10,7 @@ export interface ShuangMessage {
   senderId: string;
   senderName: string;
   content: string;
+  originalContent?: string;
   timestamp: string;
   originalElement: HTMLElement;
   type: 'chat' | 'emote' | 'activity' | 'whisper' | 'private' | 'other';
