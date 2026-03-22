@@ -1,8 +1,13 @@
 // 版本管理配置
-export const APP_VERSION = 'v2.13.4';
+export const APP_VERSION = 'v2.13.5';
 
 // 版本历史记录
 export const VERSION_HISTORY = [
+  {
+    version: 'v2.13.5',
+    date: '2026-03-23',
+    description: '特别关注功能增强：新增"查询房间"按钮，可获取当前房间内所有玩家列表，点击即可添加到特别关注'
+  },
   {
     version: 'v2.13.4',
     date: '2026-03-23',

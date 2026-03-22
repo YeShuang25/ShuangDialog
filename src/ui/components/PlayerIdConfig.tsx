@@ -8,6 +8,12 @@ import {
 } from '../../store/useShuangConfigStore';
 import { useScale } from '../context/ScaleContext';
 
+interface RoomPlayer {
+  id: string;
+  name: string;
+  nickname?: string;
+}
+
 interface PlayerIdConfigProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +41,9 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
   const [keywordsInput, setKeywordsInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [showRecommend, setShowRecommend] = useState(false);
+  const [showRoomPlayers, setShowRoomPlayers] = useState(false);
+  const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
+  const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const scale = useScale();
 
@@ -152,6 +161,45 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
       });
       if (!player.contentMatch) togglePlayerContentMatch(playerId);
     }
+  };
+
+  const fetchRoomPlayers = () => {
+    setIsLoadingPlayers(true);
+    try {
+      const chatRoomCharacter = (window as any).ChatRoomCharacter;
+      if (!chatRoomCharacter || !Array.isArray(chatRoomCharacter)) {
+        setRoomPlayers([]);
+        setShowRoomPlayers(true);
+        return;
+      }
+      
+      const players: RoomPlayer[] = chatRoomCharacter.map((p: any) => ({
+        id: String(p.MemberNumber),
+        name: p.Name || '',
+        nickname: p.Nickname || undefined
+      }));
+      
+      setRoomPlayers(players);
+      setShowRoomPlayers(true);
+    } catch (e) {
+      console.error('[PlayerIdConfig] 获取房间玩家失败:', e);
+      setRoomPlayers([]);
+      setShowRoomPlayers(true);
+    } finally {
+      setIsLoadingPlayers(false);
+    }
+  };
+
+  const handleSelectRoomPlayer = (player: RoomPlayer) => {
+    if (!followedPlayers.some(p => p.id === player.id)) {
+      addFollowedPlayer(player.id);
+    }
+    setShowRoomPlayers(false);
+    setRoomPlayers([]);
+  };
+
+  const getPlayerDisplayName = (player: RoomPlayer): string => {
+    return player.nickname || player.name || `玩家 ${player.id}`;
   };
 
   const handleStartEditKeywords = () => {
@@ -457,7 +505,130 @@ export const PlayerIdConfig: React.FC<PlayerIdConfigProps> = ({ isOpen, onClose 
             >
               添加
             </button>
+            <button
+              onClick={fetchRoomPlayers}
+              disabled={isLoadingPlayers}
+              title="从当前房间获取玩家列表"
+              style={{
+                padding: `${6 * scale}px ${14 * scale}px`,
+                backgroundColor: isLoadingPlayers ? '#ccc' : '#ff9800',
+                color: 'white',
+                border: 'none',
+                borderRadius: `${4 * scale}px`,
+                cursor: isLoadingPlayers ? 'not-allowed' : 'pointer',
+                fontSize: `${12 * scale}px`,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {isLoadingPlayers ? '获取中...' : '查询房间'}
+            </button>
           </div>
+          
+          {showRoomPlayers && (
+            <div style={{
+              marginBottom: `${10 * scale}px`,
+              border: `${1 * scale}px solid #ddd`,
+              borderRadius: `${6 * scale}px`,
+              maxHeight: `${200 * scale}px`,
+              overflowY: 'auto'
+            }}>
+              <div style={{
+                padding: `${8 * scale}px ${12 * scale}px`,
+                backgroundColor: '#f0f7ff',
+                borderBottom: `${1 * scale}px solid #ddd`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: `${12 * scale}px`, fontWeight: 500, color: '#007acc' }}>
+                  房间玩家 ({roomPlayers.length}人)
+                </span>
+                <button
+                  onClick={() => {
+                    setShowRoomPlayers(false);
+                    setRoomPlayers([]);
+                  }}
+                  style={{
+                    padding: `${2 * scale}px ${8 * scale}px`,
+                    backgroundColor: '#e0e0e0',
+                    color: '#666',
+                    border: 'none',
+                    borderRadius: `${4 * scale}px`,
+                    cursor: 'pointer',
+                    fontSize: `${11 * scale}px`
+                  }}
+                >
+                  关闭
+                </button>
+              </div>
+              {roomPlayers.length === 0 ? (
+                <div style={{
+                  padding: `${16 * scale}px`,
+                  textAlign: 'center',
+                  color: '#999',
+                  fontSize: `${12 * scale}px`
+                }}>
+                  未找到房间玩家，请确保已在游戏房间中
+                </div>
+              ) : (
+                roomPlayers.map((player) => {
+                  const isFollowed = followedPlayers.some(p => p.id === player.id);
+                  return (
+                    <div
+                      key={player.id}
+                      onClick={() => !isFollowed && handleSelectRoomPlayer(player)}
+                      style={{
+                        padding: `${8 * scale}px ${12 * scale}px`,
+                        borderBottom: `${1 * scale}px solid #eee`,
+                        cursor: isFollowed ? 'default' : 'pointer',
+                        backgroundColor: isFollowed ? '#f5f5f5' : 'transparent',
+                        opacity: isFollowed ? 0.6 : 1,
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isFollowed) {
+                          e.currentTarget.style.backgroundColor = '#e3f2fd';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isFollowed) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: `${12 * scale}px`, 
+                        fontWeight: 500,
+                        color: isFollowed ? '#999' : '#333',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: `${6 * scale}px`
+                      }}>
+                        {getPlayerDisplayName(player)}
+                        {isFollowed && <span style={{ 
+                          fontSize: `${10 * scale}px`, 
+                          color: '#28a745',
+                          fontWeight: 'normal'
+                        }}>已关注</span>}
+                      </div>
+                      <div style={{ 
+                        fontSize: `${10 * scale}px`, 
+                        color: '#666',
+                        fontFamily: 'monospace'
+                      }}>
+                        ID: {player.id}
+                        {player.nickname && player.name && (
+                          <span style={{ marginLeft: `${8 * scale}px`, color: '#999' }}>
+                            ({player.name})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
           
           <div style={{ 
             padding: `${8 * scale}px ${10 * scale}px`, 
